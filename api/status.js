@@ -1,103 +1,117 @@
 // api/status.js
-// GET /api/status
-// Header: x-api-key: <founder's api key>
-// Returns Gmail connection status for the authenticated founder.
+// GET /api/status — checks if Gmail is connected and returns sender info
+// Multi-user version — uses {USER}_ACCESS_TOKEN env vars
 
-const { getOAuthClient, google } = require('../lib/gmail');
+const { google } = require('googleapis');
 
-function cors(res) {
-    res.setHeader('Access-Control-Allow-Origin',  process.env.ALLOWED_ORIGIN || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-api-key');
+function getOAuthClient(user) {
+    const userKey = user.toUpperCase();
+    const client = new google.auth.OAuth2(
+        process.env.GMAIL_CLIENT_ID,
+        process.env.GMAIL_CLIENT_SECRET,
+        process.env.GMAIL_REDIRECT_URI
+    );
+    
+    // Use per-user tokens
+    const accessToken = process.env[`${userKey}_ACCESS_TOKEN`];
+    const refreshToken = process.env[`${userKey}_REFRESH_TOKEN`];
+    
+    if (accessToken && refreshToken) {
+        client.setCredentials({
+            access_token: accessToken,
+            refresh_token: refreshToken
+        });
+    }
+    
+    return client;
 }
 
-const USERS = [
-    {
-        id:          'paramjit',
-        name:        'Paramjit',
-        senderEmail: 'Paramjit@adsidol.com',
-        get apiKey()       { return process.env.PARAMJIT_API_KEY; },
-        get accessToken()  { return process.env.PARAMJIT_ACCESS_TOKEN; },
-        get refreshToken() { return process.env.PARAMJIT_REFRESH_TOKEN; },
-    },
-    {
-        id:          'moni',
-        name:        'Moni',
-        senderEmail: 'moni@adsidol.com',
-        get apiKey()       { return process.env.MONI_API_KEY; },
-        get accessToken()  { return process.env.MONI_ACCESS_TOKEN; },
-        get refreshToken() { return process.env.MONI_REFRESH_TOKEN; },
-    },
-    {
-        id:          'ujjwal',
-        name:        'Ujjwal',
-        senderEmail: 'Ujjwal@adsidol.com',
-        get apiKey()       { return process.env.UJJWAL_API_KEY; },
-        get accessToken()  { return process.env.UJJWAL_ACCESS_TOKEN; },
-        get refreshToken() { return process.env.UJJWAL_REFRESH_TOKEN; },
-    },
-    {
-        id:          'hemleta',
-        name:        'Hemleta',
-        senderEmail: 'Hemleta@adsidol.com',
-        get apiKey()       { return process.env.HEMLETA_API_KEY; },
-        get accessToken()  { return process.env.HEMLETA_ACCESS_TOKEN; },
-        get refreshToken() { return process.env.HEMLETA_REFRESH_TOKEN; },
-    },
-];
-
-function getUserByApiKey(apiKey) {
-    if (!apiKey) return null;
-    return USERS.find(u => u.apiKey && u.apiKey === apiKey) || null;
+function getUserFromApiKey(apiKey) {
+    // Match API key to user
+    const users = ['PARAMJIT', 'MONI', 'UJJWAL', 'HEMLETA'];
+    for (const user of users) {
+        if (process.env[`${user}_API_KEY`] === apiKey) {
+            return user;
+        }
+    }
+    return null;
 }
 
 module.exports = async (req, res) => {
+    // More permissive CORS - allow all subpaths of adsidol.com
+    const origin = req.headers.origin || req.headers.referer;
+    const allowedOrigins = [
+        'https://www.adsidol.com',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ];
+    
+    // Check if origin starts with any allowed origin
+    const isAllowed = allowedOrigins.some(allowed => 
+        origin && origin.startsWith(allowed)
+    );
+    
+    if (isAllowed || origin?.includes('adsidol.com')) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://www.adsidol.com');
+    }
+    
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // API key check
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey) {
+        return res.status(401).json({ ok: false, connected: false, error: 'Missing API key' });
+    }
+    
+    const user = getUserFromApiKey(apiKey);
+    if (!user) {
+        return res.status(401).json({ ok: false, connected: false, error: 'Invalid API key' });
+    }
+
+    // Check if tokens are configured for this user
+    const accessToken = process.env[`${user}_ACCESS_TOKEN`];
+    const refreshToken = process.env[`${user}_REFRESH_TOKEN`];
+    
+    if (!accessToken || !refreshToken) {
+        return res.status(200).json({
+            ok: false,
+            connected: false,
+            user: user.toLowerCase(),
+            error: `Gmail not connected for ${user} — tokens not configured`
+        });
+    }
+
     try {
-        cors(res);
-        if (req.method === 'OPTIONS') return res.status(200).end();
+        const auth = getOAuthClient(user);
+        const gmail = google.gmail({ version: 'v1', auth });
 
-        const user = getUserByApiKey(req.headers['x-api-key']);
-        if (!user) {
-            return res.status(401).json({ ok: false, connected: false, error: 'Unauthorized — invalid or missing x-api-key' });
-        }
-
-        if (!user.accessToken || !user.refreshToken) {
-            return res.status(200).json({
-                ok:        false,
-                connected: false,
-                user:      user.name,
-                error:     `Gmail not configured for ${user.name}. Visit /api/auth?user=${user.id} to connect.`,
-                authUrl:   `/api/auth?user=${user.id}`,
-            });
-        }
-
-        const auth     = getOAuthClient(user);
-        const oauth2   = google.oauth2({ version: 'v2', auth });
-        const userInfo = await oauth2.userinfo.get();
+        // Get sender profile to confirm token works
+        const profile = await gmail.users.getProfile({ userId: 'me' });
 
         return res.status(200).json({
-            ok:           true,
-            connected:    true,
-            user:         user.name,
-            email:        userInfo.data.email,
-            senderEmail:  user.senderEmail,
+            ok: true,
+            connected: true,
+            user: user.toLowerCase(),
+            email: profile.data.emailAddress,
+            senderEmail: profile.data.emailAddress,
+            messagesTotal: profile.data.messagesTotal
         });
 
     } catch (err) {
-        const tokenExpired =
-            err.message?.includes('invalid_grant') ||
-            err.message?.includes('Token has been expired');
-
-        return res.status(err.status === 401 ? 401 : 200).json({
-            ok:        false,
+        console.error(`Status check failed for ${user}:`, err.message);
+        const tokenExpired = err.message?.includes('invalid_grant') || err.message?.includes('Token has been expired');
+        return res.status(200).json({
+            ok: false,
             connected: false,
-            user:      "Paramjit", // Default to reasonable name for UI
-            error:     tokenExpired
-                ? `Token expired — re-authorise at /api/auth?user=paramjit`
-                : err.message,
-            code:      tokenExpired ? 'TOKEN_EXPIRED' : 'ERROR',
-            authUrl:   tokenExpired ? `/api/auth?user=paramjit` : undefined,
-            crash:     err.message
+            user: user.toLowerCase(),
+            error: tokenExpired ? 'Token expired — re-authenticate via Connect Gmail' : err.message,
+            code: tokenExpired ? 'TOKEN_EXPIRED' : 'ERROR'
         });
     }
 };

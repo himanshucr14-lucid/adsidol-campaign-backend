@@ -1,107 +1,248 @@
 // api/callback.js
-// GET /api/callback  →  receives Gmail OAuth code, exchanges for tokens,
-//                        shows them so you can paste into Vercel env vars.
+// OAuth callback — exchanges authorization code for tokens, then displays them
+// URL: https://your-project.vercel.app/api/callback?code=...&state=paramjit
 
-const { getOAuthClient } = require('../lib/gmail');
-const { getUserById }    = require('../lib/users');
+const { google } = require('googleapis');
+
+function getOAuthClient() {
+    return new google.auth.OAuth2(
+        process.env.GMAIL_CLIENT_ID,
+        process.env.GMAIL_CLIENT_SECRET,
+        process.env.GMAIL_REDIRECT_URI
+    );
+}
 
 module.exports = async (req, res) => {
-    const { code, state: userId, error } = req.query;
+    const { code, state, user } = req.query;
 
-    if (error) {
-        return res.status(400).send(`<h2>OAuth Error</h2><p>${error}</p>`);
-    }
     if (!code) {
-        return res.status(400).send('<h2>Missing OAuth code</h2>');
-    }
-    if (!userId) {
-        return res.status(400).send('<h2>Missing state (userId) — restart from /api/auth?user=...</h2>');
-    }
-
-    const user = getUserById(userId);
-    if (!user) {
-        return res.status(400).send(`<h2>Unknown user: ${userId}</h2>`);
+        return res.status(400).send(`
+            <html>
+            <head>
+                <title>OAuth Error</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; background: #FEF2F2; }
+                    h1 { color: #EF4444; }
+                </style>
+            </head>
+            <body>
+                <h1>❌ OAuth Error</h1>
+                <p>No authorization code received. Please try the Gmail connection process again.</p>
+                <button onclick="window.close()" style="margin-top:20px; padding:10px 20px; background:#3B82F6; color:white; border:none; border-radius:8px; cursor:pointer;">Close Window</button>
+            </body>
+            </html>
+        `);
     }
 
     try {
-        const oauth2Client     = getOAuthClient();
-        const { tokens }       = await oauth2Client.getToken(code);
-        const accessEnvKey     = `${user.id.toUpperCase()}_ACCESS_TOKEN`;
-        const refreshEnvKey    = `${user.id.toUpperCase()}_REFRESH_TOKEN`;
+        const oauth2Client = getOAuthClient();
+        const { tokens } = await oauth2Client.getToken(code);
 
-        const hasRefresh = !!tokens.refresh_token;
+        oauth2Client.setCredentials(tokens);
 
-        return res.status(200).send(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Gmail OAuth Success — ${user.name}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Outfit', sans-serif; background: #F8FAFC; color: #0F172A; padding: 40px 24px; }
-    .card { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 20px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-    h1 { color: #10B981; font-size: 28px; margin-bottom: 8px; }
-    p  { color: #475569; margin-bottom: 16px; }
-    .env-block { background: #F1F5F9; border-radius: 12px; padding: 20px; margin: 16px 0; }
-    .label { font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .val   { font-family: monospace; font-size: 13px; background: #0F172A; color: #34D399; padding: 10px 14px; border-radius: 8px; word-break: break-all; cursor: pointer; }
-    .steps { background: #EFF6FF; border-left: 4px solid #3B82F6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin-top: 24px; }
-    .steps ol { padding-left: 18px; color: #1E40AF; }
-    .steps li { margin-bottom: 8px; line-height: 1.6; }
-    .warn { background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 0 12px 12px 0; padding: 16px 20px; margin: 16px 0; color: #92400E; }
-    a { color: #3B82F6; }
-    code { background: #E2E8F0; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>✅ Gmail Connected — ${user.name}</h1>
-    <p>Copy both env vars below and add them to your <strong>Vercel Dashboard → Settings → Environment Variables</strong>.</p>
+        // Get user's email
+        const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+        const userInfo = await oauth2.userinfo.get();
+        const email = userInfo.data.email;
 
-    <div class="env-block">
-      <div class="label">Env Var Name</div>
-      <div class="val">${accessEnvKey}</div>
-      <div class="label" style="margin-top:12px">Value</div>
-      <div class="val">${tokens.access_token}</div>
-    </div>
+        // Determine which user this is for (from state param or user param)
+        const userName = (state || user || 'paramjit').toUpperCase();
 
-    ${hasRefresh ? `
-    <div class="env-block">
-      <div class="label">Env Var Name</div>
-      <div class="val">${refreshEnvKey}</div>
-      <div class="label" style="margin-top:12px">Value</div>
-      <div class="val">${tokens.refresh_token}</div>
-    </div>
-    ` : `
-    <div class="warn">
-      ⚠️ <strong>No refresh_token received.</strong><br>
-      This happens when you've already authorised the app. To fix:<br>
-      1. Go to <a href="https://myaccount.google.com/permissions" target="_blank">myaccount.google.com/permissions</a><br>
-      2. Remove "Adsidol Campaign Manager" access<br>
-      3. Visit <a href="/api/auth?user=${user.id}">/api/auth?user=${user.id}</a> again
-    </div>
-    `}
-
-    <div class="steps">
-      <strong>🚀 Next Steps:</strong>
-      <ol>
-        <li>Go to your <a href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a></li>
-        <li>Select your project → <strong>Settings → Environment Variables</strong></li>
-        <li>Add/update the env vars above (apply to Production, Preview, Development)</li>
-        <li>Click <strong>Redeploy</strong> your project</li>
-        <li>Test: <code>GET /api/status</code> with header <code>x-api-key: ${user.id}-secret-key</code></li>
-      </ol>
-    </div>
-  </div>
-</body>
-</html>`);
+        res.send(`
+            <html>
+            <head>
+                <title>Gmail Connected ✅</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        padding: 20px;
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .container {
+                        background: white;
+                        border-radius: 16px;
+                        padding: 40px;
+                        max-width: 700px;
+                        width: 100%;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                    }
+                    h1 {
+                        color: #10B981;
+                        margin-bottom: 10px;
+                        font-size: 32px;
+                    }
+                    .email {
+                        color: #64748B;
+                        font-size: 18px;
+                        margin-bottom: 30px;
+                    }
+                    .step {
+                        background: #F8FAFC;
+                        border-left: 4px solid #3B82F6;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        border-radius: 8px;
+                    }
+                    .step-title {
+                        font-weight: 600;
+                        color: #1E293B;
+                        margin-bottom: 12px;
+                        font-size: 16px;
+                    }
+                    .token-box {
+                        background: #1E293B;
+                        color: #10B981;
+                        padding: 16px;
+                        border-radius: 8px;
+                        font-family: 'Monaco', 'Courier New', monospace;
+                        font-size: 13px;
+                        word-break: break-all;
+                        margin-top: 10px;
+                        position: relative;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+                    .token-box:hover {
+                        background: #0F172A;
+                    }
+                    .token-box::after {
+                        content: '📋 Click to copy';
+                        position: absolute;
+                        top: 8px;
+                        right: 12px;
+                        font-size: 11px;
+                        color: #64748B;
+                        font-family: 'Segoe UI', sans-serif;
+                    }
+                    .token-box.copied::after {
+                        content: '✅ Copied!';
+                        color: #10B981;
+                    }
+                    .var-name {
+                        color: #F59E0B;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                    }
+                    .warning {
+                        background: #FEF3C7;
+                        border-left: 4px solid #F59E0B;
+                        padding: 16px;
+                        border-radius: 8px;
+                        color: #92400E;
+                        margin-top: 24px;
+                        font-size: 14px;
+                    }
+                    .close-btn {
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        border: none;
+                        padding: 14px 28px;
+                        border-radius: 10px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        margin-top: 24px;
+                        width: 100%;
+                        transition: all 0.3s;
+                    }
+                    .close-btn:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+                    }
+                    code {
+                        background: #F1F5F9;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-family: monospace;
+                        color: #1E293B;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>✅ Gmail Connected!</h1>
+                    <div class="email">Authenticated as: <strong>${email}</strong></div>
+                    
+                    <div class="step">
+                        <div class="step-title">📋 Step 1: Copy Your Tokens</div>
+                        <p style="color: #64748B; font-size: 14px; margin-bottom: 12px;">
+                            Click each token box below to copy it to your clipboard:
+                        </p>
+                        
+                        <div class="var-name">${userName}_ACCESS_TOKEN</div>
+                        <div class="token-box" onclick="copyToken(this, '${tokens.access_token}')">
+                            ${tokens.access_token}
+                        </div>
+                        
+                        <div class="var-name" style="margin-top: 20px;">${userName}_REFRESH_TOKEN</div>
+                        <div class="token-box" onclick="copyToken(this, '${tokens.refresh_token}')">
+                            ${tokens.refresh_token}
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">⚙️ Step 2: Add to Vercel</div>
+                        <ol style="color: #64748B; font-size: 14px; padding-left: 20px;">
+                            <li>Go to <strong>Vercel Dashboard</strong> → Your Project → <strong>Settings</strong> → <strong>Environment Variables</strong></li>
+                            <li>Add/Update these two variables:
+                                <ul style="margin-top: 8px;">
+                                    <li><code>${userName}_ACCESS_TOKEN</code></li>
+                                    <li><code>${userName}_REFRESH_TOKEN</code></li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Save</strong></li>
+                            <li><strong>Redeploy</strong> your project (Settings → Deployments → click "..." → Redeploy)</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>🔒 Security Note:</strong> Keep these tokens private! They grant access to send emails from ${email}. Never share them or commit them to Git.
+                    </div>
+                    
+                    <button class="close-btn" onclick="window.close()">Close Window & Return to Dashboard</button>
+                </div>
+                
+                <script>
+                    function copyToken(element, text) {
+                        navigator.clipboard.writeText(text).then(() => {
+                            element.classList.add('copied');
+                            setTimeout(() => element.classList.remove('copied'), 2000);
+                        });
+                    }
+                </script>
+            </body>
+            </html>
+        `);
 
     } catch (err) {
-        console.error(`Token exchange failed for ${userId}:`, err.message);
-        return res.status(500).send(
-            `<h2>Token exchange failed</h2><p>${err.message}</p>` +
-            `<p>Try again: <a href="/api/auth?user=${userId}">/api/auth?user=${userId}</a></p>`
-        );
+        console.error('OAuth callback error:', err.message);
+        res.status(500).send(`
+            <html>
+            <head>
+                <title>OAuth Error</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; background: #FEF2F2; }
+                    h1 { color: #EF4444; }
+                    .error { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #EF4444; }
+                </style>
+            </head>
+            <body>
+                <h1>❌ Authentication Failed</h1>
+                <div class="error">
+                    <p><strong>Error:</strong> ${err.message}</p>
+                    <p style="margin-top: 12px; color: #64748B;">Please try connecting Gmail again from the dashboard.</p>
+                </div>
+                <button onclick="window.close()" style="margin-top:20px; padding:10px 20px; background:#3B82F6; color:white; border:none; border-radius:8px; cursor:pointer;">Close Window</button>
+            </body>
+            </html>
+        `);
     }
 };
