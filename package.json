@@ -3,7 +3,6 @@
   "version": "3.0.0",
   "description": "Adsidol Campaign Manager — Vercel backend with 4-user Gmail support and persistent follow-ups",
   "scripts": {
-    "start": "node -e \"console.log('Deploy to Vercel — run: npx vercel dev')\""
   },
   "dependencies": {
     "googleapis": "^140.0.0"
