@@ -7,7 +7,44 @@
 // Password for each user is set via env vars: PARAMJIT_PASSWORD, MONI_PASSWORD, etc.
 // On success, returns the user's API key so the frontend can authenticate further calls.
 
-const { USERS } = require('../lib/users');
+const USERS = [
+    {
+        id:          'paramjit',
+        name:        'Paramjit',
+        senderEmail: 'Paramjit@adsidol.com',
+        get apiKey()       { return process.env.PARAMJIT_API_KEY; },
+        get accessToken()  { return process.env.PARAMJIT_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.PARAMJIT_REFRESH_TOKEN; },
+        get password()     { return process.env.PARAMJIT_PASSWORD; },
+    },
+    {
+        id:          'moni',
+        name:        'Moni',
+        senderEmail: 'moni@adsidol.com',
+        get apiKey()       { return process.env.MONI_API_KEY; },
+        get accessToken()  { return process.env.MONI_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.MONI_REFRESH_TOKEN; },
+        get password()     { return process.env.MONI_PASSWORD; },
+    },
+    {
+        id:          'ujjwal',
+        name:        'Ujjwal',
+        senderEmail: 'Ujjwal@adsidol.com',
+        get apiKey()       { return process.env.UJJWAL_API_KEY; },
+        get accessToken()  { return process.env.UJJWAL_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.UJJWAL_REFRESH_TOKEN; },
+        get password()     { return process.env.UJJWAL_PASSWORD; },
+    },
+    {
+        id:          'hemleta',
+        name:        'Hemleta',
+        senderEmail: 'Hemleta@adsidol.com',
+        get apiKey()       { return process.env.HEMLETA_API_KEY; },
+        get accessToken()  { return process.env.HEMLETA_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.HEMLETA_REFRESH_TOKEN; },
+        get password()     { return process.env.HEMLETA_PASSWORD; },
+    },
+];
 
 function cors(res) {
     res.setHeader('Access-Control-Allow-Origin',  process.env.ALLOWED_ORIGIN || '*');

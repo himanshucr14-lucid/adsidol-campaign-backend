@@ -3,7 +3,30 @@
 // The ?user= param must be one of: paramjit, moni, ujjwal, hemleta
 
 const { getOAuthClient } = require('../lib/gmail');
-const { getUserById }    = require('../lib/users');
+const USERS = [
+    {
+        id:          'paramjit',
+        name:        'Paramjit',
+    },
+    {
+        id:          'moni',
+        name:        'Moni',
+    },
+    {
+        id:          'ujjwal',
+        name:        'Ujjwal',
+    },
+    {
+        id:          'hemleta',
+        name:        'Hemleta',
+    },
+];
+
+function getUserById(id) {
+    if (!id) return null;
+    return USERS.find(u => u.id === id.toLowerCase()) || null;
+}
+
 
 const VALID_IDS = ['paramjit', 'moni', 'ujjwal', 'hemleta'];
 

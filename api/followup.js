@@ -13,8 +13,52 @@
 
 const { getOAuthClient, google }     = require('../lib/gmail');
 const { buildRawEmail, personalise } = require('../lib/email');
-const { getUserByApiKey, getUserById } = require('../lib/users');
-const store                          = require('../lib/store');
+const USERS = [
+    {
+        id:          'paramjit',
+        name:        'Paramjit',
+        senderEmail: 'Paramjit@adsidol.com',
+        get apiKey()       { return process.env.PARAMJIT_API_KEY; },
+        get accessToken()  { return process.env.PARAMJIT_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.PARAMJIT_REFRESH_TOKEN; },
+    },
+    {
+        id:          'moni',
+        name:        'Moni',
+        senderEmail: 'moni@adsidol.com',
+        get apiKey()       { return process.env.MONI_API_KEY; },
+        get accessToken()  { return process.env.MONI_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.MONI_REFRESH_TOKEN; },
+    },
+    {
+        id:          'ujjwal',
+        name:        'Ujjwal',
+        senderEmail: 'Ujjwal@adsidol.com',
+        get apiKey()       { return process.env.UJJWAL_API_KEY; },
+        get accessToken()  { return process.env.UJJWAL_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.UJJWAL_REFRESH_TOKEN; },
+    },
+    {
+        id:          'hemleta',
+        name:        'Hemleta',
+        senderEmail: 'Hemleta@adsidol.com',
+        get apiKey()       { return process.env.HEMLETA_API_KEY; },
+        get accessToken()  { return process.env.HEMLETA_ACCESS_TOKEN; },
+        get refreshToken() { return process.env.HEMLETA_REFRESH_TOKEN; },
+    },
+];
+
+function getUserByApiKey(apiKey) {
+    if (!apiKey) return null;
+    return USERS.find(u => u.apiKey && u.apiKey === apiKey) || null;
+}
+
+function getUserById(id) {
+    if (!id) return null;
+    return USERS.find(u => u.id === id.toLowerCase()) || null;
+}
+
+const store = require('../lib/store');
 
 function cors(res) {
     res.setHeader('Access-Control-Allow-Origin',  process.env.ALLOWED_ORIGIN || '*');
