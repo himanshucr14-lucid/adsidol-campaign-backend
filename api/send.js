@@ -1,0 +1,112 @@
+// api/send.js
+// POST /api/send
+// Header: x-api-key: <founder's api key>
+// Body: { contact: { email, first_name?, company_name?, vertical? }, subject, body }
+// Sends the initial email via the founder's Gmail and returns IDs for follow-up threading.
+
+const { getOAuthClient, google }     = require('../lib/gmail');
+const { buildRawEmail, personalise } = require('../lib/email');
+const { getUserByApiKey }            = require('../lib/users');
+const store                        = require('../lib/store');
+
+function cors(res) {
+    res.setHeader('Access-Control-Allow-Origin',  process.env.ALLOWED_ORIGIN || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+}
+
+module.exports = async (req, res) => {
+    cors(res);
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') {
+        return res.status(405).json({ ok: false, error: 'Method not allowed — use POST' });
+    }
+
+    const user = getUserByApiKey(req.headers['x-api-key']);
+    if (!user) {
+        return res.status(401).json({ ok: false, error: 'Unauthorized — invalid or missing x-api-key' });
+    }
+
+    const { contact, subject, body } = req.body || {};
+
+    if (!contact?.email || !subject || !body) {
+        return res.status(400).json({
+            ok:    false,
+            error: 'Missing required fields: contact.email, subject, body',
+        });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+        return res.status(400).json({ ok: false, error: 'Invalid email address' });
+    }
+
+    try {
+        const auth  = getOAuthClient(user);
+        const gmail = google.gmail({ version: 'v1', auth });
+
+        const raw = buildRawEmail({
+            name:    user.name,
+            from:    user.senderEmail,
+            to:      contact.email,
+            subject: personalise(subject, contact),
+            body:    personalise(body, contact),
+        });
+
+        const result = await gmail.users.messages.send({
+            userId:      'me',
+            requestBody: { raw },
+        });
+
+        // Fetch the RFC Message-ID header for proper email threading in follow-ups
+        let rfcMessageId = null;
+        try {
+            const msg = await gmail.users.messages.get({
+                userId:          'me',
+                id:              result.data.id,
+                format:          'metadata',
+                metadataHeaders: ['Message-ID'],
+            });
+            rfcMessageId = msg.data.payload?.headers?.find(h => h.name === 'Message-ID')?.value || null;
+        } catch (_) { /* non-critical */ }
+
+        console.log(`[${user.name}] Sent to ${contact.email} — id: ${result.data.id}`);
+
+        // ── LOG ANALYTICS (Permanent Cloud Ledger) ──
+        try {
+            await store.logEvent(user.id, {
+                type:     'initial',
+                date:     Date.now(),
+                email:    contact.email,
+                vertical: contact.vertical,
+                name:     contact.first_name || contact.name?.split(' ')[0] || 'Unknown',
+                step:     0 // Step 0 = Initial
+            });
+        } catch (logErr) {
+            console.error(`[Analytics] Failed to log send for ${contact.email}:`, logErr.message);
+        }
+
+        return res.status(200).json({
+            ok:           true,
+            messageId:    result.data.id,
+            threadId:     result.data.threadId,
+            rfcMessageId,
+            sentTo:       contact.email,
+            sentBy:       user.name,
+        });
+
+    } catch (err) {
+        console.error(`[${user.name}] Failed to send to ${contact?.email}:`, err.message);
+        const tokenExpired =
+            err.message?.includes('invalid_grant') ||
+            err.message?.includes('Token has been expired');
+        if (tokenExpired) {
+            return res.status(401).json({
+                ok:      false,
+                error:   `Gmail token expired for ${user.name} — re-authorise at /api/auth?user=${user.id}`,
+                code:    'TOKEN_EXPIRED',
+                authUrl: `/api/auth?user=${user.id}`,
+            });
+        }
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+};
