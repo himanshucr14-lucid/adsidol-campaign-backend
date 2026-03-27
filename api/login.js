@@ -16,48 +16,52 @@ function cors(res) {
 }
 
 module.exports = async (req, res) => {
-    cors(res);
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') {
-        return res.status(405).json({ ok: false, error: 'Method not allowed — use POST' });
+    try {
+        cors(res);
+        if (req.method === 'OPTIONS') return res.status(200).end();
+        if (req.method !== 'POST') {
+            return res.status(405).json({ ok: false, error: 'Method not allowed — use POST' });
+        }
+
+        const { email, password } = req.body || {};
+
+        if (!email || !password) {
+            return res.status(400).json({ ok: false, error: 'Email and password are required' });
+        }
+
+        // Find user by email (case-insensitive)
+        const user = USERS.find(u => u.senderEmail.toLowerCase() === email.toLowerCase().trim());
+
+        if (!user) {
+            // Generic error — don't reveal which emails are valid
+            return res.status(401).json({ ok: false, error: 'Invalid email or password' });
+        }
+
+        // Check password against env var (e.g. PARAMJIT_PASSWORD)
+        const envKey  = `${user.id.toUpperCase()}_PASSWORD`;
+        const stored  = process.env[envKey];
+
+        if (!stored) {
+            console.error(`Password env var ${envKey} is not set`);
+            return res.status(500).json({ ok: false, error: 'Account not fully configured — contact admin' });
+        }
+
+        if (stored !== password) {
+            return res.status(401).json({ ok: false, error: 'Invalid email or password' });
+        }
+
+        // Return user info + API key for subsequent requests
+        return res.status(200).json({
+            ok:   true,
+            user: {
+                id:          user.id,
+                name:        user.name,
+                email:       user.senderEmail,
+                senderEmail: user.senderEmail,
+            },
+            apiKey: user.apiKey,  // frontend uses this for all API calls
+        });
+    } catch (e) {
+        return res.status(500).json({ ok: false, error: "CRASH: " + String(e.message), stack: e.stack });
     }
-
-    const { email, password } = req.body || {};
-
-    if (!email || !password) {
-        return res.status(400).json({ ok: false, error: 'Email and password are required' });
-    }
-
-    // Find user by email (case-insensitive)
-    const user = USERS.find(u => u.senderEmail.toLowerCase() === email.toLowerCase().trim());
-
-    if (!user) {
-        // Generic error — don't reveal which emails are valid
-        return res.status(401).json({ ok: false, error: 'Invalid email or password' });
-    }
-
-    // Check password against env var (e.g. PARAMJIT_PASSWORD)
-    const envKey  = `${user.id.toUpperCase()}_PASSWORD`;
-    const stored  = process.env[envKey];
-
-    if (!stored) {
-        console.error(`Password env var ${envKey} is not set`);
-        return res.status(500).json({ ok: false, error: 'Account not fully configured — contact admin' });
-    }
-
-    if (stored !== password) {
-        return res.status(401).json({ ok: false, error: 'Invalid email or password' });
-    }
-
-    // Return user info + API key for subsequent requests
-    return res.status(200).json({
-        ok:   true,
-        user: {
-            id:          user.id,
-            name:        user.name,
-            email:       user.senderEmail,
-            senderEmail: user.senderEmail,
-        },
-        apiKey: user.apiKey,  // frontend uses this for all API calls
-    });
 };

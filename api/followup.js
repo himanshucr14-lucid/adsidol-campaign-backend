@@ -49,171 +49,175 @@ async function executeJob(job) {
 }
 
 module.exports = async (req, res) => {
-    cors(res);
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    try {
+        cors(res);
+        if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const user = getUserByApiKey(req.headers['x-api-key']);
-    if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+        const user = getUserByApiKey(req.headers['x-api-key']);
+        if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized' });
 
-    const action = req.query.action;
+        const action = req.query.action;
 
-    // ── LIST ─────────────────────────────────────────────────────────────────
-    if (req.method === 'GET' && action === 'list') {
-        const all      = await store.getAllJobs();
-        const userJobs = all.filter(j => j.userId === user.id);
-        const vertical = req.query.vertical;
-        return res.status(200).json({
-            ok:   true,
-            jobs: vertical ? userJobs.filter(j => j.contact.vertical === vertical) : userJobs,
-        });
-    }
-
-    // ── STATS ─────────────────────────────────────────────────────────────────
-    if (req.method === 'GET' && action === 'stats') {
-        const all      = await store.getAllJobs();
-        const userJobs = all.filter(j => j.userId === user.id);
-        const stats = {
-            total:      userJobs.length,
-            pending:    userJobs.filter(j => j.status === 'pending').length,
-            sent:       userJobs.filter(j => j.status === 'sent').length,
-            failed:     userJobs.filter(j => j.status === 'failed').length,
-            cancelled:  userJobs.filter(j => j.status === 'cancelled').length,
-            byVertical: {},
-        };
-        userJobs.forEach(j => {
-            const v = j.contact.vertical || 'Unknown';
-            if (!stats.byVertical[v]) stats.byVertical[v] = { total: 0, pending: 0, sent: 0, failed: 0, cancelled: 0 };
-            stats.byVertical[v].total++;
-            stats.byVertical[v][j.status] = (stats.byVertical[v][j.status] || 0) + 1;
-        });
-        return res.status(200).json({ ok: true, stats });
-    }
-
-    // ── SCHEDULE ──────────────────────────────────────────────────────────────
-    if (req.method === 'POST' && action === 'schedule') {
-        const { contact, followups, originalMessageId, originalThreadId } = req.body || {};
-
-        if (!contact?.email || !followups?.length) {
-            return res.status(400).json({ ok: false, error: 'Missing contact.email or followups array' });
+        // ── LIST ─────────────────────────────────────────────────────────────────
+        if (req.method === 'GET' && action === 'list') {
+            const all      = await store.getAllJobs();
+            const userJobs = all.filter(j => j.userId === user.id);
+            const vertical = req.query.vertical;
+            return res.status(200).json({
+                ok:   true,
+                jobs: vertical ? userJobs.filter(j => j.contact.vertical === vertical) : userJobs,
+            });
         }
 
-        // Cancel existing pending jobs for same contact + vertical + user
-        const allJobs     = await store.getAllJobs();
-        const toReplace   = allJobs.filter(
-            j => j.userId === user.id &&
-                 j.contact.email === contact.email &&
-                 j.contact.vertical === contact.vertical &&
-                 j.status === 'pending'
-        );
-        for (const j of toReplace) {
-            j.status = 'cancelled';
-            await store.updateJob(j);
+        // ── STATS ─────────────────────────────────────────────────────────────────
+        if (req.method === 'GET' && action === 'stats') {
+            const all      = await store.getAllJobs();
+            const userJobs = all.filter(j => j.userId === user.id);
+            const stats = {
+                total:      userJobs.length,
+                pending:    userJobs.filter(j => j.status === 'pending').length,
+                sent:       userJobs.filter(j => j.status === 'sent').length,
+                failed:     userJobs.filter(j => j.status === 'failed').length,
+                cancelled:  userJobs.filter(j => j.status === 'cancelled').length,
+                byVertical: {},
+            };
+            userJobs.forEach(j => {
+                const v = j.contact.vertical || 'Unknown';
+                if (!stats.byVertical[v]) stats.byVertical[v] = { total: 0, pending: 0, sent: 0, failed: 0, cancelled: 0 };
+                stats.byVertical[v].total++;
+                stats.byVertical[v][j.status] = (stats.byVertical[v][j.status] || 0) + 1;
+            });
+            return res.status(200).json({ ok: true, stats });
         }
-        if (toReplace.length) {
-            console.log(`[${user.name}] Replaced ${toReplace.length} existing jobs for ${contact.email}`);
-        }
 
-        const now     = Date.now();
-        const newJobs = followups.slice(0, 4).map((fu, i) => ({
-            id:                `fu_${now}_${i}_${Math.random().toString(36).slice(2, 7)}`,
-            userId:            user.id,
-            userName:          user.name,
-            step:              fu.step || (i + 1),
-            contact,
-            subject:           fu.subject,
-            body:              fu.body,
-            delayDays:         fu.delayDays || (i + 1) * 3,
-            scheduledFor:      now + (fu.delayDays || (i + 1) * 3) * 86400000,
-            status:            'pending',
-            originalMessageId: originalMessageId || null,
-            originalThreadId:  originalThreadId  || null,
-            sentAt:            null,
-            sentMessageId:     null,
-            error:             null,
-            createdAt:         now,
-        }));
+        // ── SCHEDULE ──────────────────────────────────────────────────────────────
+        if (req.method === 'POST' && action === 'schedule') {
+            const { contact, followups, originalMessageId, originalThreadId } = req.body || {};
 
-        for (const job of newJobs) await store.saveJob(job);
-
-        console.log(`[${user.name}] Scheduled ${newJobs.length} follow-ups for ${contact.email}`);
-        return res.status(200).json({ ok: true, scheduled: newJobs.length, jobs: newJobs });
-    }
-
-    // ── SEND SPECIFIC JOB ─────────────────────────────────────────────────────
-    if (req.method === 'POST' && action === 'send') {
-        const { jobId } = req.body || {};
-        if (!jobId) return res.status(400).json({ ok: false, error: 'Missing jobId' });
-
-        const job = await store.getJob(jobId);
-        if (!job)                    return res.status(404).json({ ok: false, error: 'Job not found' });
-        if (job.userId !== user.id)  return res.status(403).json({ ok: false, error: 'Forbidden — not your job' });
-        if (job.status === 'sent')   return res.status(409).json({ ok: false, error: 'Already sent' });
-        if (job.status === 'cancelled') return res.status(409).json({ ok: false, error: 'Job was cancelled' });
-
-        try {
-            const result    = await executeJob(job);
-            job.status      = 'sent';
-            job.sentAt      = Date.now();
-            job.sentMessageId = result.id;
-            await store.updateJob(job);
-
-            // ── LOG ANALYTICS (Permanent Cloud Ledger) ──
-            try {
-                await store.logEvent(user.id, {
-                    type:     'followup',
-                    date:     Date.now(),
-                    email:    job.contact.email,
-                    vertical: job.contact.vertical,
-                    name:     job.contact.name || job.contact.first_name || 'Unknown',
-                    step:     job.step
-                });
-            } catch (logErr) {
-                console.error(`[Manual Analytics] Failed to log for ${job.contact.email}:`, logErr.message);
+            if (!contact?.email || !followups?.length) {
+                return res.status(400).json({ ok: false, error: 'Missing contact.email or followups array' });
             }
 
-            console.log(`[${user.name}] Follow-up step ${job.step} sent to ${job.contact.email}`);
-            return res.status(200).json({ ok: true, messageId: result.id, step: job.step });
+            // Cancel existing pending jobs for same contact + vertical + user
+            const allJobs     = await store.getAllJobs();
+            const toReplace   = allJobs.filter(
+                j => j.userId === user.id &&
+                     j.contact.email === contact.email &&
+                     j.contact.vertical === contact.vertical &&
+                     j.status === 'pending'
+            );
+            for (const j of toReplace) {
+                j.status = 'cancelled';
+                await store.updateJob(j);
+            }
+            if (toReplace.length) {
+                console.log(`[${user.name}] Replaced ${toReplace.length} existing jobs for ${contact.email}`);
+            }
 
-        } catch (err) {
-            job.status = 'failed';
-            job.error  = err.message;
-            await store.updateJob(job);
-            const tokenExpired = err.message?.includes('invalid_grant');
-            if (tokenExpired) return res.status(401).json({ ok: false, error: 'Token expired', code: 'TOKEN_EXPIRED' });
-            return res.status(500).json({ ok: false, error: err.message });
+            const now     = Date.now();
+            const newJobs = followups.slice(0, 4).map((fu, i) => ({
+                id:                `fu_${now}_${i}_${Math.random().toString(36).slice(2, 7)}`,
+                userId:            user.id,
+                userName:          user.name,
+                step:              fu.step || (i + 1),
+                contact,
+                subject:           fu.subject,
+                body:              fu.body,
+                delayDays:         fu.delayDays || (i + 1) * 3,
+                scheduledFor:      now + (fu.delayDays || (i + 1) * 3) * 86400000,
+                status:            'pending',
+                originalMessageId: originalMessageId || null,
+                originalThreadId:  originalThreadId  || null,
+                sentAt:            null,
+                sentMessageId:     null,
+                error:             null,
+                createdAt:         now,
+            }));
+
+            for (const job of newJobs) await store.saveJob(job);
+
+            console.log(`[${user.name}] Scheduled ${newJobs.length} follow-ups for ${contact.email}`);
+            return res.status(200).json({ ok: true, scheduled: newJobs.length, jobs: newJobs });
         }
-    }
 
-    // ── CANCEL ────────────────────────────────────────────────────────────────
-    if (req.method === 'POST' && action === 'cancel') {
-        const { jobId, email, vertical } = req.body || {};
+        // ── SEND SPECIFIC JOB ─────────────────────────────────────────────────────
+        if (req.method === 'POST' && action === 'send') {
+            const { jobId } = req.body || {};
+            if (!jobId) return res.status(400).json({ ok: false, error: 'Missing jobId' });
 
-        if (jobId) {
             const job = await store.getJob(jobId);
-            if (!job)                   return res.status(404).json({ ok: false, error: 'Job not found' });
-            if (job.userId !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden' });
-            job.status = 'cancelled';
-            await store.updateJob(job);
-            return res.status(200).json({ ok: true, cancelled: 1 });
+            if (!job)                    return res.status(404).json({ ok: false, error: 'Job not found' });
+            if (job.userId !== user.id)  return res.status(403).json({ ok: false, error: 'Forbidden — not your job' });
+            if (job.status === 'sent')   return res.status(409).json({ ok: false, error: 'Already sent' });
+            if (job.status === 'cancelled') return res.status(409).json({ ok: false, error: 'Job was cancelled' });
+
+            try {
+                const result    = await executeJob(job);
+                job.status      = 'sent';
+                job.sentAt      = Date.now();
+                job.sentMessageId = result.id;
+                await store.updateJob(job);
+
+                // ── LOG ANALYTICS (Permanent Cloud Ledger) ──
+                try {
+                    await store.logEvent(user.id, {
+                        type:     'followup',
+                        date:     Date.now(),
+                        email:    job.contact.email,
+                        vertical: job.contact.vertical,
+                        name:     job.contact.name || job.contact.first_name || 'Unknown',
+                        step:     job.step
+                    });
+                } catch (logErr) {
+                    console.error(`[Manual Analytics] Failed to log for ${job.contact.email}:`, logErr.message);
+                }
+
+                console.log(`[${user.name}] Follow-up step ${job.step} sent to ${job.contact.email}`);
+                return res.status(200).json({ ok: true, messageId: result.id, step: job.step });
+
+            } catch (err) {
+                job.status = 'failed';
+                job.error  = err.message;
+                await store.updateJob(job);
+                const tokenExpired = err.message?.includes('invalid_grant');
+                if (tokenExpired) return res.status(401).json({ ok: false, error: 'Token expired', code: 'TOKEN_EXPIRED' });
+                return res.status(500).json({ ok: false, error: err.message });
+            }
         }
 
-        if (email) {
-            const all = await store.getAllJobs();
-            let count = 0;
-            for (const j of all) {
-                if (j.userId === user.id && j.contact.email === email && j.status === 'pending') {
-                    if (!vertical || j.contact.vertical === vertical) {
-                        j.status = 'cancelled';
-                        await store.updateJob(j);
-                        count++;
+        // ── CANCEL ────────────────────────────────────────────────────────────────
+        if (req.method === 'POST' && action === 'cancel') {
+            const { jobId, email, vertical } = req.body || {};
+
+            if (jobId) {
+                const job = await store.getJob(jobId);
+                if (!job)                   return res.status(404).json({ ok: false, error: 'Job not found' });
+                if (job.userId !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden' });
+                job.status = 'cancelled';
+                await store.updateJob(job);
+                return res.status(200).json({ ok: true, cancelled: 1 });
+            }
+
+            if (email) {
+                const all = await store.getAllJobs();
+                let count = 0;
+                for (const j of all) {
+                    if (j.userId === user.id && j.contact.email === email && j.status === 'pending') {
+                        if (!vertical || j.contact.vertical === vertical) {
+                            j.status = 'cancelled';
+                            await store.updateJob(j);
+                            count++;
+                        }
                     }
                 }
+                return res.status(200).json({ ok: true, cancelled: count });
             }
-            return res.status(200).json({ ok: true, cancelled: count });
+
+            return res.status(400).json({ ok: false, error: 'Provide jobId or email to cancel' });
         }
 
-        return res.status(400).json({ ok: false, error: 'Provide jobId or email to cancel' });
+        return res.status(400).json({ ok: false, error: `Unknown action: "${action}". Valid: schedule, send, cancel, list, stats` });
+    } catch (e) {
+        return res.status(500).json({ ok: false, error: "CRASH: " + String(e.message) });
     }
-
-    return res.status(400).json({ ok: false, error: `Unknown action: "${action}". Valid: schedule, send, cancel, list, stats` });
 };
