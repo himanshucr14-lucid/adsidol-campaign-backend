@@ -12,7 +12,7 @@ const store                        = require('../lib/store');
 function cors(res) {
     res.setHeader('Access-Control-Allow-Origin',  process.env.ALLOWED_ORIGIN || '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-api-key');
 }
 
 module.exports = async (req, res) => {
