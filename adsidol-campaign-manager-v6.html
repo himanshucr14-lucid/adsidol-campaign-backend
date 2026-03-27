@@ -3445,33 +3445,6 @@
                     onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(59,130,246,0.35)'">
                     Sign In →
                 </button>
-
-                <!-- Backend Configuration Toggle -->
-                <div style="text-align:center;margin-top:16px;">
-                    <a href="#" id="toggleBackendConfig" 
-                       style="font-size:12px;color:var(--text-muted);text-decoration:none;font-weight:600;"
-                       onclick="event.preventDefault(); document.getElementById('backendConfig').style.display = document.getElementById('backendConfig').style.display === 'none' ? 'block' : 'none';">
-                       ⚙️ Backend Settings
-                    </a>
-                </div>
-
-                <!-- Backend Config Panel (Hidden) -->
-                <div id="backendConfig" style="display:none;margin-top:16px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:14px;animation:fadeIn 0.3s ease;">
-                    <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px;">API Base URL</label>
-                    <input type="text" id="configBackendUrl" value="" 
-                           style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;margin-bottom:10px;outline:none;">
-                    <div style="display:flex;gap:8px;">
-                        <button onclick="saveBackendConfig()" 
-                                style="flex:1;padding:8px;background:var(--blue-600);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
-                                Save & Test
-                        </button>
-                        <button onclick="resetBackendConfig()" 
-                                style="padding:8px 12px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-light);font-size:12px;font-weight:600;cursor:pointer;">
-                                Reset
-                        </button>
-                    </div>
-                    <div id="backendStatus" style="font-size:11px;margin-top:10px;font-weight:600;display:none;"></div>
-                </div>
             </div>
 
             <!-- Loading state (hidden by default) -->
@@ -3504,57 +3477,12 @@
     </style>
 
     <script>
-        // CONFIG — Persistence for BACKEND_URL
         // ═══════════════════════════════════════════════
-        const DEFAULT_BACKEND = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname)
+        // CONFIG — Current Vercel Backend URL
+        // ═══════════════════════════════════════════════
+        const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://localhost:3000'
-            : window.location.origin;
-
-        let BACKEND_URL = localStorage.getItem('adsidol_backend_url') || DEFAULT_BACKEND;
-
-        // ═══════════════════════════════════════════════
-        // BACKEND CONFIG LOGIC
-        // ═══════════════════════════════════════════════
-        window.saveBackendConfig = async function() {
-            const url = document.getElementById('configBackendUrl').value.trim().replace(/\/$/, '');
-            if (!url) { showToast('Please enter a valid URL', 'error'); return; }
-            localStorage.setItem('adsidol_backend_url', url);
-            BACKEND_URL = url;
-            
-            const statusEl = document.getElementById('backendStatus');
-            statusEl.style.display = 'block';
-            statusEl.style.color = 'var(--text-muted)';
-            statusEl.textContent = 'Testing connection…';
-            
-            try {
-                // Try a simple GET to /api/login (should return 405 if alive)
-                const res = await fetch(`${url}/api/login`);
-                if (res.status === 405 || res.ok) {
-                    statusEl.textContent = '✅ Connection successful!';
-                    statusEl.style.color = 'var(--success)';
-                    showToast('Backend URL updated and verified', 'success');
-                    setTimeout(() => { document.getElementById('backendConfig').style.display = 'none'; }, 1500);
-                } else {
-                    statusEl.textContent = `❌ Connected, but got status ${res.status}`;
-                    statusEl.style.color = 'var(--warning)';
-                }
-            } catch (e) {
-                statusEl.textContent = '❌ Connection failed: ' + e.message;
-                statusEl.style.color = 'var(--error)';
-                showToast('Could not reach the specified backend', 'error');
-            }
-        };
-
-        window.resetBackendConfig = function() {
-            localStorage.removeItem('adsidol_backend_url');
-            location.reload();
-        };
-
-        // Initialize config input
-        window.addEventListener('DOMContentLoaded', () => {
-            const input = document.getElementById('configBackendUrl');
-            if (input) input.value = BACKEND_URL;
-        });
+            : 'https://email-with-4-follow-up-project.vercel.app';
 
         // Founders registry (for login UI display)
         const FOUNDERS = [
@@ -4454,8 +4382,7 @@
                 }
             } catch (e) {
                 console.error('Login error:', e);
-                const currentUrl = BACKEND_URL;
-                errorDiv.innerHTML = `Cannot reach backend — check your network.<br><span style="font-size:11px;opacity:0.8;font-weight:400;margin-top:4px;display:block;">URL: ${currentUrl}</span>`;
+                errorDiv.textContent = 'Cannot reach backend — check your network';
                 errorDiv.style.display = 'block';
                 document.getElementById('loginLoading').style.display = 'none';
                 document.getElementById('loginForm').style.display = 'block';
