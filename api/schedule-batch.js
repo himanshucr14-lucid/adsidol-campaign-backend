@@ -7,14 +7,19 @@
 
 const { getUserByApiKey } = require('../lib/users');
 
-function cors(res) {
-    res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+function cors(req, res) {
+    const origin = req.headers.origin || req.headers.referer || '*';
+    if (origin.includes('adsidol.com') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        res.setHeader('Access-Control-Allow-Origin', origin.replace(/\/$/, ""));
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-api-key');
 }
 
 module.exports = async (req, res) => {
-    cors(res);
+    cors(req, res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') {
         return res.status(405).json({ ok: false, error: 'Method not allowed — use POST' });
