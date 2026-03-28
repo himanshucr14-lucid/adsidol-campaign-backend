@@ -45,7 +45,8 @@ module.exports = async (req, res) => {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
     const destinationUrl = `${protocol}://${host}/api/send`;
-    const publishUrl = `https://qstash.upstash.io/v2/publish/${destinationUrl}`;
+    const qstashUrl = process.env.QSTASH_URL || 'https://qstash.upstash.io';
+    const publishUrl = `${qstashUrl.replace(/\/$/, '')}/v2/publish/${destinationUrl}`;
 
     try {
         let scheduledCount = 0;
@@ -60,7 +61,12 @@ module.exports = async (req, res) => {
                 'Upstash-Forward-x-api-key': apiKey // Proxies your API key to /api/send
             };
 
-            if (delaySeconds > 0) {
+            if (payload.scheduledFor) {
+                // Future scheduling: Base timestamp + index delay
+                const baseUnix = Math.floor(new Date(payload.scheduledFor).getTime() / 1000);
+                const executeAt = baseUnix + delaySeconds;
+                headers['Upstash-Not-Before'] = executeAt.toString();
+            } else if (delaySeconds > 0) {
                 headers['Upstash-Delay'] = `${delaySeconds}s`;
             }
 
