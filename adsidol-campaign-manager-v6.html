@@ -4290,13 +4290,14 @@
             const vertical = document.getElementById('testEmailVertical').value;
             if (!email.includes('@')) { showToast('Enter a valid email address', 'error'); return; }
             document.getElementById('testEmailModal').style.display = 'none';
-            showToast(`Sending test to ${email}…`, 'info');
             const tpl = templates[vertical];
+            if (!tpl || !tpl.subject || !tpl.body) { showToast('No saved template found for this vertical', 'error'); return; }
+            showToast(`Sending test to ${email}...`, 'info');
             try {
                 const res = await fetch(`${BACKEND.baseUrl}/api/send`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey }, body: JSON.stringify({ contact: { first_name: 'Test', company_name: 'Test Co', vertical, email, name: 'Test', company: 'Test Co' }, subject: tpl.subject, body: tpl.body }) });
                 const data = await res.json();
                 data.ok ? showToast(`Test sent to ${email}`, 'success') : showToast(`Send failed: ${data.error}`, 'error', 6000);
-            } catch (e) { showToast('Could not reach backend', 'error'); }
+            } catch (e) { showToast('Could not reach backend - Network or CORS error', 'error'); }
         });
 
         // ═══════════════════════════════════════════════
