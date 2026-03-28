@@ -3979,8 +3979,10 @@
         const IDLE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
         // Record activity to prevent idle sleep
-        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
-            window.addEventListener(evt, () => { lastActivityTime = Date.now(); });
+        ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove', 'focus'].forEach(evt => {
+            window.addEventListener(evt, () => { 
+                lastActivityTime = Date.now(); 
+            });
         });
 
         /**
@@ -4098,6 +4100,10 @@
         // Auto-pause/resume on visibility change
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentApiKey && gmailConnected) {
+                console.log("Tab focused — waking up sync...");
+                lastActivityTime = Date.now(); // Reset idle timer on focus
+                updateSyncTimestamp(false); // Instantly turn UI green
+                
                 // Pulse immediately on return if polling is active
                 if (pollingInterval) {
                     fetchCloudAnalytics();
@@ -4679,18 +4685,34 @@
         // SEND TIME / LIMIT / DATE
         // ═══════════════════════════════════════════════
         function formatTime(val) { return new Date('2000-01-01 ' + val).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }); }
-        function syncTime(val) { document.getElementById('displayTime').textContent = formatTime(val); document.getElementById('infoTime').textContent = formatTime(val); updateDashboard(); saveState(); }
+        function syncTime(val, skipSave = false) { 
+            document.getElementById('displayTime').textContent = formatTime(val); 
+            document.getElementById('infoTime').textContent = formatTime(val); 
+            updateDashboard(); 
+            if (!skipSave) saveState(); 
+        }
         document.getElementById('sendTime').addEventListener('change', e => syncTime(e.target.value));
         document.getElementById('timeHourDown').addEventListener('click', () => { const i = document.getElementById('sendTime'); const [h, m] = i.value.split(':').map(Number); i.value = String((h + 23) % 24).padStart(2, '0') + ':' + String(m).padStart(2, '0'); syncTime(i.value); });
         document.getElementById('timeHourUp').addEventListener('click', () => { const i = document.getElementById('sendTime'); const [h, m] = i.value.split(':').map(Number); i.value = String((h + 1) % 24).padStart(2, '0') + ':' + String(m).padStart(2, '0'); syncTime(i.value); });
-        function syncLimit(val) { document.getElementById('displayLimit').textContent = val; document.getElementById('infoLimit').textContent = val; const pct = ((val - 10) / (490) * 100).toFixed(1); document.getElementById('sendLimit').style.setProperty('--pct', pct + '%'); saveState(); }
+        function syncLimit(val, skipSave = false) { 
+            document.getElementById('displayLimit').textContent = val; 
+            document.getElementById('infoLimit').textContent = val; 
+            const pct = ((val - 10) / (490) * 100).toFixed(1); 
+            document.getElementById('sendLimit').style.setProperty('--pct', pct + '%'); 
+            if (!skipSave) saveState(); 
+        }
         document.getElementById('sendLimit').addEventListener('input', e => syncLimit(e.target.value));
         document.getElementById('limitDown').addEventListener('click', () => { const s = document.getElementById('sendLimit'); s.value = Math.max(10, parseInt(s.value) - 10); syncLimit(s.value); });
         document.getElementById('limitUp').addEventListener('click', () => { const s = document.getElementById('sendLimit'); s.value = Math.min(500, parseInt(s.value) + 10); syncLimit(s.value); });
-        function syncDate(val) { if (!val) return; const d = new Date(val + 'T00:00:00'); document.getElementById('displayDate').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); saveState(); }
+        function syncDate(val, skipSave = false) { 
+            if (!val) return; 
+            const d = new Date(val + 'T00:00:00'); 
+            document.getElementById('displayDate').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); 
+            if (!skipSave) saveState(); 
+        }
         document.getElementById('startDate').addEventListener('change', e => syncDate(e.target.value));
 
-        function syncInterval(val) {
+        function syncInterval(val, skipSave = false) {
             let display = val + 's';
             if (val >= 60) {
                 const mins = Math.floor(val / 60);
@@ -4700,7 +4722,7 @@
             document.getElementById('displayInterval').textContent = display;
             const pct = ((val - 15) / (105) * 100).toFixed(1);
             document.getElementById('sendInterval').style.setProperty('--pct', pct + '%');
-            saveState();
+            if (!skipSave) saveState();
         }
         document.getElementById('sendInterval').addEventListener('input', e => syncInterval(e.target.value));
         document.getElementById('intervalDown').addEventListener('click', () => { const s = document.getElementById('sendInterval'); s.value = Math.max(15, parseInt(s.value) - 15); syncInterval(s.value); });
@@ -4909,9 +4931,12 @@
             const saved = loadState();
             const tomorrow = new Date(Date.now() + 86400000);
             document.getElementById('startDate').valueAsDate = tomorrow;
-            syncDate(tomorrow.toISOString().split('T')[0]);
-            syncTime('11:15'); syncLimit(50);
-            if (document.getElementById('sendInterval')) syncInterval(15);
+            
+            // Initialization Phase: UI update only (no saveState while still loading)
+            syncDate(tomorrow.toISOString().split('T')[0], true);
+            syncTime('11:15', true); 
+            syncLimit(50, true);
+            if (document.getElementById('sendInterval')) syncInterval(15, true);
 
             if (!saved) { updateStats(); return; }
             if (saved.darkMode) setDark(true);
