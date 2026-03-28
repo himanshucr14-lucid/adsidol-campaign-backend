@@ -1598,11 +1598,66 @@
             align-items: center;
             gap: 5px;
             padding: 4px 10px;
+            border-radius: 8px;
+            background: var(--blue-50);
+            color: var(--blue-600);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* ── LIVE SYNC INDICATOR ── */
+        .sync-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 8px;
             background: rgba(16, 185, 129, 0.1);
             color: var(--success);
-            border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        .sync-indicator.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .sync-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .sync-dot.polling {
+            animation: syncPulse 1.5s infinite;
+        }
+
+        @keyframes syncPulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .sync-indicator.paused {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--text-muted);
+        }
+
+        .sync-indicator.paused .sync-dot {
+            background: var(--text-muted);
+            animation: none;
+        }
+
+        .last-updated-text {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-left: 4px;
         }
 
         /* ── FOLLOW-UP SYSTEM ── */
@@ -2025,7 +2080,7 @@
                 gap: 4px;
             }
         }
-        
+
         .template-saved-badge {
             display: inline-flex;
             align-items: center;
@@ -2679,17 +2734,21 @@
             <div class="header-actions">
                 <div class="gmail-indicator">
                     <div class="status-dot" id="headerGmailDot"></div>
-                    <span id="headerGmailStatus">Not Connected</span>
+                    <span id="headerGmailStatus">Gmail disconnected</span>
                 </div>
-                <button class="dark-toggle" id="desktopDarkToggle" title="Toggle dark mode"></button>
-                <button class="btn btn-secondary" id="headerConnectGmail"
-                    style="padding: 9px 16px; font-size: 13px; display:inline-flex; align-items:center; gap:8px;">
+                <div class="sync-indicator" id="headerSyncIndicator">
+                    <div class="sync-dot polling"></div>
+                    <span>LIVE SYNC</span>
+                    <span class="last-updated-text" id="headerLastUpdated"></span>
+                </div>
+                <button class="nav-link" id="headerConnectGmail" style="background:var(--blue-600);color:white;padding:9px 16px;font-size:13px;border-radius:14px;cursor:pointer;border:none;">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="currentColor"
-                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                     Connect Gmail
                 </button>
+                <button class="dark-toggle" id="desktopDarkToggle" title="Toggle dark mode"></button>
             </div>
         </div>
     </header>
@@ -2818,7 +2877,7 @@
                     <button class="btn btn-secondary" id="exportBtn"
                         style="padding: 10px 20px; display:inline-flex; align-items:center; gap:8px;">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M7 1v8M7 9l-3-3m3 3l3-3M2 12h10" stroke="currentColor" stroke-width="1.5"
+                            <path d="M7 1v8M7 9l-3-3m-3 3l3-3M2 12h10" stroke="currentColor" stroke-width="1.5"
                                 stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         Export
@@ -2959,7 +3018,7 @@
                                         style="background: var(--card); padding: 3px 8px; border-radius: 6px; font-weight: 600;">{{vertical}}</code>
                                 </div>
                                 <textarea id="emailBody"
-                                    placeholder="Hi {{first_name}},&#10;&#10;I noticed {{company_name}} is scaling in {{vertical}}.&#10;&#10;Adsidol specializes in high-converting user acquisition.&#10;&#10;Would you be open to a quick conversation?&#10;&#10;Best,&#10;Your Name&#10;Adsidol"></textarea>
+                                    placeholder="Hi {{first_name}},&#10;&#10;I noticed {{company_name}} is scaling in {{vertical}}.&#10;&#10;Adsidol specializes in high-converting user acquisition.&#10;&#10;Would you be open to a quick conversation"></textarea>
                             </div>
                             <div class="btn-group">
                                 <button class="btn btn-primary" id="saveTemplate"
@@ -3025,7 +3084,8 @@
                 </div>
                 <div class="fu-stats-row" id="fuStatsRow"></div>
                 <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px;">
-                    <select id="fuStepFilter" onchange="renderFuDashboard()" style="padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; cursor: pointer; min-width: 160px;">
+                    <select id="fuStepFilter" onchange="renderFuDashboard()"
+                        style="padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; cursor: pointer; min-width: 160px;">
                         <option value="all">All Follow-ups (F1-F4)</option>
                         <option value="1">Step F1 Only</option>
                         <option value="2">Step F2 Only</option>
@@ -3146,9 +3206,9 @@
                 <div class="sched-tile">
                     <div class="sched-tile-icon-wrap icon-3d-amber">
                         <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                            <circle cx="14" cy="14" r="10" stroke="white" stroke-width="1.8"/>
-                            <path d="M14 6v8l4 2" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-                            <path d="M11 4h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="14" cy="14" r="10" stroke="white" stroke-width="1.8" />
+                            <path d="M14 6v8l4 2" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+                            <path d="M11 4h6" stroke="white" stroke-width="2" stroke-linecap="round" />
                         </svg>
                     </div>
                     <div class="sched-tile-label">Send Interval</div>
@@ -3156,7 +3216,8 @@
                     <div class="sched-limit-display" id="displayInterval">15s</div>
                     <div class="sched-limit-row">
                         <button class="limit-btn" id="intervalDown">−</button>
-                        <input type="range" id="sendInterval" min="15" max="120" step="15" value="15" class="sched-slider">
+                        <input type="range" id="sendInterval" min="15" max="120" step="15" value="15"
+                            class="sched-slider">
                         <button class="limit-btn" id="intervalUp">+</button>
                     </div>
                     <div class="sched-limit-ticks">
@@ -3319,13 +3380,16 @@
 
                 <div class="analytics-card">
                     <div class="analytics-title">Top Vertical</div>
-                    <div class="analytics-value" id="advTopVertical" style="font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Top Vertical">—</div>
+                    <div class="analytics-value" id="advTopVertical"
+                        style="font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                        title="Top Vertical">—</div>
                     <div class="analytics-change" id="advTopVerticalSub">Awaiting data</div>
                 </div>
             </div>
 
             <div style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px;">
-                <h3 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 20px;">Vertical Breakdown</h3>
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 20px;">Vertical
+                    Breakdown</h3>
                 <div id="verticalBreakdownContainer" style="display: flex; flex-direction: column; gap: 16px;">
                     <div style="color: var(--text-muted); font-size: 13px;">No data to display yet.</div>
                 </div>
@@ -3748,7 +3812,7 @@
             // We find the difference between actual NOW and what the target wall clock says now
             const targetWallClockNow = new Date(now.toLocaleString('en-US', { timeZone: tz }));
             const diff = targetWallClockNow.getTime() - now.getTime();
-            
+
             // The actual UTC time = target wall clock goal - the timezone difference
             let finalUtc = new Date(targetDate.getTime() - diff);
 
@@ -3910,6 +3974,43 @@
             const iv = setInterval(() => { step++; el.textContent = Math.round(start + diff * (step / 20)); if (step >= 20) clearInterval(iv); }, 16);
         }
         let analyticsData = [];
+        let pollingInterval = null;
+        let lastActivityTime = Date.now();
+        const IDLE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+
+        // Record activity to prevent idle sleep
+        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+            window.addEventListener(evt, () => { lastActivityTime = Date.now(); });
+        });
+
+        /**
+         * syncStatusWithAnalytics
+         * Loops through current contacts and updates their status to 'sent'
+         * if they are found in the cloud analytics ledger.
+         */
+        function syncStatusWithAnalytics() {
+            if (!analyticsData || analyticsData.length === 0) return;
+
+            let changed = false;
+            const sentEmails = new Set(analyticsData.map(e => e.email.toLowerCase()));
+
+            contacts.forEach(c => {
+                const email = c.email.toLowerCase();
+                // If contact is in 'scheduled' (batch sent to Vercel) or 'pending',
+                // but we see it in the analytics ledger, it means it's been sent.
+                if (sentEmails.has(email) && (c.status === 'scheduled' || c.status === 'pending')) {
+                    c.status = 'sent';
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                filteredContacts = [...contacts];
+                updateDashboard();
+                saveState();
+            }
+        }
+
         async function fetchCloudAnalytics() {
             if (!currentApiKey) return;
             try {
@@ -3919,10 +4020,91 @@
                 const data = await res.json();
                 if (data.ok) {
                     analyticsData = data.events;
+                    syncStatusWithAnalytics(); // Match local contacts with cloud events
                     updateStats();
+                    updateSyncTimestamp();
                 }
             } catch (e) { console.error('Failed to fetch analytics:', e); }
         }
+
+        function updateSyncTimestamp(isPaused = false) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const elements = ['headerLastUpdated', 'fuLastUpdated'];
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (isPaused) {
+                        el.textContent = ' (Paused)';
+                    } else {
+                        el.textContent = `@ ${timeStr}`;
+                    }
+                }
+            });
+            const indicators = ['headerSyncIndicator', 'fuSyncIndicator'];
+            indicators.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.add('visible');
+                    el.classList.toggle('paused', isPaused);
+                    const label = el.querySelector('span:not(.last-updated-text)');
+                    if (label) label.textContent = isPaused ? 'SYNC PAUSED' : 'LIVE SYNC';
+                }
+            });
+        }
+
+        function startPolling() {
+            if (pollingInterval) return;
+            console.log("Starting smart background sync...");
+            
+            // Initial full refresh (Immediate)
+            fetchCloudAnalytics();
+            loadFollowupDashboard();
+
+            // Poll every 60 seconds (Efficient)
+            pollingInterval = setInterval(() => {
+                if (!currentApiKey || !gmailConnected) {
+                    stopPolling();
+                    return;
+                }
+
+                const isIdle = (Date.now() - lastActivityTime) > IDLE_TIMEOUT;
+                const isHidden = document.hidden;
+
+                if (isHidden || isIdle) {
+                    console.log(`Sync paused: ${isHidden ? 'tab hidden' : 'user idle'}`);
+                    updateSyncTimestamp(true);
+                    return;
+                }
+
+                fetchCloudAnalytics();
+                loadFollowupDashboard();
+            }, 60000);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                console.log("Stopping background sync...");
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            const indicators = ['headerSyncIndicator', 'fuSyncIndicator'];
+            indicators.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('visible');
+            });
+        }
+
+        // Auto-pause/resume on visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentApiKey && gmailConnected) {
+                // Pulse immediately on return if polling is active
+                if (pollingInterval) {
+                    fetchCloudAnalytics();
+                    loadFollowupDashboard();
+                }
+            }
+        });
 
         document.getElementById('statsPeriod').addEventListener('change', updateStats);
 
@@ -3959,7 +4141,7 @@
             document.getElementById('progressScheduled').style.width = pct(scheduled);
             document.getElementById('progressSent').style.width = cloudSent > 0 ? '100%' : '0%'; // Different logic for cloud
             document.getElementById('progressPending').style.width = pct(pending);
-            
+
             if (typeof updateAdvancedAnalytics === 'function') updateAdvancedAnalytics();
         }
 
@@ -4230,7 +4412,7 @@
                         ${job.status === 'pending' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button><button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : '—'}
                     </td>
                 </tr>`).join('');
-                
+
             if (typeof updateAdvancedAnalytics === 'function') updateAdvancedAnalytics();
         }
 
@@ -4343,6 +4525,9 @@
                     const banner = document.querySelector('.demo-banner');
                     if (banner) banner.style.display = 'none';
                     showToast(`Gmail connected — sending as ${data.senderEmail || data.email}`, 'success');
+                    
+                    // Start auto-syncing when connected
+                    startPolling();
                 }
                 // If not connected: do nothing silently — user must click Connect button
             } catch (e) { console.warn('Auto Gmail status check failed:', e.message); }
@@ -4367,6 +4552,9 @@
                     const banner = document.querySelector('.demo-banner');
                     if (banner) banner.style.display = 'none';
                     showToast(`Gmail connected — sending as ${data.senderEmail || data.email}`, 'success');
+                    
+                    // Start auto-syncing when connected
+                    startPolling();
                 } else {
                     // Only open OAuth when user explicitly clicks Connect
                     if (data.code === 'TOKEN_EXPIRED') {
@@ -4444,6 +4632,9 @@
                     autoCheckGmailStatus();
                     // Load templates from cloud
                     loadTemplatesFromCloud();
+                    
+                    // Start auto-syncing after login
+                    startPolling();
                 } else {
                     // Failed
                     errorDiv.textContent = data.error || 'Invalid email or password';
@@ -4499,17 +4690,17 @@
         function syncDate(val) { if (!val) return; const d = new Date(val + 'T00:00:00'); document.getElementById('displayDate').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); saveState(); }
         document.getElementById('startDate').addEventListener('change', e => syncDate(e.target.value));
 
-        function syncInterval(val) { 
+        function syncInterval(val) {
             let display = val + 's';
             if (val >= 60) {
                 const mins = Math.floor(val / 60);
                 const secs = val % 60;
                 display = secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
             }
-            document.getElementById('displayInterval').textContent = display; 
-            const pct = ((val - 15) / (105) * 100).toFixed(1); 
-            document.getElementById('sendInterval').style.setProperty('--pct', pct + '%'); 
-            saveState(); 
+            document.getElementById('displayInterval').textContent = display;
+            const pct = ((val - 15) / (105) * 100).toFixed(1);
+            document.getElementById('sendInterval').style.setProperty('--pct', pct + '%');
+            saveState();
         }
         document.getElementById('sendInterval').addEventListener('input', e => syncInterval(e.target.value));
         document.getElementById('intervalDown').addEventListener('click', () => { const s = document.getElementById('sendInterval'); s.value = Math.max(15, parseInt(s.value) - 15); syncInterval(s.value); });
@@ -4532,7 +4723,7 @@
             toSend.forEach(c => { c.status = 'scheduled'; c.scheduledFor = calculateSendTime(c, sendTime); });
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
             showToast(`Scheduling ${toSend.length} emails in the cloud via Upstash...`, 'info', 5000);
-            
+
             const scheduleBtn = document.getElementById('scheduleBtn');
             const originalText = scheduleBtn.innerHTML;
             scheduleBtn.disabled = true;
@@ -4546,13 +4737,13 @@
                     followups = fuSteps.filter(f => f.subject && f.body);
                 }
                 return {
-                    contact: { 
-                        email: contact.email, 
-                        first_name: contact.name ? contact.name.split(' ')[0] : '', 
-                        company_name: contact.company, 
-                        vertical: contact.vertical, 
-                        name: contact.name, 
-                        company: contact.company 
+                    contact: {
+                        email: contact.email,
+                        first_name: contact.name ? contact.name.split(' ')[0] : '',
+                        company_name: contact.company,
+                        vertical: contact.vertical,
+                        name: contact.name,
+                        company: contact.company
                     },
                     scheduledFor: contact.scheduledFor,
                     subject: tpl.subject,
@@ -4567,9 +4758,9 @@
                     headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey },
                     body: JSON.stringify({ batch, intervalSeconds })
                 });
-                
+
                 const data = await res.json();
-                
+
                 if (data.ok) {
                     showToast('Campaign successfully scheduled online! You can safely close this tab.', 'success', 8000);
                 } else {
@@ -4581,7 +4772,7 @@
                 showToast('Failed to connect to backend.', 'error');
                 toSend.forEach(c => c.status = 'pending');
             }
-            
+
             scheduleBtn.disabled = false;
             scheduleBtn.innerHTML = originalText;
 
@@ -4622,7 +4813,7 @@
             let sentCount = 0;
             let failedCount = 0;
             let pendingCount = contacts.filter(c => c.status === 'pending' || c.status === 'scheduled').length;
-            
+
             const verticalCounts = {};
 
             // Aggregate initial contacts
@@ -4649,7 +4840,7 @@
 
             const totalProcessed = sentCount + failedCount;
             const deliveryRate = totalProcessed > 0 ? ((sentCount / totalProcessed) * 100).toFixed(1) : 0;
-            
+
             // Delivery Rate Card
             const drEl = document.getElementById('advDeliveryRate');
             const drSubEl = document.getElementById('advDeliverySub');
@@ -4758,6 +4949,9 @@
             }
             updateStats();
             loadFollowupDashboard(); // Load follow-up queue on page load
+            
+            // Start polling if session is already active
+            if (currentApiKey) startPolling();
         })();
     </script>
 </body>
