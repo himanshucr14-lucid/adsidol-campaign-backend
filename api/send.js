@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
         return res.status(401).json({ ok: false, error: 'Unauthorized — invalid or missing x-api-key' });
     }
 
-    const { contact, subject, body } = req.body || {};
+    const { contact, subject, body, followups } = req.body || {};
 
     if (!contact?.email || !subject || !body) {
         return res.status(400).json({
@@ -83,6 +83,45 @@ module.exports = async (req, res) => {
             });
         } catch (logErr) {
             console.error(`[Analytics] Failed to log send for ${contact.email}:`, logErr.message);
+        }
+
+        // ── AUTO-QUEUE FOLLOW-UPS ──
+        if (followups && Array.isArray(followups) && followups.length > 0) {
+            try {
+                const allJobs = await store.getAllJobs();
+                const toReplace = allJobs.filter(
+                    j => j.userId === user.id && j.contact.email === contact.email && j.contact.vertical === contact.vertical && j.status === 'pending'
+                );
+                for (const j of toReplace) {
+                    j.status = 'cancelled';
+                    await store.updateJob(j);
+                }
+
+                const now = Date.now();
+                const newJobs = followups.slice(0, 4).map((fu, i) => ({
+                    id:                `fu_${now}_${i}_${Math.random().toString(36).slice(2, 7)}`,
+                    userId:            user.id,
+                    userName:          user.name,
+                    step:              fu.step || (i + 1),
+                    contact,
+                    subject:           fu.subject,
+                    body:              fu.body,
+                    delayDays:         fu.delayDays || (i + 1) * 3,
+                    scheduledFor:      now + (fu.delayDays || (i + 1) * 3) * 86400000,
+                    status:            'pending',
+                    originalMessageId: rfcMessageId || result.data.id || null,
+                    originalThreadId:  result.data.threadId || null,
+                    sentAt:            null,
+                    sentMessageId:     null,
+                    error:             null,
+                    createdAt:         now,
+                }));
+
+                for (const job of newJobs) await store.saveJob(job);
+                console.log(`[${user.name}] Auto-queued ${newJobs.length} follow-ups for ${contact.email}`);
+            } catch (fuErr) {
+                console.error(`[Auto-Followup] Failed to schedule for ${contact.email}:`, fuErr.message);
+            }
         }
 
         return res.status(200).json({
