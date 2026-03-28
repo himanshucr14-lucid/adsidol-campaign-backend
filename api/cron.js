@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
                 await store.logEvent(job.userId, {
                     type:     'followup',
                     date:     Date.now(),
-                    email:    job.contact.email,
+                    email:    job.contact.email.toLowerCase().trim(),
                     vertical: job.contact.vertical,
                     name:     job.contact.name || job.contact.first_name || 'Unknown',
                     step:     job.step

@@ -81,7 +81,7 @@ module.exports = async (req, res) => {
             await store.logEvent(user.id, {
                 type:     'initial',
                 date:     Date.now(),
-                email:    contact.email,
+                email:    contact.email.toLowerCase().trim(),
                 vertical: contact.vertical,
                 name:     contact.first_name || contact.name?.split(' ')[0] || 'Unknown',
                 step:     0 // Step 0 = Initial
