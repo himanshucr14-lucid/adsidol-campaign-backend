@@ -1211,7 +1211,7 @@
         /* ── SCHEDULE CONFIG TILES ── */
         .schedule-config-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
         }
 
@@ -1450,10 +1450,6 @@
         @media (min-width: 601px) and (max-width: 900px) {
             .schedule-config-grid {
                 grid-template-columns: 1fr 1fr;
-            }
-
-            .sched-tile:last-child {
-                grid-column: span 2;
             }
         }
 
@@ -3146,6 +3142,28 @@
                     <input type="date" id="startDate" class="sched-date-input">
                 </div>
 
+                <!-- Send Interval -->
+                <div class="sched-tile">
+                    <div class="sched-tile-icon-wrap icon-3d-amber">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <circle cx="14" cy="14" r="10" stroke="white" stroke-width="1.8"/>
+                            <path d="M14 6v8l4 2" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M11 4h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="sched-tile-label">Send Interval</div>
+                    <div class="sched-tile-sub">Delay between emails</div>
+                    <div class="sched-limit-display" id="displayInterval">15s</div>
+                    <div class="sched-limit-row">
+                        <button class="limit-btn" id="intervalDown">−</button>
+                        <input type="range" id="sendInterval" min="15" max="120" step="15" value="15" class="sched-slider">
+                        <button class="limit-btn" id="intervalUp">+</button>
+                    </div>
+                    <div class="sched-limit-ticks">
+                        <span>15s</span><span>1m</span><span>2m</span>
+                    </div>
+                </div>
+
             </div>
 
             <div class="demo-banner">
@@ -3531,6 +3549,7 @@
                     contacts, templates, followupTemplates, darkMode,
                     sendTime: document.getElementById('sendTime').value,
                     sendLimit: document.getElementById('sendLimit').value,
+                    sendInterval: document.getElementById('sendInterval') ? document.getElementById('sendInterval').value : '15',
                     startDate: document.getElementById('startDate').value,
                     savedTemplatesList: [...savedTemplates]
                 }));
@@ -4458,6 +4477,22 @@
         function syncDate(val) { if (!val) return; const d = new Date(val + 'T00:00:00'); document.getElementById('displayDate').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); saveState(); }
         document.getElementById('startDate').addEventListener('change', e => syncDate(e.target.value));
 
+        function syncInterval(val) { 
+            let display = val + 's';
+            if (val >= 60) {
+                const mins = Math.floor(val / 60);
+                const secs = val % 60;
+                display = secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+            }
+            document.getElementById('displayInterval').textContent = display; 
+            const pct = ((val - 15) / (105) * 100).toFixed(1); 
+            document.getElementById('sendInterval').style.setProperty('--pct', pct + '%'); 
+            saveState(); 
+        }
+        document.getElementById('sendInterval').addEventListener('input', e => syncInterval(e.target.value));
+        document.getElementById('intervalDown').addEventListener('click', () => { const s = document.getElementById('sendInterval'); s.value = Math.max(15, parseInt(s.value) - 15); syncInterval(s.value); });
+        document.getElementById('intervalUp').addEventListener('click', () => { const s = document.getElementById('sendInterval'); s.value = Math.min(120, parseInt(s.value) + 15); syncInterval(s.value); });
+
         // ═══════════════════════════════════════════════
         // SCHEDULE CAMPAIGN + AUTO-QUEUE FOLLOW-UPS
         // ═══════════════════════════════════════════════
@@ -4468,59 +4503,67 @@
             if (pending.length === 0) { showToast('No pending contacts to schedule', 'info'); return; }
             const sendTime = document.getElementById('sendTime').value;
             const dailyLimit = parseInt(document.getElementById('sendLimit').value);
+            const intervalSecondsStr = document.getElementById('sendInterval') ? document.getElementById('sendInterval').value : "15";
+            const intervalSeconds = parseInt(intervalSecondsStr);
             const toSend = pending.slice(0, dailyLimit);
 
             toSend.forEach(c => { c.status = 'scheduled'; c.scheduledFor = calculateSendTime(c, sendTime); });
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
-            showToast(`Sending ${toSend.length} emails…`, 'info', 10000);
+            showToast(`Scheduling ${toSend.length} emails in the cloud via Upstash...`, 'info', 5000);
+            
+            const scheduleBtn = document.getElementById('scheduleBtn');
+            const originalText = scheduleBtn.innerHTML;
+            scheduleBtn.disabled = true;
+            scheduleBtn.innerHTML = '<span class="icon-3d icon-3d-slate"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg></span> Scheduling...';
 
-            let sent = 0, failed = 0;
-            for (const contact of toSend) {
+            const batch = toSend.map(contact => {
                 const tpl = templates[contact.vertical] || templates[Object.keys(templates)[0]];
-                try {
-                    const res = await fetch(`${BACKEND.baseUrl}/api/send`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey },
-                        body: JSON.stringify({ contact: { first_name: contact.name.split(' ')[0], company_name: contact.company, vertical: contact.vertical, email: contact.email, name: contact.name, company: contact.company }, subject: tpl.subject, body: tpl.body })
-                    });
-                    const data = await res.json();
-                    if (data.ok) {
-                        contact.status = 'sent';
-                        contact.sentMessageId = data.rfcMessageId || data.messageId;
-                        contact.sentThreadId = data.threadId;
-                        sent++;
+                let followups = [];
+                const fuSteps = followupTemplates[contact.vertical];
+                if (fuSteps && fuSteps.some(f => f.subject && f.body)) {
+                    followups = fuSteps.filter(f => f.subject && f.body);
+                }
+                return {
+                    contact: { 
+                        email: contact.email, 
+                        first_name: contact.name ? contact.name.split(' ')[0] : '', 
+                        company_name: contact.company, 
+                        vertical: contact.vertical, 
+                        name: contact.name, 
+                        company: contact.company 
+                    },
+                    subject: tpl.subject,
+                    body: tpl.body,
+                    followups: followups
+                };
+            });
 
-                        // ── AUTO-QUEUE FOLLOW-UPS ──
-                        const fuSteps = followupTemplates[contact.vertical];
-                        if (fuSteps && fuSteps.some(f => f.subject && f.body)) {
-                            const configuredSteps = fuSteps.filter(f => f.subject && f.body);
-                            try {
-                                await fetch(`${BACKEND.baseUrl}/api/followup?action=schedule`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey },
-                                    body: JSON.stringify({
-                                        contact: { first_name: contact.name.split(' ')[0], company_name: contact.company, vertical: contact.vertical, email: contact.email, name: contact.name, company: contact.company },
-                                        followups: configuredSteps,
-                                        originalMessageId: contact.sentMessageId,
-                                        originalThreadId: contact.sentThreadId
-                                    })
-                                });
-                            } catch (e) { console.warn('Follow-up scheduling failed for ' + contact.email, e); }
-                        }
-                    } else {
-                        contact.status = 'pending'; failed++;
-                        if (data.code === 'TOKEN_EXPIRED') { showToast('Gmail token expired — re-connect', 'error', 8000); break; }
-                    }
-                } catch (e) { contact.status = 'pending'; failed++; }
-                await new Promise(r => setTimeout(r, 300));
-                if ((sent + failed) % 5 === 0) { filteredContacts = [...contacts]; updateDashboard(); updateStats(); }
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/schedule-batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey },
+                    body: JSON.stringify({ batch, intervalSeconds })
+                });
+                
+                const data = await res.json();
+                
+                if (data.ok) {
+                    showToast('Campaign successfully scheduled online! You can safely close this tab.', 'success', 8000);
+                } else {
+                    showToast('Scheduling failed: ' + (data.error || 'Unknown error'), 'error', 8000);
+                    toSend.forEach(c => c.status = 'pending');
+                }
+            } catch (e) {
+                console.error('Schedule Error:', e);
+                showToast('Failed to connect to backend.', 'error');
+                toSend.forEach(c => c.status = 'pending');
             }
+            
+            scheduleBtn.disabled = false;
+            scheduleBtn.innerHTML = originalText;
+
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
 
-            const fuCount = toSend.filter(c => c.status === 'sent' && followupTemplates[c.vertical]?.some(f => f.subject && f.body)).length;
-            if (failed === 0) showToast(`${sent} emails sent${fuCount > 0 ? ` + ${fuCount * 4} follow-ups queued` : ''}!`, 'success', 6000);
-            else if (sent > 0) showToast(`Sent ${sent}, failed ${failed}`, 'warning', 7000);
-            else showToast(`All ${failed} sends failed — check Gmail connection`, 'error', 7000);
 
             // Refresh follow-up dashboard if visible
             if (document.getElementById('followupDashboard').style.display !== 'none') loadFollowupDashboard();
@@ -4654,6 +4697,7 @@
             document.getElementById('startDate').valueAsDate = tomorrow;
             syncDate(tomorrow.toISOString().split('T')[0]);
             syncTime('11:15'); syncLimit(50);
+            if (document.getElementById('sendInterval')) syncInterval(15);
 
             if (!saved) { updateStats(); return; }
             if (saved.darkMode) setDark(true);
@@ -4663,6 +4707,7 @@
             }
             if (saved.sendTime) { document.getElementById('sendTime').value = saved.sendTime; syncTime(saved.sendTime); }
             if (saved.sendLimit) { document.getElementById('sendLimit').value = saved.sendLimit; syncLimit(saved.sendLimit); }
+            if (saved.sendInterval && document.getElementById('sendInterval')) { document.getElementById('sendInterval').value = saved.sendInterval; syncInterval(saved.sendInterval); }
             if (saved.startDate) { document.getElementById('startDate').value = saved.startDate; syncDate(saved.startDate); }
             if (saved.savedTemplatesList) {
                 saved.savedTemplatesList.forEach(v => {
