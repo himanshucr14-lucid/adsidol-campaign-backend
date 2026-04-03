@@ -3856,6 +3856,8 @@
                 const result = parseCSV(e.target.result);
                 if (!result.ok) { showToast(result.error, 'error'); return; }
                 if (result.duplicates > 0) showToast(`${result.duplicates} duplicate email${result.duplicates > 1 ? 's' : ''} skipped`, 'warning');
+                if (result.repeats > 0) setTimeout(() => showToast(`Note: ${result.repeats} contact${result.repeats > 1 ? 's have' : ' has'} been previously contacted (see ⚠️)`, 'info', 8000), 500);
+                
                 document.getElementById('uploadedFileName').textContent = file.name;
                 document.getElementById('previewCount').textContent = contacts.length;
                 document.getElementById('uploadPreview').style.display = 'block';
@@ -3878,6 +3880,7 @@
             const missing = ['name', 'company', 'vertical', 'email'].filter(r => !headers.some(h => h.includes(r)));
             if (missing.length) return { ok: false, error: `Missing columns: ${missing.join(', ')}` };
             const existingEmails = new Set(contacts.map(c => c.email.toLowerCase()));
+            const sentEmails = (analyticsData && analyticsData.length > 0) ? new Set(analyticsData.map(e => e.email.toLowerCase())) : new Set();
             let duplicates = 0;
             const newContacts = [];
             for (let i = 1; i < lines.length; i++) {
@@ -3887,12 +3890,14 @@
                     if (!name || !email) continue;
                     if (existingEmails.has(email.toLowerCase())) { duplicates++; continue; }
                     existingEmails.add(email.toLowerCase());
-                    newContacts.push({ name, company, vertical, email, location: location || 'Unknown', timezone: detectTimezone(location || company || 'United States'), status: 'pending', scheduledFor: null, selected: false, sentMessageId: null, sentThreadId: null });
+                    const previouslySent = sentEmails.has(email.toLowerCase());
+                    newContacts.push({ name, company, vertical, email, location: location || 'Unknown', timezone: detectTimezone(location || company || 'United States'), status: 'pending', scheduledFor: null, selected: false, sentMessageId: null, sentThreadId: null, previouslySent });
                 }
             }
             contacts = [...contacts, ...newContacts];
+            const repeats = newContacts.filter(c => c.previouslySent).length;
             const sample = lines[1]?.split(',').map(v => v.trim().replace(/^["']|["']$/g, '')) || [];
-            return { ok: true, headers: lines[0].split(',').map(h => h.trim()), sample, duplicates };
+            return { ok: true, headers: lines[0].split(',').map(h => h.trim()), sample, duplicates, repeats };
         }
 
         function showColumnPreview(headers, sample) {
@@ -3932,7 +3937,7 @@
                     <td style="font-weight:600;">${escHtml(contact.name)}</td>
                     <td class="col-company">${escHtml(contact.company)}</td>
                     <td style="color:var(--blue-600);font-weight:600;">${escHtml(contact.vertical)}</td>
-                    <td style="color:var(--text-light);">${escHtml(contact.email)}</td>
+                    <td style="color:var(--text-light);">${escHtml(contact.email)} ${contact.previouslySent ? '<span title="Previously contacted" style="cursor:help;font-size:12px;margin-left:4px;">⚠️</span>' : ''}</td>
                     <td class="col-timezone">${escHtml(contact.location)}<span class="timezone-badge">${tzAbbr}</span></td>
                     <td style="font-weight:600;">${scheduledDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</td>
                     <td>
@@ -3994,15 +3999,21 @@
             if (!analyticsData || analyticsData.length === 0) return;
 
             let changed = false;
-            const sentEmails = new Set(analyticsData.map(e => e.email.toLowerCase()));
 
+            // When cross-referencing, we only want to mark contacts as Sent if they were currently "scheduled".
+            // If they are "pending", it means the user just uploaded them and hasn't clicked schedule yet,
+            // so we shouldn't automatically mark them as sent even if they exist in historical analytics.
             contacts.forEach(c => {
-                const email = c.email.toLowerCase();
-                // If contact is in 'scheduled' (batch sent to Vercel) or 'pending',
-                // but we see it in the analytics ledger, it means it's been sent.
-                if (sentEmails.has(email) && (c.status === 'scheduled' || c.status === 'pending')) {
-                    c.status = 'sent';
-                    changed = true;
+                if (c.status === 'scheduled') {
+                    const email = c.email.toLowerCase();
+                    // Optional: If you eventually want to allow re-sending to the same email multiple times,
+                    // you'd also want to compare timestamps here. For now, checking if email exists in ledger
+                    // and status is scheduled is sufficient to fix the "instant sent on upload" bug.
+                    const isSent = analyticsData.some(e => e.email.toLowerCase() === email);
+                    if (isSent) {
+                        c.status = 'sent';
+                        changed = true;
+                    }
                 }
             });
 
