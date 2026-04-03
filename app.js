@@ -85,7 +85,8 @@
                 if (data.ok && data.data) {
                     if (data.data.templates) templates = data.data.templates;
                     if (data.data.followupTemplates) Object.assign(followupTemplates, data.data.followupTemplates);
-                    updateHistoryDashboard();\n                    updateStats();
+                    updateHistoryDashboard();
+                    updateStats();
                     // If we are currently editing a template, we might need to refresh the UI
                     if (currentEditingVertical) {
                         const isFollowupTab = document.querySelector('.tpl-tab[data-tab="followups"]').classList.contains('active');
@@ -1545,4 +1546,4 @@
             
             // Start polling if session is already active
             if (currentApiKey) startPolling();
-        })();\n\n
+        })();
