@@ -60,8 +60,14 @@ function getUserById(id) {
 
 const store = require('../lib/store');
 
-function cors(res) {
-    res.setHeader('Access-Control-Allow-Origin',  process.env.ALLOWED_ORIGIN || '*');
+function cors(req, res) {
+    // Secure Dynamic CORS
+    const reqOrigin = req.headers.origin || req.headers.referer || '';
+    if (reqOrigin.includes('adsidol.com') || reqOrigin.includes('localhost') || reqOrigin.includes('127.0.0.1')) {
+        res.setHeader('Access-Control-Allow-Origin', reqOrigin.replace(/\/$/, ""));
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://www.adsidol.com');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-api-key');
 }
@@ -94,7 +100,7 @@ async function executeJob(job) {
 
 module.exports = async (req, res) => {
     try {
-        cors(res);
+        cors(req, res);
         if (req.method === 'OPTIONS') return res.status(200).end();
 
         const user = getUserByApiKey(req.headers['x-api-key']);

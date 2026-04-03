@@ -38,21 +38,10 @@ function getUserFromApiKey(apiKey) {
 }
 
 module.exports = async (req, res) => {
-    // More permissive CORS - allow all subpaths of adsidol.com
-    const origin = req.headers.origin || req.headers.referer;
-    const allowedOrigins = [
-        'https://www.adsidol.com',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000'
-    ];
-    
-    // Check if origin starts with any allowed origin
-    const isAllowed = allowedOrigins.some(allowed => 
-        origin && origin.startsWith(allowed)
-    );
-    
-    if (isAllowed || origin?.includes('adsidol.com')) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
+    // Secure Dynamic CORS
+    const reqOrigin = req.headers.origin || req.headers.referer || '';
+    if (reqOrigin.includes('adsidol.com') || reqOrigin.includes('localhost') || reqOrigin.includes('127.0.0.1')) {
+        res.setHeader('Access-Control-Allow-Origin', reqOrigin.replace(/\/$/, ""));
     } else {
         res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://www.adsidol.com');
     }
