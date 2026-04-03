@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adsidol Campaign Manager</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-backdrop" id="mobileBackdrop"></div>
+        <div class="mobile-menu-panel">
+            <div class="mobile-menu-logo">Adsidol</div>
+            <button class="mobile-nav-link active" data-section="upload">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Upload Contacts</button>
+            <button class="mobile-nav-link" data-section="templates">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                Templates</button>
+            <button class="mobile-nav-link" data-section="schedule">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M5 2v2m6-2v2M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                Schedule</button>
+            <button class="mobile-nav-link" data-section="campaigns">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Campaigns</button>
+            <button class="mobile-nav-link" data-section="analytics">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                Analytics</button>
+            <div class="mobile-menu-divider"></div>
+            <div class="mobile-dark-toggle">
+                <span style="display:flex;align-items:center;gap:8px;">
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                        <path d="M13 8.5A5.5 5.5 0 016.5 2a5.5 5.5 0 100 11A5.5 5.5 0 0013 8.5z" stroke="currentColor"
+                            stroke-width="1.4" stroke-linejoin="round" />
+                    </svg>
+                    Dark Mode
+                </span>
+                <button class="dark-toggle" id="mobileDarkToggle"></button>
+            </div>
+            <div class="mobile-menu-divider"></div>
+            <div style="padding: 10px 16px; display: flex; align-items: center; gap: 10px;">
+                <div class="status-dot" id="mobileGmailDot"></div>
+                <span style="font-size:14px; font-weight:600; color: var(--text-light);" id="mobileGmailStatus">Gmail
+                    Not Connected</span>
+            </div>
+            <button class="btn btn-primary" id="mobileConnectGmail"
+                style="margin: 8px 0; width: 100%; justify-content: center; display:inline-flex; align-items:center; gap:8px;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Connect Gmail
+            </button>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="logo">Adsidol</div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-link active" data-section="upload"><svg class="nav-icon" viewBox="0 0 16 16"
+                        fill="none">
+                        <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg> Upload</button>
+                <button class="nav-link" data-section="templates"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg> Templates</button>
+                <button class="nav-link" data-section="schedule"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M5 2v2m6-2v2M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg> Schedule</button>
+                <button class="nav-link" data-section="campaigns"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg> Campaigns</button>
+                <button class="nav-link" data-section="analytics"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg> Analytics</button>
+                <button class="nav-link" data-section="followups"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 8h12M10 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg> Follow-ups</button>
+            </nav>
+
+            <div class="header-actions">
+                <div class="gmail-indicator">
+                    <div class="status-dot" id="headerGmailDot"></div>
+                    <span id="headerGmailStatus">Gmail disconnected</span>
+                </div>
+                <div class="sync-indicator" id="headerSyncIndicator">
+                    <div class="sync-dot polling"></div>
+                    <span>LIVE SYNC</span>
+                    <span class="last-updated-text" id="headerLastUpdated"></span>
+                </div>
+                <button class="nav-link" id="headerConnectGmail" style="background:var(--blue-600);color:white;padding:9px 16px;font-size:13px;border-radius:14px;cursor:pointer;border:none;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    Connect Gmail
+                </button>
+                <button class="dark-toggle" id="desktopDarkToggle" title="Toggle dark mode"></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Bulk Action Bar -->
+        <div id="bulkBar">
+            <span class="bulk-count" id="bulkCount">0 selected</span>
+            <span class="bulk-spacer"></span>
+            <button class="bulk-btn bulk-btn-pending" id="bulkPending">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:5px">
+                    <path d="M2 6.5h9M2 6.5l3-3m-3 3l3 3" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>Reset to Pending</button>
+            <button class="bulk-btn bulk-btn-schedule" id="bulkSchedule">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:5px">
+                    <rect x="1.5" y="2" width="10" height="9.5" rx="1.5" stroke="currentColor" stroke-width="1.4" />
+                    <path d="M4 1.5v1.5m5-1.5v1.5M1.5 6h10" stroke="currentColor" stroke-width="1.4"
+                        stroke-linecap="round" />
+                </svg>Mark Scheduled</button>
+            <button class="bulk-btn bulk-btn-delete" id="bulkDelete">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:5px">
+                    <path d="M2 3.5h9M5 3.5V2.5h3v1M10.5 3.5l-.5 7.5H3L2.5 3.5" stroke="currentColor" stroke-width="1.4"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>Delete</button>
+            <button class="bulk-btn bulk-btn-close" id="bulkClose" title="Deselect all">✕</button>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1 class="hero-title">Email Campaign Manager</h1>
+            <p class="hero-subtitle">Schedule personalized emails across timezones with intelligent automation</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-header">
+            <div></div> <!-- Spacer -->
+            <div class="stats-filter">
+                <span class="stats-filter-label">Period:</span>
+                <select id="statsPeriod">
+                    <option value="today">Date-wise (Today)</option>
+                    <option value="7d">Week-wise (Last 7 Days)</option>
+                    <option value="30d">Month-wise (Last 30 Days)</option>
+                    <option value="all" selected>All Time</option>
+                </select>
+            </div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalContacts">0</div>
+                <div class="stat-label">Total Contacts</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="progressTotal" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="scheduledCount">0</div>
+                <div class="stat-label">Scheduled</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="progressScheduled"
+                        style="width:0%; background: linear-gradient(90deg, #F59E0B, #D97706)"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="sentCount">0</div>
+                <div class="stat-label">Sent Today</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="progressSent"
+                        style="width:0%; background: linear-gradient(90deg, #10B981, #059669)"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingCount">0</div>
+                <div class="stat-label">Pending</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="progressPending"
+                        style="width:0%; background: linear-gradient(90deg, #94A3B8, #64748B)"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="card" id="uploadSection">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-badge">1</span>
+                    Upload Contact List
+                </h2>
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon-wrap">
+                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                        <path d="M18 8v16M18 8l-6 6m6-6l6 6" stroke="white" stroke-width="2.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M6 28h24" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="upload-text">Drop CSV file here or click to browse</div>
+                <div class="upload-hint">Required: Name, Company, Vertical, Email, Country/City</div>
+                <input type="file" id="fileInput" accept=".csv">
+            </div>
+
+            <div id="uploadPreview" style="display: none;">
+                <div class="success-preview">
+                    <div class="success-icon-wrap">
+                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                            <path d="M5 11l4 4 8-8" stroke="white" stroke-width="2.2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="success-title" id="uploadedFileName"></div>
+                        <div class="success-subtitle">
+                            <span id="previewCount">0</span> contacts loaded • Ready to configure
+                            &nbsp;<span class="persist-badge" id="persistBadge" style="display:none;">
+                                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                                    <rect x="1" y="1" width="9" height="9" rx="1.5" stroke="currentColor"
+                                        stroke-width="1.3" />
+                                    <path d="M3 5.5h5M5.5 3v5" stroke="currentColor" stroke-width="1.3"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Auto-saved</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" id="exportBtn"
+                        style="padding: 10px 20px; display:inline-flex; align-items:center; gap:8px;">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 1v8M7 9l-3-3m-3 3l3-3M2 12h10" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Export
+                    </button>
+                </div>
+                <div class="csv-column-preview" id="csvColumnPreview" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Campaign Dashboard -->
+        <div class="card" id="campaignsSection">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-badge">2</span>
+                    Campaign Dashboard
+                </h2>
+            </div>
+
+            <div class="table-container">
+                <div class="table-controls">
+                    <div class="search-box">
+                        <span class="search-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="7" cy="7" r="4.5" stroke="var(--text-muted)" stroke-width="1.5" />
+                                <path d="M10.5 10.5l3 3" stroke="var(--text-muted)" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </span>
+                        <input type="text" id="searchContacts" placeholder="Search contacts...">
+                    </div>
+
+                    <select id="filterVertical" style="width: auto; min-width: 180px;">
+                        <option value="">All Verticals</option>
+                        <option value="Fintech (DC & CC Disbursal)">Fintech (DC & CC)</option>
+                        <option value="Fintech (FTD)">Fintech (FTD)</option>
+                        <option value="iGaming (FTD)">iGaming (FTD)</option>
+                        <option value="Crypto (FTD)">Crypto (FTD)</option>
+                        <option value="Ecommerce (AOV)">Ecommerce (AOV)</option>
+                        <option value="VPN">VPN</option>
+                    </select>
+
+                    <select id="filterStatus" style="width: auto; min-width: 150px;">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="sent">Sent</option>
+                    </select>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" class="checkbox" id="selectAll"></th>
+                            <th>Name</th>
+                            <th class="col-company">Company</th>
+                            <th>Vertical</th>
+                            <th>Email</th>
+                            <th class="col-timezone">Timezone</th>
+                            <th>Scheduled For</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaignTableBody">
+                        <tr>
+                            <td colspan="9">
+                                <div class="empty-state">
+                                    <div style="margin-bottom:16px;">
+                                        <div
+                                            style="width:64px;height:64px;border-radius:20px;background:linear-gradient(145deg,#3B82F6,#4F46E5);box-shadow:0 8px 24px rgba(59,130,246,0.3);display:inline-flex;align-items:center;justify-content:center;opacity:0.6;">
+                                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                                <path d="M4 8h24v18a2 2 0 01-2 2H6a2 2 0 01-2-2V8zm0 0l12 9 12-9"
+                                                    stroke="white" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="empty-text">No contacts uploaded yet. Upload a CSV to get started.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- Pitch Templates -->
+        <div class="card" id="templatesSection">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-badge">3</span>
+                    Configure Pitch Templates
+                </h2>
+            </div>
+
+            <div class="template-grid">
+                <div class="template-card" data-vertical="Fintech (DC & CC Disbursal)">
+                    <div class="template-icon-wrap icon-3d-blue">
+                        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                            <rect x="2" y="6" width="22" height="14" rx="3" stroke="white" stroke-width="1.8" />
+                            <path d="M2 10h22M7 15h4" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="template-vertical">Fintech (DC & CC Disbursal)</div>
+                    <div class="template-preview">Debit & credit card disbursement campaigns</div>
+                </div>
+                <div class="template-card" data-vertical="Fintech (FTD)">
+                    <div class="template-icon-wrap icon-3d-green">
+                        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                            <circle cx="13" cy="13" r="9" stroke="white" stroke-width="1.8" />
+                            <path
+                                d="M13 8v10M10 10.5c0-1.4 1.3-2.5 3-2.5s3 1.1 3 2.5-1.3 2.5-3 2.5-3 1.1-3 2.5 1.3 2.5 3 2.5"
+                                stroke="white" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="template-vertical">Fintech (FTD)</div>
+                    <div class="template-preview">First-time deposit acquisition for fintech</div>
+                </div>
+                <div class="template-card" data-vertical="iGaming (FTD)">
+                    <div class="template-icon-wrap icon-3d-purple">
+                        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                            <rect x="3" y="7" width="20" height="12" rx="3" stroke="white" stroke-width="1.8" />
+                            <path d="M9 13h3m1.5-1.5v3M17 13h1" stroke="white" stroke-width="1.8"
+                                stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="template-vertical">iGaming (FTD)</div>
+                    <div class="template-preview">First-time depositors for online casinos</div>
+                </div>
+                <div class="template-card" data-vertical="Crypto (FTD)">
+                    <div class="template-icon-wrap icon-3d-amber">
+                        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                            <path d="M13 3l7.5 4.5v9L13 21l-7.5-4.5v-9L13 3z" stroke="white" stroke-width="1.8"
+                                stroke-linejoin="round" />
+                            <path d="M10.5 10.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v5" stroke="white"
+                                stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="template-vertical">Crypto (FTD)</div>
+                    <div class="template-preview">Crypto exchange user acquisition</div>
+                </div>
+                <div class="template-card" data-vertical="Ecommerce (AOV)">
+                    <div class="template-icon-wrap icon-3d-teal">
+                        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                            <path d="M4 5h2l2.5 11h11l2-7H8" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <circle cx="11" cy="19.5" r="1.5" fill="white" />
+                            <circle cx="18" cy="19.5" r="1.5" fill="white" />
+                        </svg>
+                    </div>
+                    <div class="template-vertical">Ecommerce (AOV)</div>
+                    <div class="template-preview">Average order value optimization</div>
+                </div>
+                <div class="template-card" data-vertical="VPN">
+                    <div class="template-icon-wrap icon-3d-slate">
+                        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                            <path d="M13 3l8 3v6c0 5-3.5 9-8 10C8.5 21 5 17 5 12V6l8-3z" stroke="white"
+                                stroke-width="1.8" stroke-linejoin="round" />
+                            <path d="M9.5 13l2.5 2.5 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="template-vertical">VPN</div>
+                    <div class="template-preview">VPN subscription campaigns</div>
+                </div>
+            </div>
+
+            <div id="templateEditor"
+                style="display: none; margin-top: 40px; padding-top: 32px; border-top: 2px solid var(--border);">
+                <h3 style="color: var(--text); margin-bottom: 20px; font-size: 22px; font-weight: 700;"
+                    id="editingVertical"></h3>
+
+                <!-- Tab Bar -->
+                <div class="tpl-tabs">
+                    <button class="tpl-tab active" data-tab="initial">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 3.5h10v7a1 1 0 01-1 1H3a1 1 0 01-1-1v-7zm0 0l5 4 5-4" stroke="currentColor"
+                                stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Initial Email
+                    </button>
+                    <button class="tpl-tab" data-tab="followups">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 7h10M8 4l4 3-4 3" stroke="currentColor" stroke-width="1.4"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Follow-ups
+                        <span id="fuCountBadge"
+                            style="display:none;background:var(--blue-500);color:white;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800;"></span>
+                    </button>
+                </div>
+
+                <!-- TAB: Initial Email -->
+                <div id="tabInitial" class="tab-pane">
+                    <div class="template-editor-grid">
+                        <div class="template-editor-fields">
+                            <div style="margin-bottom: 24px;">
+                                <label>Subject Line</label>
+                                <input type="text" id="subjectLine"
+                                    placeholder="{{first_name}}, ready to scale {{company_name}}'s growth?">
+                            </div>
+                            <div>
+                                <label>Email Body</label>
+                                <div
+                                    style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; padding: 12px; background: var(--bg); border-radius: 10px;">
+                                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"
+                                        style="display:inline;vertical-align:middle">
+                                        <path d="M6.5 2a3 3 0 00-1.5 5.6V9h3V7.6A3 3 0 006.5 2zM5 10h3m-2.5 1h2"
+                                            stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                                    </svg> Use <code
+                                        style="background: var(--card); padding: 3px 8px; border-radius: 6px; font-weight: 600;">{{first_name}}</code>,
+                                    <code
+                                        style="background: var(--card); padding: 3px 8px; border-radius: 6px; font-weight: 600;">{{company_name}}</code>,
+                                    <code
+                                        style="background: var(--card); padding: 3px 8px; border-radius: 6px; font-weight: 600;">{{vertical}}</code>
+                                </div>
+                                <textarea id="emailBody"
+                                    placeholder="Hi {{first_name}},&#10;&#10;I noticed {{company_name}} is scaling in {{vertical}}.&#10;&#10;Adsidol specializes in high-converting user acquisition.&#10;&#10;Would you be open to a quick conversation"></textarea>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" id="saveTemplate"
+                                    style="display:inline-flex;align-items:center;gap:8px;">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                        <path d="M2 2h8l2 2v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2zm3 0v4h4V2M4 11v-3h6v3"
+                                            stroke="white" stroke-width="1.4" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                    Save Template
+                                </button>
+                                <button class="btn btn-secondary" id="cancelTemplate">Cancel</button>
+                            </div>
+                        </div>
+                        <div class="preview-panel">
+                            <div class="preview-header"><svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                    <ellipse cx="7" cy="7" rx="5" ry="3.5" stroke="currentColor" stroke-width="1.4" />
+                                    <circle cx="7" cy="7" r="1.5" fill="currentColor" />
+                                </svg> Live Preview <span style="font-weight:400;opacity:0.7">— sample data</span></div>
+                            <div class="preview-subject">
+                                <div class="preview-subject-label">Subject</div>
+                                <div class="preview-subject-value" id="previewSubject">—</div>
+                            </div>
+                            <div class="preview-body" id="previewBody">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: Follow-ups -->
+                <div id="tabFollowups" class="tab-pane" style="display:none;">
+                    <p style="font-size:14px;color:var(--text-light);margin-bottom:20px;">Configure up to 4 follow-up
+                        emails per vertical. Each follow-up threads into the original conversation and sends
+                        automatically after the specified delay.</p>
+
+                    <div class="followup-steps" id="followupSteps">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <div class="btn-group" style="margin-top:24px;">
+                        <button class="btn btn-primary" id="saveFollowups"
+                            style="display:inline-flex;align-items:center;gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M2 2h8l2 2v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2zm3 0v4h4V2M4 11v-3h6v3"
+                                    stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Save All Follow-ups
+                        </button>
+                        <button class="btn btn-secondary" id="cancelTemplate2">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow-up Dashboard -->
+            <div class="followup-dashboard" id="followupDashboard">
+                <div class="followup-dashboard-title">
+                    <span class="icon-3d icon-3d-indigo" style="width:36px;height:36px;border-radius:10px;">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M2 9h14M12 5l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    Follow-up Queue
+                </div>
+                <div class="fu-stats-row" id="fuStatsRow"></div>
+                <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px;">
+                    <select id="fuStepFilter" onchange="renderFuDashboard()"
+                        style="padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; cursor: pointer; min-width: 160px;">
+                        <option value="all">All Follow-ups (F1-F4)</option>
+                        <option value="1">Step F1 Only</option>
+                        <option value="2">Step F2 Only</option>
+                        <option value="3">Step F3 Only</option>
+                        <option value="4">Step F4 Only</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="fu-job-table">
+                        <thead>
+                            <tr>
+                                <th>Contact</th>
+                                <th>Vertical</th>
+                                <th>Step</th>
+                                <th>Scheduled For</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fuJobTableBody">
+                            <tr>
+                                <td colspan="6"
+                                    style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">No
+                                    follow-ups scheduled yet. Schedule a campaign to auto-queue follow-ups.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="btn-group" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="sendDueBtn"
+                        style="display:inline-flex;align-items:center;gap:8px;">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 7h10M9 4l3 3-3 3" stroke="white" stroke-width="1.5" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        Send All Due Now
+                    </button>
+                    <button class="btn btn-secondary" id="refreshFuBtn"
+                        style="display:inline-flex;align-items:center;gap:8px;">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path
+                                d="M2 7a5 5 0 015-5 5 5 0 014.5 2.8M12 7a5 5 0 01-5 5 5 5 0 01-4.5-2.8M2 2v3h3M12 12v-3h-3"
+                                stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Configuration -->
+        <div class="card" id="scheduleSection">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-badge">4</span>
+                    Schedule & Launch
+                </h2>
+            </div>
+
+            <div class="schedule-config-grid">
+
+                <!-- Send Time -->
+                <div class="sched-tile">
+                    <div class="sched-tile-icon-wrap icon-3d-blue">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <circle cx="14" cy="14" r="9" stroke="white" stroke-width="1.8" />
+                            <path d="M14 8v6l4 2" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="sched-tile-label">Send Time</div>
+                    <div class="sched-tile-sub">Recipient's local timezone</div>
+                    <div class="sched-time-display" id="displayTime">11:15 AM</div>
+                    <div class="sched-time-row">
+                        <button class="time-seg-btn" id="timeHourDown">‹</button>
+                        <input type="time" id="sendTime" value="11:15" class="sched-time-input">
+                        <button class="time-seg-btn" id="timeHourUp">›</button>
+                    </div>
+                </div>
+
+                <!-- Daily Send Limit -->
+                <div class="sched-tile">
+                    <div class="sched-tile-icon-wrap icon-3d-indigo">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <path d="M5 20h4v-8H5v8zm7 0h4V8h-4v12zm7 0h4v-5h-4v5z" stroke="white" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="sched-tile-label">Daily Send Limit</div>
+                    <div class="sched-tile-sub">Emails per day</div>
+                    <div class="sched-limit-display" id="displayLimit">50</div>
+                    <div class="sched-limit-row">
+                        <button class="limit-btn" id="limitDown">−</button>
+                        <input type="range" id="sendLimit" min="10" max="500" step="10" value="50" class="sched-slider">
+                        <button class="limit-btn" id="limitUp">+</button>
+                    </div>
+                    <div class="sched-limit-ticks">
+                        <span>10</span><span>250</span><span>500</span>
+                    </div>
+                </div>
+
+                <!-- Start Date -->
+                <div class="sched-tile">
+                    <div class="sched-tile-icon-wrap icon-3d-green">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <rect x="4" y="6" width="20" height="18" rx="3" stroke="white" stroke-width="1.8" />
+                            <path d="M4 12h20M9 4v4m10-4v4" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="sched-tile-label">Start Date</div>
+                    <div class="sched-tile-sub">Campaign begins on</div>
+                    <div class="sched-date-display" id="displayDate">—</div>
+                    <input type="date" id="startDate" class="sched-date-input">
+                </div>
+
+                <!-- Send Interval -->
+                <div class="sched-tile">
+                    <div class="sched-tile-icon-wrap icon-3d-amber">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <circle cx="14" cy="14" r="10" stroke="white" stroke-width="1.8" />
+                            <path d="M14 6v8l4 2" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+                            <path d="M11 4h6" stroke="white" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="sched-tile-label">Send Interval</div>
+                    <div class="sched-tile-sub">Delay between emails</div>
+                    <div class="sched-limit-display" id="displayInterval">15s</div>
+                    <div class="sched-limit-row">
+                        <button class="limit-btn" id="intervalDown">−</button>
+                        <input type="range" id="sendInterval" min="15" max="120" step="15" value="15"
+                            class="sched-slider">
+                        <button class="limit-btn" id="intervalUp">+</button>
+                    </div>
+                    <div class="sched-limit-ticks">
+                        <span>15s</span><span>1m</span><span>2m</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="demo-banner">
+                <span class="demo-banner-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="#D97706" stroke-width="1.6" />
+                        <path d="M10 6v5m0 2.5v.5" stroke="#D97706" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span><strong>Demo Mode</strong> — Gmail OAuth is not connected. Scheduling will simulate sending only.
+                    <a href="https://developers.google.com/gmail/api" target="_blank"
+                        style="color:var(--blue-600);font-weight:700;">Connect real Gmail →</a></span>
+            </div>
+
+            <div class="info-box" style="margin-top: 0;">
+                <div class="info-title">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4l-3.7 2.1.7-4.1L2 5.5l4.2-.9L8 1z"
+                            stroke="var(--blue-500)" stroke-width="1.4" stroke-linejoin="round" />
+                    </svg>
+                    Smart Timezone Scheduling Enabled
+                </div>
+                <div class="info-text">
+                    Emails send at <strong id="infoTime">11:15 AM</strong> in each recipient's local timezone.
+                    Daily cap: <strong id="infoLimit">50</strong> emails to protect deliverability.
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="scheduleBtn" disabled
+                    style="display:inline-flex;align-items:center;gap:10px;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="1.5" y="2" width="13" height="12" rx="2" stroke="white" stroke-width="1.5" />
+                        <path d="M1.5 6h13M5 1v2m6-2v2" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M8 9l1.5 1.5L12 8" stroke="white" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Schedule Campaign
+                </button>
+                <button class="btn btn-secondary" id="testBtn" style="display:inline-flex;align-items:center;gap:10px;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 3.5h12v9a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12.5v-9zm0 0l6 5 6-5"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    Send Test Email
+                </button>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="card" id="analyticsSection" style="display: none;">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-badge">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M2 13l4-4 3 3 7-8" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    Campaign Analytics
+                </h2>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-title">Delivery Rate</div>
+                    <div class="analytics-value" id="advDeliveryRate">0%</div>
+                    <div class="analytics-change" id="advDeliverySub">Awaiting data</div>
+                </div>
+
+                <div class="analytics-card">
+                    <div class="analytics-title">Queue Health</div>
+                    <div class="analytics-value" id="advQueueHealth">0 / 0</div>
+                    <div class="analytics-change" id="advQueueSub">Pending vs. Sent</div>
+                </div>
+
+                <div class="analytics-card">
+                    <div class="analytics-title">Top Vertical</div>
+                    <div class="analytics-value" id="advTopVertical"
+                        style="font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                        title="Top Vertical">—</div>
+                    <div class="analytics-change" id="advTopVerticalSub">Awaiting data</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px;">
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 20px;">Vertical
+                    Breakdown</h3>
+                <div id="verticalBreakdownContainer" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="color: var(--text-muted); font-size: 13px;">No data to display yet.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sent Emails History Section -->
+        <div class="card" id="historySection">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-badge">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M2 9v4a2 2 0 002 2h10a2 2 0 002-2V9M9 12V2M5 6l4-4 4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    Sent Emails History
+                </h2>
+                <div style="font-size:13px; color:var(--text-muted);">Pulled live from Cloud Storage</div>
+            </div>
+
+            <div class="table-controls">
+                <div class="search-box">
+                    <span class="search-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="7" cy="7" r="4.5" stroke="var(--text-muted)" stroke-width="1.5" />
+                            <path d="M10.5 10.5l3 3" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                    </span>
+                    <input type="text" id="searchHistory" placeholder="Search history...">
+                </div>
+
+                <select id="historyVerticalFilter" style="width: auto; min-width: 150px;">
+                    <option value="">All Verticals</option>
+                    <option value="Fintech (DC & CC Disbursal)">Fintech (DC & CC)</option>
+                    <option value="Fintech (FTD)">Fintech (FTD)</option>
+                    <option value="iGaming (FTD)">iGaming (FTD)</option>
+                    <option value="Crypto (FTD)">Crypto (FTD)</option>
+                    <option value="Ecommerce (AOV)">Ecommerce (AOV)</option>
+                    <option value="VPN">VPN</option>
+                </select>
+
+                <select id="historyDateFilter" style="width: auto; min-width: 150px;">
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="7days">Last 7 Days</option>
+                    <option value="14days">Last 14 Days</option>
+                    <option value="30days">Last 30 Days</option>
+                    <option value="thismonth">This Month</option>
+                    <option value="lastmonth">Last Month</option>
+                    <option value="custom">Custom Range...</option>
+                </select>
+
+                <div id="customDateRange" style="display: none; align-items: center; gap: 8px;">
+                    <input type="date" id="historyStartDate" class="btn" style="padding: 6px; height: 38px;">
+                    <span style="color:var(--text-light);font-size:13px;">to</span>
+                    <input type="date" id="historyEndDate" class="btn" style="padding: 6px; height: 38px;">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="contacts-table">
+                    <thead>
+                        <tr>
+                            <th>Sent Date</th>
+                            <th>Name</th>
+                            <th>Email Address</th>
+                            <th>Vertical</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr><td colspan="5"><div style="text-align:center;padding:32px;color:var(--text-muted);">Loading history...</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="historyPagination" class="pagination" style="display: none; padding:16px;">
+                <button class="btn btn-secondary" id="historyPrevBtn" disabled>Previous</button>
+                <div class="page-info" style="font-size:14px;color:var(--text-muted);">Page <span id="historyCurrentPage" style="font-weight:600;color:var(--text);">1</span> of <span id="historyTotalPages" style="font-weight:600;color:var(--text);">1</span></div>
+                <button class="btn btn-secondary" id="historyNextBtn" disabled>Next</button>
+            </div>
+        </div>
+\n    </div>\n\n    <!-- Edit Contact Modal -->
+    <div class="modal-overlay" id="editModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-title">
+                <span class="icon-3d icon-3d-blue" style="width:36px;height:36px;border-radius:10px;">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M13 2l3 3-10 10H3v-3L13 2z" stroke="white" stroke-width="1.5"
+                            stroke-linejoin="round" />
+                    </svg>
+                </span>
+                Edit Contact
+            </div>
+            <div class="modal-field"><label>Name</label><input type="text" id="editName"></div>
+            <div class="modal-field"><label>Company</label><input type="text" id="editCompany"></div>
+            <div class="modal-field"><label>Email</label><input type="email" id="editEmail"></div>
+            <div class="modal-field">
+                <label>Vertical</label>
+                <select id="editVertical">
+                    <option>Fintech (DC & CC Disbursal)</option>
+                    <option>Fintech (FTD)</option>
+                    <option>iGaming (FTD)</option>
+                    <option>Crypto (FTD)</option>
+                    <option>Ecommerce (AOV)</option>
+                    <option>VPN</option>
+                </select>
+            </div>
+            <div class="modal-field"><label>Location</label><input type="text" id="editLocation"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="editModalCancel">Cancel</button>
+                <button class="btn btn-primary" id="editModalSave"
+                    style="display:inline-flex;align-items:center;gap:8px;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 7l3 3 7-7" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Email Modal -->
+    <div class="modal-overlay" id="testEmailModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-title">
+                <span class="icon-3d icon-3d-indigo" style="width:36px;height:36px;border-radius:10px;">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M2 4h14v10a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 012 14V4zm0 0l7 5.5L16 4" stroke="white"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </span>
+                Send Test Email
+            </div>
+            <p style="font-size:14px;color:var(--text-light);margin-bottom:20px;">Send a preview of your campaign email
+                to verify formatting before launching.</p>
+            <div class="modal-field"><label>Your Email Address</label><input type="email" id="testEmailInput"
+                    placeholder="you@example.com"></div>
+            <div class="modal-field">
+                <label>Template to Preview</label>
+                <select id="testEmailVertical">
+                    <option>Fintech (DC & CC Disbursal)</option>
+                    <option>Fintech (FTD)</option>
+                    <option>iGaming (FTD)</option>
+                    <option>Crypto (FTD)</option>
+                    <option>Ecommerce (AOV)</option>
+                    <option>VPN</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="testEmailCancel">Cancel</button>
+                <button class="btn btn-primary" id="testEmailSend"
+                    style="display:inline-flex;align-items:center;gap:8px;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 7h10M9 4l3 3-3 3" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Send Test
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ── USER LOGIN MODAL ── -->
+    <div class="modal-overlay" id="loginModal"
+        style="display:flex;z-index:9998;background:linear-gradient(135deg,rgba(15,23,42,0.92),rgba(30,41,59,0.95));backdrop-filter:blur(12px);">
+        <div
+            style="max-width:420px;width:100%;background:var(--card);border-radius:28px;padding:48px 40px;box-shadow:0 32px 80px rgba(0,0,0,0.3);border:1px solid var(--border);animation:fadeInUp 0.5s ease;position:relative;overflow:hidden;">
+            <!-- Decorative gradient orb -->
+            <div
+                style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(59,130,246,0.15),transparent 70%);pointer-events:none;">
+            </div>
+
+            <!-- Logo -->
+            <div style="text-align:center;margin-bottom:32px;">
+                <div
+                    style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--blue-600),var(--indigo-600));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px;margin-bottom:4px;">
+                    Adsidol</div>
+                <p style="font-size:14px;color:var(--text-muted);margin:0;">Campaign Manager · Sign In</p>
+            </div>
+
+            <!-- Form -->
+            <div id="loginForm">
+                <div style="margin-bottom:18px;">
+                    <label for="loginEmail"
+                        style="font-size:13px;font-weight:600;color:var(--text-light);margin-bottom:8px;display:block;">Email
+                        Address</label>
+                    <input type="email" id="loginEmail" placeholder="you@adsidol.com" autocomplete="email"
+                        style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:14px;padding:14px 18px;color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;transition:border-color 0.2s,box-shadow 0.2s;outline:none;">
+                </div>
+                <div style="margin-bottom:8px;position:relative;">
+                    <label for="loginPassword"
+                        style="font-size:13px;font-weight:600;color:var(--text-light);margin-bottom:8px;display:block;">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Your password"
+                        autocomplete="current-password"
+                        style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:14px;padding:14px 52px 14px 18px;color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;transition:border-color 0.2s,box-shadow 0.2s;outline:none;">
+                    <button id="togglePwdBtn"
+                        onclick="(function(){const i=document.getElementById('loginPassword');i.type=i.type==='password'?'text':'password';document.getElementById('togglePwdBtn').innerHTML=i.type==='password'?'👁':'🙈';})()"
+                        style="position:absolute;right:14px;bottom:14px;background:none;border:none;cursor:pointer;font-size:16px;padding:0;line-height:1;">👁</button>
+                </div>
+
+                <!-- Error message -->
+                <div id="loginError"
+                    style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;font-size:13px;color:#DC2626;font-weight:600;margin-bottom:12px;">
+                </div>
+
+                <button id="loginSubmitBtn"
+                    style="width:100%;margin-top:8px;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--blue-600),var(--indigo-600));color:white;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 16px rgba(59,130,246,0.35);"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(59,130,246,0.45)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(59,130,246,0.35)'">
+                    Sign In →
+                </button>
+            </div>
+
+            <!-- Loading state (hidden by default) -->
+            <div id="loginLoading" style="display:none;text-align:center;padding:24px 0;">
+                <div
+                    style="display:inline-block;width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue-500);border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:12px;">
+                </div>
+                <p style="color:var(--text-light);font-size:14px;font-weight:600;">Signing in…</p>
+            </div>
+
+            <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:24px;margin-bottom:0;">
+                🔒 Secured · Adsidol internal tool
+            </p>
+        </div>
+    </div>
+
+    
+
+    
+    <script src="app.js"></script>\n</body>
+
+</html>
