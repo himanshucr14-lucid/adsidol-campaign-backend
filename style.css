@@ -2996,3 +2996,66 @@
         .sig-contact-val a:hover {
             text-decoration: underline;
         }
+
+        /* ── ROW ACTION BUTTONS (Campaign Dashboard) ── */
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .row-action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0;
+            outline: none;
+        }
+
+        body.dark .row-action-btn {
+            border-color: var(--border-light-dark); /* or var(--border-dark) */
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .row-action-btn:hover {
+            background: var(--bg-body);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            color: var(--text-light);
+        }
+
+        /* Specific colors on hover to guide users */
+        .row-send-btn:hover {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: #10b981 !important;
+        }
+
+        .row-edit-btn:hover {
+            border-color: #3b82f6 !important;
+            background: rgba(59, 130, 246, 0.08) !important;
+            color: #3b82f6 !important;
+        }
+
+        .row-del-btn:hover {
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.08) !important;
+            color: #ef4444 !important;
+        }
+
+        .row-action-btn svg {
+            transition: transform 0.2s ease;
+        }
+
+        .row-action-btn:active {
+            transform: scale(0.95);
+        }

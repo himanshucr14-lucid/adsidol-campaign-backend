@@ -423,6 +423,7 @@
                         </div>
                     </td>
                     <td><div class="row-actions">
+                        ${contact.status !== 'sent' ? `<button class="row-action-btn row-send-btn" data-real="${realIdx}" title="Send Now"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5l4 4 7-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ''}
                         <button class="row-action-btn row-edit-btn" data-real="${realIdx}" title="Edit"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9.5 2l1.5 1.5-8 8H1.5V10l8-8z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></button>
                         <button class="row-action-btn row-del-btn" data-real="${realIdx}" title="Delete"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2.5h3v1M10 3.5l-.5 7H3.5L3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                     </div></td>
@@ -433,6 +434,7 @@
                 cb.addEventListener('change', e => { contacts[parseInt(e.target.dataset.real)].selected = e.target.checked; updateBulkBar(); });
             });
             tbody.querySelectorAll('.row-edit-btn').forEach(btn => { btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.real))); });
+            tbody.querySelectorAll('.row-send-btn').forEach(btn => { btn.addEventListener('click', () => sendManualNow(parseInt(btn.dataset.real))); });
             tbody.querySelectorAll('.row-del-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const ri = parseInt(btn.dataset.real);
@@ -477,18 +479,29 @@
             if (!analyticsData || analyticsData.length === 0) return;
 
             let changed = false;
+            const now = Date.now();
 
             contacts.forEach(c => {
                 if (c.status === 'scheduled') {
                     const email = c.email.toLowerCase();
                     const schedTime = c.scheduledFor ? new Date(c.scheduledFor).getTime() : 0;
                     
-                    // Do not mark as sent if the scheduled time hasn't arrived yet
-                    if (schedTime > Date.now()) return;
+                    // 1. SAFETY: Never mark as sent if the scheduled time is in the future (plus 1min buffer)
+                    if (schedTime > (now + 60000)) return;
 
+                    // 2. RELAXED MATCH: Check if this email appears in analytics ledger 
+                    // AND occured at or after our scheduled time (or just anytime today for same vertical)
                     const isSent = analyticsData.some(e => {
-                        // Check if email exists in ledger AND the event occurred on or after the scheduled time
-                        return e.email.toLowerCase() === email && (!e.date || e.date >= schedTime - 300000);
+                        if (e.email.toLowerCase() !== email) return false;
+                        const eventTime = e.date ? new Date(e.date).getTime() : 0;
+                        if (!eventTime) return false; 
+                        
+                        // If it matches perfectly (post-schedule), it's sent
+                        const isAfterSchedule = eventTime >= (schedTime - 300000);
+                        // If it happened today for the SAME vertical, treat it as a manual send override
+                        const isSameVerticalToday = e.vertical === c.vertical && (now - eventTime) < 86400000;
+                        
+                        return isAfterSchedule || isSameVerticalToday;
                     });
                     
                     if (isSent) {
@@ -1409,6 +1422,42 @@
                 data.ok ? showToast(`Test sent to ${email}`, 'success') : showToast(`Send failed: ${data.error}`, 'error', 6000);
             } catch (e) { showToast('Could not reach backend - Network or CORS error', 'error'); }
         });
+
+        async function sendManualNow(ri) {
+            const contact = contacts[ri];
+            if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
+            if (contact.status === 'sent') return;
+
+            const tpl = templates[contact.vertical];
+            if (!tpl || !tpl.subject || !tpl.body) { showToast('No template saved for ' + contact.vertical, 'warning'); return; }
+
+            if (!confirm(`Are you sure you want to send the "${contact.vertical}" email to ${contact.email} immediately?`)) return;
+
+            showToast(`Initiating manual send to ${contact.name}...`, 'info');
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/send`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey }, 
+                    body: JSON.stringify({ 
+                        contact, 
+                        subject: tpl.subject, 
+                        body: tpl.body,
+                        followups: followupTemplates[contact.vertical] || [],
+                        signature: emailSignature
+                    }) 
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`Successfully sent! Status will update shortly.`, 'success');
+                    contact.status = 'sent';
+                    updateDashboard();
+                    updateStats();
+                    saveState();
+                } else {
+                    showToast(`Manual send failed: ${data.error}`, 'error', 7000);
+                }
+            } catch (e) { showToast('Could not reach backend', 'error'); }
+        }
 
         // ═══════════════════════════════════════════════
         // GMAIL CONNECTION
