@@ -244,12 +244,12 @@ module.exports = async (req, res) => {
             const job = await store.getJob(jobId);
             if (!job) return res.status(404).json({ ok: false, error: 'Job not found' });
             if (job.userId !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden' });
-            if (job.status === 'sent' || job.status === 'cancelled') {
-                return res.status(409).json({ ok: false, error: `Cannot reschedule a ${job.status} job` });
+            if (job.status === 'sent') {
+                return res.status(409).json({ ok: false, error: `Cannot reschedule a already sent job` });
             }
 
             job.scheduledFor = parseInt(newTimestamp, 10);
-            job.status = 'pending'; // In case it was failed, rescheduling sets it back to pending
+            job.status = 'pending'; // In case it was failed or cancelled, rescheduling sets it back to pending
             job.error = null;
             await store.updateJob(job);
 
