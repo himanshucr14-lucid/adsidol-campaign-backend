@@ -1080,7 +1080,7 @@
                     <td style="font-size:13px;">${formatDate(job.scheduledFor)}</td>
                     <td><span class="fu-status-badge fu-status-${job.status}">${job.status}</span></td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
-                        ${job.status === 'pending' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button><button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : '—'}
+                        ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button><button class="fu-send-now-btn" style="background:#F59E0B;" onclick="openRescheduleModal('${job.id}', ${job.scheduledFor}, ${job.step}, '${job.contact?.email}')">Reschedule</button><button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : '—'}
                     </td>
                 </tr>`).join('');
 
@@ -1212,6 +1212,58 @@
                 if (data.ok) { showToast('Follow-up cancelled', 'info'); loadFollowupDashboard(); }
             } catch (e) { showToast('Network error', 'error'); }
         };
+
+        window.openRescheduleModal = function (jobId, scheduledFor, step, email) {
+            document.getElementById('reschedJobId').value = jobId;
+            document.getElementById('reschedSubtitle').textContent = `Step ${step} for ${email}`;
+            
+            // Format current scheduledFor into local date/time inputs
+            const dateObj = new Date(scheduledFor);
+            const dateStr = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+            const timeStr = String(dateObj.getHours()).padStart(2, '0') + ':' + String(dateObj.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('reschedDate').value = dateStr;
+            document.getElementById('reschedTime').value = timeStr;
+            
+            document.getElementById('rescheduleModal').style.display = 'flex';
+        };
+
+        document.getElementById('reschedCancel').addEventListener('click', () => {
+            document.getElementById('rescheduleModal').style.display = 'none';
+        });
+
+        document.getElementById('reschedSave').addEventListener('click', async () => {
+            const jobId = document.getElementById('reschedJobId').value;
+            const dateVal = document.getElementById('reschedDate').value;
+            const timeVal = document.getElementById('reschedTime').value;
+            
+            if (!dateVal || !timeVal) { showToast('Please select both date and time', 'warning'); return; }
+            
+            const [y, m, d] = dateVal.split('-');
+            const [hr, min] = timeVal.split(':');
+            const newTimestamp = new Date(Date.parse(`${y}-${m}-${d}T${hr}:${min}:00`)).getTime();
+            
+            if (newTimestamp <= Date.now()) {
+                showToast('Scheduled time must be in the future', 'warning'); return;
+            }
+            
+            showToast('Rescheduling...', 'info');
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/followup?action=reschedule`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey }, 
+                    body: JSON.stringify({ jobId, newTimestamp }) 
+                });
+                const data = await res.json();
+                if (data.ok) { 
+                    showToast('Follow-up rescheduled!', 'success'); 
+                    document.getElementById('rescheduleModal').style.display = 'none';
+                    loadFollowupDashboard(); 
+                } else {
+                    showToast(`Error: ${data.error}`, 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        });
 
         document.getElementById('sendDueBtn').addEventListener('click', async () => {
             if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
