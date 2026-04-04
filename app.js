@@ -681,38 +681,38 @@
             const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime();
 
             // Filter data
-            const filtered = analyticsData.filter(e => {
+            const filtered = analyticsData.filter(entry => {
                 // Search filter
-                const nameStr = (e.name || '').toLowerCase();
-                const emailStr = (e.email || '').toLowerCase();
+                const nameStr = (entry.name || '').toLowerCase();
+                const emailStr = (entry.email || '').toLowerCase();
                 if (searchVal && !nameStr.includes(searchVal) && !emailStr.includes(searchVal)) return false;
                 
                 // Vertical filter
-                if (verticalVal && e.vertical !== verticalVal) return false;
+                if (verticalVal && entry.vertical !== verticalVal) return false;
                 
                 // Date filter
-                if (e.date && dateFilter !== 'all') {
-                    if (dateFilter === 'today' && e.date < today) return false;
-                    if (dateFilter === 'yesterday' && (e.date < yesterday || e.date >= today)) return false;
-                    if (dateFilter === '7days' && e.date < (now.getTime() - 7 * 86400000)) return false;
-                    if (dateFilter === '14days' && e.date < (now.getTime() - 14 * 86400000)) return false;
-                    if (dateFilter === '30days' && e.date < (now.getTime() - 30 * 86400000)) return false;
-                    if (dateFilter === 'thismonth' && e.date < startOfThisMonth) return false;
-                    if (dateFilter === 'lastmonth' && (e.date < startOfLastMonth || e.date > endOfLastMonth)) return false;
+                if (entry.date && dateFilter !== 'all') {
+                    if (dateFilter === 'today' && entry.date < today) return false;
+                    if (dateFilter === 'yesterday' && (entry.date < yesterday || entry.date >= today)) return false;
+                    if (dateFilter === '7days' && entry.date < (now.getTime() - 7 * 86400000)) return false;
+                    if (dateFilter === '14days' && entry.date < (now.getTime() - 14 * 86400000)) return false;
+                    if (dateFilter === '30days' && entry.date < (now.getTime() - 30 * 86400000)) return false;
+                    if (dateFilter === 'thismonth' && entry.date < startOfThisMonth) return false;
+                    if (dateFilter === 'lastmonth' && (entry.date < startOfLastMonth || entry.date > endOfLastMonth)) return false;
                     
                     if (dateFilter === 'custom') {
-                        const s = historyCalendar.startDate;
-                        const e = historyCalendar.endDate;
-                        if (s && e) {
-                            const startT = new Date(s).getTime();
-                            const endT = new Date(e);
+                        const startStr = historyCalendar.startDate;
+                        const endStr = historyCalendar.endDate;
+                        if (startStr && endStr) {
+                            const startT = new Date(startStr).getTime();
+                            const endT = new Date(endStr);
                             endT.setHours(23, 59, 59, 999);
-                            if (e.date < startT || e.date > endT.getTime()) return false;
-                        } else if (s) {
-                            const startT = new Date(s).getTime();
-                            const endT = new Date(s);
+                            if (entry.date < startT || entry.date > endT.getTime()) return false;
+                        } else if (startStr) {
+                            const startT = new Date(startStr).getTime();
+                            const endT = new Date(startStr);
                             endT.setHours(23,59,59,999);
-                            if (e.date < startT || e.date > endT.getTime()) return false;
+                            if (entry.date < startT || entry.date > endT.getTime()) return false;
                         }
                     }
                 }

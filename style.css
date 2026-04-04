@@ -2108,6 +2108,13 @@
             margin-right: 12px;
         }
 
+        /* Shared calendar wrapper to anchor popups to the trigger */
+        .adsidol-cal-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
         .fu-calendar-btn {
             padding: 8px 14px;
             white-space: nowrap;
