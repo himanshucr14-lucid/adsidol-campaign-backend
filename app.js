@@ -1130,11 +1130,36 @@
                 jobs = jobs.filter(j => j.status === window.fuStatusFilter);
             }
 
-            // Date Filter
+            // Date Filter (Custom single date)
             if (window.fuDateFilter) {
                 jobs = jobs.filter(j => {
                     const jobDate = new Date(j.scheduledFor).toISOString().split('T')[0];
                     return jobDate === window.fuDateFilter;
+                });
+            }
+
+            // Date Range Filter (Dropdown)
+            const rangeVal = document.getElementById('fuDateRangeFilter')?.value || 'all';
+            if (rangeVal !== 'all') {
+                const now = new Date();
+                const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                jobs = jobs.filter(j => {
+                    const jobDate = new Date(j.scheduledFor);
+                    const jTime = jobDate.getTime();
+                    const todayTime = todayMidnight.getTime();
+                    const diffDays = (jTime - todayTime) / (1000 * 60 * 60 * 24);
+
+                    if (rangeVal === 'today') {
+                        return diffDays >= 0 && diffDays < 1;
+                    } else if (rangeVal === 'next7') {
+                        return diffDays >= 0 && diffDays <= 7;
+                    } else if (rangeVal === 'next14') {
+                        return diffDays >= 0 && diffDays <= 14;
+                    } else if (rangeVal === 'thisMonth') {
+                        return jobDate.getMonth() === now.getMonth() && jobDate.getFullYear() === now.getFullYear();
+                    }
+                    return true;
                 });
             }
 
@@ -1151,7 +1176,7 @@
 
             const tbody = document.getElementById('fuJobTableBody');
             if (jobs.length === 0) {
-                const emptyMsg = window.fuDateFilter || fuSearchQuery ? 'No follow-ups match your criteria.' : 'No follow-ups scheduled yet.';
+                const emptyMsg = window.fuDateFilter || rangeVal !== 'all' || fuSearchQuery ? 'No follow-ups match your criteria.' : 'No follow-ups scheduled yet.';
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">${emptyMsg}</td></tr>`;
                 return;
             }

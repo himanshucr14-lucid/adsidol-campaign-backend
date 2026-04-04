@@ -785,9 +785,17 @@
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-light);">
                             <path d="M6 10.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9zM12.5 12.5L9.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <input type="text" id="searchFuJobs" placeholder="Search by name, company, or email..." class="input" style="padding-left:36px;background:var(--bg);border:1px solid var(--border);height:42px;width:100%;max-width:350px;">
+                        <input type="text" id="searchFuJobs" oninput="renderFuDashboard()" placeholder="Search by name, company, or email..." class="input" style="padding-left:36px;background:var(--bg);border:1px solid var(--border);height:42px;width:100%;max-width:350px;">
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
+                        <!-- Date Range Dropdown -->
+                        <select id="fuDateRangeFilter" onchange="renderFuDashboard()" style="height:42px; padding: 0 14px; border-radius:10px; border:1px solid var(--border); background:var(--card); font-family:'Outfit', sans-serif; font-size:13px; color:var(--text); cursor:pointer; min-width:130px;">
+                            <option value="all">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="next7">Next 7 Days</option>
+                            <option value="next14">Next 14 Days</option>
+                            <option value="thisMonth">This Month</option>
+                        </select>
                         <!-- Date Filter -->
                         <div class="fu-calendar-container">
                             <button class="fu-calendar-btn" id="fuCalendarBtn" onclick="toggleFuCalendar()" style="height:42px;">
