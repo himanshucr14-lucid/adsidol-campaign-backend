@@ -11,39 +11,39 @@
 // All requests require:  Header x-api-key: <founder's key>
 // Jobs are persistently stored in Upstash Redis via lib/store.js
 
-const { getOAuthClient, google }     = require('../lib/gmail');
+const { getOAuthClient, google } = require('../lib/gmail');
 const { buildRawEmail, personalise } = require('../lib/email');
 const USERS = [
     {
-        id:          'paramjit',
-        name:        'Paramjit',
+        id: 'paramjit',
+        name: 'Paramjit',
         senderEmail: 'Paramjit@adsidol.com',
-        get apiKey()       { return process.env.PARAMJIT_API_KEY; },
-        get accessToken()  { return process.env.PARAMJIT_ACCESS_TOKEN; },
+        get apiKey() { return process.env.PARAMJIT_API_KEY; },
+        get accessToken() { return process.env.PARAMJIT_ACCESS_TOKEN; },
         get refreshToken() { return process.env.PARAMJIT_REFRESH_TOKEN; },
     },
     {
-        id:          'moni',
-        name:        'Moni',
+        id: 'moni',
+        name: 'Moni',
         senderEmail: 'moni@adsidol.com',
-        get apiKey()       { return process.env.MONI_API_KEY; },
-        get accessToken()  { return process.env.MONI_ACCESS_TOKEN; },
+        get apiKey() { return process.env.MONI_API_KEY; },
+        get accessToken() { return process.env.MONI_ACCESS_TOKEN; },
         get refreshToken() { return process.env.MONI_REFRESH_TOKEN; },
     },
     {
-        id:          'ujjwal',
-        name:        'Ujjwal',
+        id: 'ujjwal',
+        name: 'Ujjwal',
         senderEmail: 'Ujjwal@adsidol.com',
-        get apiKey()       { return process.env.UJJWAL_API_KEY; },
-        get accessToken()  { return process.env.UJJWAL_ACCESS_TOKEN; },
+        get apiKey() { return process.env.UJJWAL_API_KEY; },
+        get accessToken() { return process.env.UJJWAL_ACCESS_TOKEN; },
         get refreshToken() { return process.env.UJJWAL_REFRESH_TOKEN; },
     },
     {
-        id:          'hemleta',
-        name:        'Hemleta',
+        id: 'hemleta',
+        name: 'Hemleta',
         senderEmail: 'Hemleta@adsidol.com',
-        get apiKey()       { return process.env.HEMLETA_API_KEY; },
-        get accessToken()  { return process.env.HEMLETA_ACCESS_TOKEN; },
+        get apiKey() { return process.env.HEMLETA_API_KEY; },
+        get accessToken() { return process.env.HEMLETA_ACCESS_TOKEN; },
         get refreshToken() { return process.env.HEMLETA_REFRESH_TOKEN; },
     },
 ];
@@ -78,18 +78,18 @@ async function executeJob(job) {
     const sender = getUserById(job.userId);
     if (!sender) throw new Error(`Unknown user: ${job.userId}`);
 
-    const auth  = getOAuthClient(sender);
+    const auth = getOAuthClient(sender);
     const gmail = google.gmail({ version: 'v1', auth });
 
     const raw = buildRawEmail({
-        name:       sender.name,
-        from:       sender.senderEmail,
-        to:         job.contact.email,
-        subject:    personalise(job.subject, job.contact),
-        body:       personalise(job.body, job.contact),
-        inReplyTo:  job.originalMessageId,
+        name: sender.name,
+        from: sender.senderEmail,
+        to: job.contact.email,
+        subject: personalise(job.subject, job.contact),
+        body: personalise(job.body, job.contact),
+        inReplyTo: job.originalMessageId,
         references: job.originalMessageId,
-        signature:  job.signature || null,
+        signature: job.signature || null,
     });
 
     const params = { userId: 'me', requestBody: { raw } };
@@ -111,25 +111,25 @@ module.exports = async (req, res) => {
 
         // ── LIST ─────────────────────────────────────────────────────────────────
         if (req.method === 'GET' && action === 'list') {
-            const all      = await store.getAllJobs();
+            const all = await store.getAllJobs();
             const userJobs = all.filter(j => j.userId === user.id);
             const vertical = req.query.vertical;
             return res.status(200).json({
-                ok:   true,
+                ok: true,
                 jobs: vertical ? userJobs.filter(j => j.contact.vertical === vertical) : userJobs,
             });
         }
 
         // ── STATS ─────────────────────────────────────────────────────────────────
         if (req.method === 'GET' && action === 'stats') {
-            const all      = await store.getAllJobs();
+            const all = await store.getAllJobs();
             const userJobs = all.filter(j => j.userId === user.id);
             const stats = {
-                total:      userJobs.length,
-                pending:    userJobs.filter(j => j.status === 'pending').length,
-                sent:       userJobs.filter(j => j.status === 'sent').length,
-                failed:     userJobs.filter(j => j.status === 'failed').length,
-                cancelled:  userJobs.filter(j => j.status === 'cancelled').length,
+                total: userJobs.length,
+                pending: userJobs.filter(j => j.status === 'pending').length,
+                sent: userJobs.filter(j => j.status === 'sent').length,
+                failed: userJobs.filter(j => j.status === 'failed').length,
+                cancelled: userJobs.filter(j => j.status === 'cancelled').length,
                 byVertical: {},
             };
             userJobs.forEach(j => {
@@ -150,12 +150,12 @@ module.exports = async (req, res) => {
             }
 
             // Cancel existing pending jobs for same contact + vertical + user
-            const allJobs     = await store.getAllJobs();
-            const toReplace   = allJobs.filter(
+            const allJobs = await store.getAllJobs();
+            const toReplace = allJobs.filter(
                 j => j.userId === user.id &&
-                     j.contact.email === contact.email &&
-                     j.contact.vertical === contact.vertical &&
-                     j.status === 'pending'
+                    j.contact.email === contact.email &&
+                    j.contact.vertical === contact.vertical &&
+                    j.status === 'pending'
             );
             for (const j of toReplace) {
                 j.status = 'cancelled';
@@ -165,24 +165,24 @@ module.exports = async (req, res) => {
                 console.log(`[${user.name}] Replaced ${toReplace.length} existing jobs for ${contact.email}`);
             }
 
-            const now     = Date.now();
+            const now = Date.now();
             const newJobs = followups.slice(0, 4).map((fu, i) => ({
-                id:                `fu_${now}_${i}_${Math.random().toString(36).slice(2, 7)}`,
-                userId:            user.id,
-                userName:          user.name,
-                step:              fu.step || (i + 1),
+                id: `fu_${now}_${i}_${Math.random().toString(36).slice(2, 7)}`,
+                userId: user.id,
+                userName: user.name,
+                step: fu.step || (i + 1),
                 contact,
-                subject:           fu.subject,
-                body:              fu.body,
-                delayDays:         fu.delayDays || (i + 1) * 3,
-                scheduledFor:      now + (fu.delayDays || (i + 1) * 3) * 86400000,
-                status:            'pending',
+                subject: fu.subject,
+                body: fu.body,
+                delayDays: fu.delayDays || (i + 1) * 3,
+                scheduledFor: now + (fu.delayDays || (i + 1) * 3) * 86400000,
+                status: 'pending',
                 originalMessageId: originalMessageId || null,
-                originalThreadId:  originalThreadId  || null,
-                sentAt:            null,
-                sentMessageId:     null,
-                error:             null,
-                createdAt:         now,
+                originalThreadId: originalThreadId || null,
+                sentAt: null,
+                sentMessageId: null,
+                error: null,
+                createdAt: now,
             }));
 
             for (const job of newJobs) await store.saveJob(job);
@@ -197,27 +197,27 @@ module.exports = async (req, res) => {
             if (!jobId) return res.status(400).json({ ok: false, error: 'Missing jobId' });
 
             const job = await store.getJob(jobId);
-            if (!job)                    return res.status(404).json({ ok: false, error: 'Job not found' });
-            if (job.userId !== user.id)  return res.status(403).json({ ok: false, error: 'Forbidden — not your job' });
-            if (job.status === 'sent')   return res.status(409).json({ ok: false, error: 'Already sent' });
+            if (!job) return res.status(404).json({ ok: false, error: 'Job not found' });
+            if (job.userId !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden — not your job' });
+            if (job.status === 'sent') return res.status(409).json({ ok: false, error: 'Already sent' });
             if (job.status === 'cancelled') return res.status(409).json({ ok: false, error: 'Job was cancelled' });
 
             try {
-                const result    = await executeJob(job);
-                job.status      = 'sent';
-                job.sentAt      = Date.now();
+                const result = await executeJob(job);
+                job.status = 'sent';
+                job.sentAt = Date.now();
                 job.sentMessageId = result.id;
                 await store.updateJob(job);
 
                 // ── LOG ANALYTICS (Permanent Cloud Ledger) ──
                 try {
                     await store.logEvent(user.id, {
-                        type:     'followup',
-                        date:     Date.now(),
-                        email:    job.contact.email,
+                        type: 'followup',
+                        date: Date.now(),
+                        email: job.contact.email,
                         vertical: job.contact.vertical,
-                        name:     job.contact.name || job.contact.first_name || 'Unknown',
-                        step:     job.step
+                        name: job.contact.name || job.contact.first_name || 'Unknown',
+                        step: job.step
                     });
                 } catch (logErr) {
                     console.error(`[Manual Analytics] Failed to log for ${job.contact.email}:`, logErr.message);
@@ -228,12 +228,33 @@ module.exports = async (req, res) => {
 
             } catch (err) {
                 job.status = 'failed';
-                job.error  = err.message;
+                job.error = err.message;
                 await store.updateJob(job);
                 const tokenExpired = err.message?.includes('invalid_grant');
                 if (tokenExpired) return res.status(401).json({ ok: false, error: 'Token expired', code: 'TOKEN_EXPIRED' });
                 return res.status(500).json({ ok: false, error: err.message });
             }
+        }
+
+        // ── RESCHEDULE ────────────────────────────────────────────────────────────
+        if (req.method === 'POST' && action === 'reschedule') {
+            const { jobId, newTimestamp } = req.body || {};
+            if (!jobId || !newTimestamp) return res.status(400).json({ ok: false, error: 'Missing jobId or newTimestamp' });
+
+            const job = await store.getJob(jobId);
+            if (!job) return res.status(404).json({ ok: false, error: 'Job not found' });
+            if (job.userId !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden' });
+            if (job.status === 'sent' || job.status === 'cancelled') {
+                return res.status(409).json({ ok: false, error: `Cannot reschedule a ${job.status} job` });
+            }
+
+            job.scheduledFor = parseInt(newTimestamp, 10);
+            job.status = 'pending'; // In case it was failed, rescheduling sets it back to pending
+            job.error = null;
+            await store.updateJob(job);
+
+            console.log(`[${user.name}] Rescheduled job ${jobId} to ${new Date(job.scheduledFor).toISOString()}`);
+            return res.status(200).json({ ok: true, rescheduledJob: job });
         }
 
         // ── CANCEL ────────────────────────────────────────────────────────────────
@@ -242,7 +263,7 @@ module.exports = async (req, res) => {
 
             if (jobId) {
                 const job = await store.getJob(jobId);
-                if (!job)                   return res.status(404).json({ ok: false, error: 'Job not found' });
+                if (!job) return res.status(404).json({ ok: false, error: 'Job not found' });
                 if (job.userId !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden' });
                 job.status = 'cancelled';
                 await store.updateJob(job);
