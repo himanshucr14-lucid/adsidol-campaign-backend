@@ -200,7 +200,6 @@ module.exports = async (req, res) => {
             if (!job) return res.status(404).json({ ok: false, error: 'Job not found' });
             if (job.userId !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden — not your job' });
             if (job.status === 'sent') return res.status(409).json({ ok: false, error: 'Already sent' });
-            if (job.status === 'cancelled') return res.status(409).json({ ok: false, error: 'Job was cancelled' });
 
             try {
                 const result = await executeJob(job);
