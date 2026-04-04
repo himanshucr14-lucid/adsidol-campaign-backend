@@ -1080,7 +1080,7 @@
                     <td style="font-size:13px;">${formatDate(job.scheduledFor)}</td>
                     <td><span class="fu-status-badge fu-status-${job.status}">${job.status}</span></td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
-                        ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button>` : ''}
+                        ${job.status === 'pending' || job.status === 'failed' || job.status === 'cancelled' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button>` : ''}
                         ${job.status === 'pending' || job.status === 'failed' || job.status === 'cancelled' ? `<button class="fu-send-now-btn" style="background:#F59E0B;" onclick="openRescheduleModal('${job.id}', ${job.scheduledFor}, ${job.step}, '${job.contact?.email}')">Reschedule</button>` : ''}
                         ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : ''}
                         ${job.status === 'sent' ? '—' : ''}
@@ -1221,7 +1221,12 @@
             document.getElementById('reschedSubtitle').textContent = `Step ${step} for ${email}`;
             
             // Format current scheduledFor into local date/time inputs
-            const dateObj = new Date(scheduledFor);
+            let timeToUse = scheduledFor;
+            if (timeToUse < Date.now()) {
+                timeToUse = Date.now() + 5 * 60000; // default to 5 minutes from now if the original was in the past
+            }
+            
+            const dateObj = new Date(timeToUse);
             const dateStr = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
             const timeStr = String(dateObj.getHours()).padStart(2, '0') + ':' + String(dateObj.getMinutes()).padStart(2, '0');
             
