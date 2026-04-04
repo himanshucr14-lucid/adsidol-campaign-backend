@@ -960,7 +960,7 @@
         }
 
         .table-controls {
-            padding: 20px 24px;
+            padding: 16px 24px;
             border-bottom: 1px solid var(--border);
             display: flex;
             gap: 12px;
@@ -1158,34 +1158,38 @@
         }
 
         /* Analytics Section */
+        #analyticsSection, #historySection {
+            padding: 24px 32px;
+        }
+
         .analytics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-            margin-top: 24px;
+            gap: 16px;
+            margin-top: 16px;
         }
 
         .analytics-card {
             background: linear-gradient(135deg, var(--card), var(--bg));
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 24px;
+            padding: 16px 20px;
         }
 
         .analytics-title {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-light);
             font-weight: 600;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .analytics-value {
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 800;
             color: var(--text);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .analytics-change {
