@@ -14,7 +14,13 @@ function cors(req, res) {
     if (origin.includes('adsidol.com') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
         res.setHeader('Access-Control-Allow-Origin', origin.replace(/\/$/, ""));
     } else {
-        res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+        // Secure Dynamic CORS for Adsidol
+    const reqOrigin = req.headers.origin || req.headers.referer || '';
+    if (reqOrigin.includes('adsidol.com') || reqOrigin.includes('localhost') || reqOrigin.includes('127.0.0.1')) {
+        res.setHeader('Access-Control-Allow-Origin', reqOrigin.replace(/\/$/, ""));
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://www.adsidol.com');
+    }
     }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-api-key');
@@ -32,7 +38,7 @@ module.exports = async (req, res) => {
         return res.status(401).json({ ok: false, error: 'Unauthorized — invalid or missing x-api-key' });
     }
 
-    const { contact, subject, body, followups } = req.body || {};
+    const { contact, subject, body, followups, signature } = req.body || {};
 
     if (!contact?.email || !subject || !body) {
         return res.status(400).json({
@@ -55,6 +61,7 @@ module.exports = async (req, res) => {
             to:      contact.email,
             subject: personalise(subject, contact),
             body:    personalise(body, contact),
+            signature,
         });
 
         const result = await gmail.users.messages.send({
@@ -111,6 +118,7 @@ module.exports = async (req, res) => {
                     contact,
                     subject:           fu.subject,
                     body:              fu.body,
+                    signature:         signature || null,
                     delayDays:         fu.delayDays || (i + 1) * 3,
                     scheduledFor:      now + (fu.delayDays || (i + 1) * 3) * 86400000,
                     status:            'pending',

@@ -89,6 +89,7 @@ async function executeJob(job) {
         body:       personalise(job.body, job.contact),
         inReplyTo:  job.originalMessageId,
         references: job.originalMessageId,
+        signature:  job.signature || null,
     });
 
     const params = { userId: 'me', requestBody: { raw } };
