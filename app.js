@@ -364,15 +364,27 @@
                     <td style="font-weight:600;">${escHtml(contact.name)}</td>
                     <td class="col-company">${escHtml(contact.company)}</td>
                     <td style="color:var(--blue-600);font-weight:600;">${escHtml(contact.vertical)}</td>
-                    <td style="color:var(--text-light);">${escHtml(contact.email)} ${contact.previouslySent ? '<span title="Previously contacted" style="cursor:help;font-size:12px;margin-left:4px;">⚠️</span>' : ''}</td>
-                    <td class="col-timezone">${escHtml(contact.location)}<span class="timezone-badge">${tzAbbr}</span></td>
+                    <td style="color:var(--text-light);">
+                        <div style="display:flex;align-items:center;flex-wrap:nowrap;">
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;" title="${escHtml(contact.email)}">${escHtml(contact.email)}</span>
+                            ${contact.previouslySent ? '<span title="Previously contacted" style="cursor:help;font-size:12px;margin-left:6px;flex-shrink:0;">⚠️</span>' : ''}
+                        </div>
+                    </td>
+                    <td class="col-timezone">
+                        <div style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;">
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;" title="${escHtml(contact.location)}">${escHtml(contact.location)}</span>
+                            <span class="timezone-badge" style="flex-shrink:0;">${tzAbbr}</span>
+                        </div>
+                    </td>
                     <td style="line-height:1.4;">
-                        <div style="font-weight:600;">${new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:2px;">(Local)</span></div>
-                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:10px;font-weight:700;opacity:0.6;">(IST)</span></div>
+                        <div style="font-weight:600;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:4px;">(Local)</span></div>
+                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:10px;font-weight:700;opacity:0.6;margin-left:4px;">(IST)</span></div>
                     </td>
                     <td>
-                        <span class="status status-${contact.status}"><span class="status-icon"></span>${contact.status}</span>
-                        ${hasFu ? `<span title="Follow-ups configured" style="margin-left:6px;display:inline-flex;align-items:center;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6h10M8 3l3 3-3 3" stroke="var(--blue-500)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : ''}
+                        <div style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;">
+                            <span class="status status-${contact.status}" style="flex-shrink:0;"><span class="status-icon"></span>${contact.status}</span>
+                            ${hasFu ? `<span title="Follow-ups configured" style="display:inline-flex;align-items:center;flex-shrink:0;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6h10M8 3l3 3-3 3" stroke="var(--blue-500)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : ''}
+                        </div>
                     </td>
                     <td><div class="row-actions">
                         <button class="row-action-btn row-edit-btn" data-real="${realIdx}" title="Edit"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9.5 2l1.5 1.5-8 8H1.5V10l8-8z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></button>
@@ -917,7 +929,7 @@
                         <div class="fu-step-num">F${fu.step}</div>
                         <div class="fu-step-info">
                             <div class="fu-step-title">Follow-up ${fu.step}</div>
-                            <div class="fu-step-meta">Sends ${fu.delayDays} day${fu.delayDays !== 1 ? 's' : ''} after initial email</div>
+                            <div class="fu-step-meta">Sends ${fu.delayDays} day${fu.delayDays !== 1 ? 's' : ''} after ${fu.step === 1 ? 'initial email' : 'previous follow-up'}</div>
                         </div>
                         <span class="fu-step-status ${isSaved ? 'saved' : 'unsaved'}">${isSaved ? 'Saved' : 'Not saved'}</span>
                         <svg class="fu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -967,7 +979,7 @@
             document.querySelectorAll(`#fuCard${idx} .fu-delay-btn`).forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.textContent) === days);
             });
-            document.querySelector(`#fuCard${idx} .fu-step-meta`).textContent = `Sends ${days} day${days !== 1 ? 's' : ''} after initial email`;
+            document.querySelector(`#fuCard${idx} .fu-step-meta`).textContent = `Sends ${days} day${days !== 1 ? 's' : ''} after ${idx === 0 ? 'initial email' : 'previous follow-up'}`;
         };
 
         window.updateFuPreview = function (idx) {
@@ -1069,20 +1081,34 @@
                 });
             }
 
+            // Search Filter
+            const fuSearchQuery = document.getElementById('searchFuJobs')?.value.toLowerCase() || '';
+            if (fuSearchQuery) {
+                jobs = jobs.filter(j => {
+                    const c = j.contact || {};
+                    return (c.name || '').toLowerCase().includes(fuSearchQuery) ||
+                           (c.email || '').toLowerCase().includes(fuSearchQuery) ||
+                           (c.company || '').toLowerCase().includes(fuSearchQuery);
+                });
+            }
+
             const tbody = document.getElementById('fuJobTableBody');
             if (jobs.length === 0) {
-                const emptyMsg = window.fuDateFilter ? 'No follow-ups scheduled for this date.' : 'No follow-ups scheduled yet.';
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">${emptyMsg}</td></tr>`;
+                const emptyMsg = window.fuDateFilter || fuSearchQuery ? 'No follow-ups match your criteria.' : 'No follow-ups scheduled yet.';
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">${emptyMsg}</td></tr>`;
                 return;
             }
-            tbody.innerHTML = jobs.map(job => `
+            tbody.innerHTML = jobs.map(job => {
+                const tz = job.contact?.timezone || detectTimezone(job.contact?.location || job.contact?.company || 'United States');
+                return `
                 <tr>
                     <td><strong>${escHtml(job.contact?.name || '')}</strong><br><span style="color:var(--text-muted);font-size:12px;">${escHtml(job.contact?.email || '')}</span></td>
+                    <td class="col-company" style="font-size:13px;">${escHtml(job.contact?.company || '—')}</td>
                     <td><span style="color:var(--blue-600);font-weight:600;font-size:12px;">${escHtml(job.contact?.vertical || '')}</span></td>
                     <td><div style="width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--blue-500),var(--indigo-500));display:inline-flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;">F${job.step}</div></td>
                     <td style="line-height:1.4;">
-                        <div style="font-weight:600;">${new Intl.DateTimeFormat('en-US', { timeZone: job.contact?.timezone || 'UTC', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(job.scheduledFor))} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:2px;">(Local)</span></div>
-                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(job.scheduledFor))} <span style="font-size:10px;font-weight:700;opacity:0.6;">(IST)</span></div>
+                        <div style="font-weight:600;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: tz, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(job.scheduledFor))} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:4px;">(Local)</span></div>
+                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(job.scheduledFor))} <span style="font-size:10px;font-weight:700;opacity:0.6;margin-left:4px;">(IST)</span></div>
                     </td>
                     <td><span class="fu-status-badge fu-status-${job.status}">${job.status}</span></td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1091,7 +1117,8 @@
                         ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : ''}
                         ${job.status === 'sent' ? '—' : ''}
                     </td>
-                </tr>`).join('');
+                </tr>`;
+            }).join('');
 
             if (typeof updateAdvancedAnalytics === 'function') updateAdvancedAnalytics();
             if (document.getElementById('fuCalendarPopup')?.style.display === 'block') renderFuCalendar();
