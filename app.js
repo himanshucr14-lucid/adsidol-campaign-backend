@@ -484,7 +484,8 @@
             contacts.forEach(c => {
                 if (c.status === 'scheduled') {
                     const email = c.email.toLowerCase();
-                    const schedTime = c.scheduledFor ? new Date(c.scheduledFor).getTime() : 0;
+                    if (!c.scheduledFor) return; 
+                    const schedTime = new Date(c.scheduledFor).getTime();
                     
                     // 1. SAFETY: Never mark as sent if the scheduled time is in the future (plus 1min buffer)
                     if (schedTime > (now + 60000)) return;
@@ -786,7 +787,13 @@
             updateDashboard(); updateStats(); showToast(`Deleted ${count} contact${count !== 1 ? 's' : ''}`, 'success'); saveState();
         });
         document.getElementById('bulkSchedule').addEventListener('click', () => {
-            const sel = contacts.filter(c => c.selected); sel.forEach(c => { c.status = 'scheduled'; c.selected = false; });
+            const sendTime = document.getElementById('sendTime').value;
+            const sel = contacts.filter(c => c.selected); 
+            sel.forEach(c => { 
+                c.status = 'scheduled'; 
+                c.scheduledFor = calculateSendTime(c, sendTime);
+                c.selected = false; 
+            });
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); showToast(`${sel.length} marked as scheduled`, 'warning'); saveState();
         });
         document.getElementById('bulkPending').addEventListener('click', () => {
