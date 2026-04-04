@@ -12,6 +12,136 @@
             { id: 'ujjwal', name: 'Ujjwal', email: 'Ujjwal@adsidol.com' },
             { id: 'hemleta', name: 'Hemleta', email: 'Hemleta@adsidol.com' },
         ];
+ 
+        // ═══════════════════════════════════════════════
+        // UNIFIED CALENDAR SYSTEM
+        // ═══════════════════════════════════════════════
+        class AdsidolCalendar {
+            constructor(opts) {
+                this.popupId = opts.popupId;
+                this.gridId = opts.gridId;
+                this.titleId = opts.titleId;
+                this.labelId = opts.labelId;
+                this.triggerId = opts.triggerId;
+                this.onSelect = opts.onSelect;
+                this.getCounts = opts.getCounts || (() => ({}));
+                
+                this.viewDate = new Date();
+                this.startDate = null; // YYYY-MM-DD
+                this.endDate = null;   // YYYY-MM-DD
+                
+                this.initOutsideClick();
+            }
+
+            get popup() { return document.getElementById(this.popupId); }
+            get grid() { return document.getElementById(this.gridId); }
+            get title() { return document.getElementById(this.titleId); }
+            get label() { return document.getElementById(this.labelId); }
+            get trigger() { return document.getElementById(this.triggerId); }
+
+            initOutsideClick() {
+                document.addEventListener('mousedown', (e) => {
+                    const p = this.popup;
+                    if (p && p.style.display === 'block') {
+                        const container = p.closest('.adsidol-cal-container');
+                        if (container && !container.contains(e.target)) this.close();
+                    }
+                });
+            }
+
+            toggle() {
+                const p = this.popup;
+                if (!p) return;
+                const isVisible = p.style.display === 'block';
+                if (isVisible) this.close(); else this.open();
+            }
+
+            open() {
+                const p = this.popup;
+                if (!p) return;
+                p.style.display = 'block';
+                this.trigger?.classList.add('active');
+                this.render();
+            }
+
+            close() {
+                const p = this.popup;
+                if (!p) return;
+                p.style.display = 'none';
+                this.trigger?.classList.remove('active');
+            }
+
+            changeMonth(delta) {
+                this.viewDate.setMonth(this.viewDate.getMonth() + delta);
+                this.render();
+            }
+
+            setRange(start, end) {
+                this.startDate = start;
+                this.endDate = end;
+                this.updateLabel();
+                this.render();
+                if (this.onSelect) this.onSelect();
+            }
+
+            setToToday() {
+                const today = new Date().toISOString().split('T')[0];
+                this.viewDate = new Date();
+                this.setRange(today, null);
+                this.close();
+            }
+
+            updateLabel() {
+                if (!this.label) return;
+                if (!this.startDate) {
+                    this.label.textContent = 'Select Range';
+                    return;
+                }
+                const fmt = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                if (!this.endDate) {
+                    this.label.textContent = fmt(this.startDate);
+                } else {
+                    this.label.textContent = `${fmt(this.startDate)} - ${fmt(this.endDate)}`;
+                }
+            }
+
+            render() {
+                const g = this.grid;
+                const t = this.title;
+                if (!g || !t) return;
+                const year = this.viewDate.getFullYear();
+                const month = this.viewDate.getMonth();
+                const counts = this.getCounts();
+
+                t.textContent = this.viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="adsidol-cal-day-name">${d}</div>`).join('');
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const prevMonthDays = new Date(year, month, 0).getDate();
+
+                for (let i = firstDay - 1; i >= 0; i--) html += `<div class="adsidol-cal-day other-month">${prevMonthDays - i}</div>`;
+
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const count = counts[dateStr] || 0;
+                    const isToday = dateStr === todayStr;
+                    const isSelected = dateStr === this.startDate || dateStr === this.endDate;
+                    const inRange = this.startDate && this.endDate && dateStr > this.startDate && dateStr < this.endDate;
+
+                    html += `
+                        <div class="adsidol-cal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${inRange ? 'in-range' : ''}" 
+                             onclick="window.${this.triggerId === 'fuCalendarBtn' ? 'handleFuDateClick' : 'handleHistDateClick'}('${dateStr}')">
+                            ${d}
+                            ${count > 0 ? `<span class="adsidol-cal-count">${count}</span>` : ''}
+                        </div>`;
+                }
+                g.innerHTML = html;
+            }
+        }
+
 
         // Current session user — loaded from sessionStorage
         let currentUser = null;
@@ -1242,122 +1372,9 @@
             }).join('');
 
             if (typeof updateAdvancedAnalytics === 'function') updateAdvancedAnalytics();
-            if (document.getElementById('fuCalendarPopup')?.style.display === 'block') renderFuCalendar();
+            if (document.getElementById('fuCalendarPopup')?.style.display === 'block') fuCalendar.render();
         }
 
-        // ═══════════════════════════════════════════════
-        // ═══════════════════════════════════════════════
-        // UNIFIED CALENDAR SYSTEM
-        // ═══════════════════════════════════════════════
-        class AdsidolCalendar {
-            constructor(opts) {
-                this.popup = document.getElementById(opts.popupId);
-                this.grid = document.getElementById(opts.gridId);
-                this.title = document.getElementById(opts.titleId);
-                this.label = document.getElementById(opts.labelId);
-                this.trigger = document.getElementById(opts.triggerId);
-                this.onSelect = opts.onSelect;
-                this.getCounts = opts.getCounts || (() => ({}));
-                
-                this.viewDate = new Date();
-                this.startDate = null; // YYYY-MM-DD
-                this.endDate = null;   // YYYY-MM-DD
-                
-                this.initOutsideClick();
-            }
-
-            initOutsideClick() {
-                document.addEventListener('mousedown', (e) => {
-                    if (this.popup.style.display === 'block') {
-                        const container = this.popup.closest('.adsidol-cal-container');
-                        if (container && !container.contains(e.target)) this.close();
-                    }
-                });
-            }
-
-            toggle() {
-                const isVisible = this.popup.style.display === 'block';
-                if (isVisible) this.close(); else this.open();
-            }
-
-            open() {
-                this.popup.style.display = 'block';
-                this.trigger.classList.add('active');
-                this.render();
-            }
-
-            close() {
-                this.popup.style.display = 'none';
-                this.trigger.classList.remove('active');
-            }
-
-            changeMonth(delta) {
-                this.viewDate.setMonth(this.viewDate.getMonth() + delta);
-                this.render();
-            }
-
-            setRange(start, end) {
-                this.startDate = start;
-                this.endDate = end;
-                this.updateLabel();
-                this.render();
-                if (this.onSelect) this.onSelect();
-            }
-
-            setToToday() {
-                const today = new Date().toISOString().split('T')[0];
-                this.viewDate = new Date();
-                this.setRange(today, null);
-                this.close();
-            }
-
-            updateLabel() {
-                if (!this.startDate) {
-                    this.label.textContent = 'Select Range';
-                    return;
-                }
-                const fmt = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                if (!this.endDate) {
-                    this.label.textContent = fmt(this.startDate);
-                } else {
-                    this.label.textContent = `${fmt(this.startDate)} - ${fmt(this.endDate)}`;
-                }
-            }
-
-            render() {
-                if (!this.grid || !this.title) return;
-                const year = this.viewDate.getFullYear();
-                const month = this.viewDate.getMonth();
-                const counts = this.getCounts();
-
-                this.title.textContent = this.viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-                let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="adsidol-cal-day-name">${d}</div>`).join('');
-                const firstDay = new Date(year, month, 1).getDay();
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const prevMonthDays = new Date(year, month, 0).getDate();
-
-                for (let i = firstDay - 1; i >= 0; i--) html += `<div class="adsidol-cal-day other-month">${prevMonthDays - i}</div>`;
-
-                const todayStr = new Date().toISOString().split('T')[0];
-
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const count = counts[dateStr] || 0;
-                    const isToday = dateStr === todayStr;
-                    const isSelected = dateStr === this.startDate || dateStr === this.endDate;
-                    const inRange = this.startDate && this.endDate && dateStr > this.startDate && dateStr < this.endDate;
-
-                    html += `
-                        <div class="adsidol-cal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${inRange ? 'in-range' : ''}" 
-                             onclick="window.${this.trigger.id === 'fuCalendarBtn' ? 'handleFuDateClick' : 'handleHistDateClick'}('${dateStr}')">
-                            ${d}
-                            ${count > 0 ? `<span class="adsidol-cal-count">${count}</span>` : ''}
-                        </div>`;
-                }
-                this.grid.innerHTML = html;
-            }
-        }
 
         // --- Follow-up Calendar Logic ---
         window.fuCalendar = new AdsidolCalendar({
