@@ -629,108 +629,7 @@
                 </div>
             </div>
 
-            <!-- Follow-up Dashboard -->
-            <div class="followup-dashboard" id="followupDashboard">
-                <div class="followup-dashboard-title">
-                    <span class="icon-3d icon-3d-indigo" style="width:36px;height:36px;border-radius:10px;">
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                            <path d="M2 9h14M12 5l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                    </span>
-                    Follow-up Queue
-                </div>
-                <div class="fu-stats-row" id="fuStatsRow"></div>
-                <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
-                    <!-- Date Filter -->
-                    <div class="fu-calendar-container">
-                        <button class="fu-calendar-btn" id="fuCalendarBtn" onclick="toggleFuCalendar()">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <rect x="2" y="3" width="10" height="9" rx="2" stroke="currentColor" stroke-width="1.4" />
-                                <path d="M4 2v2M10 2v2M2 6h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-                            </svg>
-                            <span id="fuDateLabel">Filter by Date</span>
-                        </button>
-                        <div class="fu-calendar-popup" id="fuCalendarPopup">
-                            <div class="cal-header">
-                                <button class="cal-nav-btn" onclick="changeFuMonth(-1)">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                        <path d="M8 10L4 6l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                </button>
-                                <div class="cal-month-title" id="calMonthTitle">April 2026</div>
-                                <button class="cal-nav-btn" onclick="changeFuMonth(1)">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                        <path d="M4 10l4-4-4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="cal-grid" id="calGrid">
-                                <!-- JS Injected Content -->
-                            </div>
-                            <div class="cal-footer">
-                                <button class="cal-clear-btn" onclick="setFuDateFilter(null)">
-                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                        <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                                    </svg>
-                                    Reset
-                                </button>
-                                <button class="cal-today-btn" onclick="setFuDateToToday()">Today</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <select id="fuStepFilter" onchange="renderFuDashboard()"
-                        style="padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; cursor: pointer; min-width: 160px;">
-                        <option value="all">All Follow-ups (F1-F4)</option>
-                        <option value="1">Step F1 Only</option>
-                        <option value="2">Step F2 Only</option>
-                        <option value="3">Step F3 Only</option>
-                        <option value="4">Step F4 Only</option>
-                    </select>
-                </div>
-                <div class="table-container">
-                    <table class="fu-job-table">
-                        <thead>
-                            <tr>
-                                <th>Contact</th>
-                                <th>Vertical</th>
-                                <th>Step</th>
-                                <th>Scheduled For</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fuJobTableBody">
-                            <tr>
-                                <td colspan="6"
-                                    style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">No
-                                    follow-ups scheduled yet. Schedule a campaign to auto-queue follow-ups.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="btn-group" style="margin-top:16px;">
-                    <button class="btn btn-primary" id="sendDueBtn"
-                        style="display:inline-flex;align-items:center;gap:8px;">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M2 7h10M9 4l3 3-3 3" stroke="white" stroke-width="1.5" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                        Send All Due Now
-                    </button>
-                    <button class="btn btn-secondary" id="refreshFuBtn"
-                        style="display:inline-flex;align-items:center;gap:8px;">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path
-                                d="M2 7a5 5 0 015-5 5 5 0 014.5 2.8M12 7a5 5 0 01-5 5 5 5 0 01-4.5-2.8M2 2v3h3M12 12v-3h-3"
-                                stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                        Refresh
-                    </button>
-                </div>
-            </div>
+            
         </div>
 
 
@@ -871,6 +770,113 @@
                 </button>
             </div>
         </div>
+
+        <!-- Follow-up Queue Section -->
+<!-- Follow-up Dashboard -->
+            <div class="card" id="followupDashboard">
+                <div class="card-header">
+<h2 class="card-title">
+<span class="step-badge"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9h14M12 5l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg></span>Follow-up Queue</h2>
+<div class="card-subtitle">Monitor and manage scheduled follow-ups</div>
+</div>
+                <div class="fu-stats-row" id="fuStatsRow"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
+                    <div style="position:relative; flex:1; min-width:250px;">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-light);">
+                            <path d="M6 10.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9zM12.5 12.5L9.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <input type="text" id="searchFuJobs" placeholder="Search by name, company, or email..." class="input" style="padding-left:36px;background:var(--bg);border:1px solid var(--border);height:42px;width:100%;max-width:350px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <!-- Date Filter -->
+                        <div class="fu-calendar-container">
+                            <button class="fu-calendar-btn" id="fuCalendarBtn" onclick="toggleFuCalendar()" style="height:42px;">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                    <rect x="2" y="3" width="10" height="9" rx="2" stroke="currentColor" stroke-width="1.4" />
+                                    <path d="M4 2v2M10 2v2M2 6h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                                </svg>
+                                <span id="fuDateLabel">Filter by Date</span>
+                            </button>
+                            <div class="fu-calendar-popup" id="fuCalendarPopup">
+                                <div class="cal-header">
+                                    <button class="cal-nav-btn" onclick="changeFuMonth(-1)">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                            <path d="M8 10L4 6l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </button>
+                                    <div class="cal-month-title" id="calMonthTitle">April 2026</div>
+                                    <button class="cal-nav-btn" onclick="changeFuMonth(1)">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                            <path d="M4 10l4-4-4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="cal-grid" id="calGrid">
+                                    <!-- JS Injected Content -->
+                                </div>
+                                <div class="cal-footer">
+                                    <button class="cal-clear-btn" onclick="setFuDateFilter(null)">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                            <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                        </svg>
+                                        Reset
+                                    </button>
+                                    <button class="cal-today-btn" onclick="setFuDateToToday()">Today</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="fuStepWidgets" class="fu-step-widgets">
+                            <button class="fu-widget active" data-step="1">F1</button>
+                            <button class="fu-widget active" data-step="2">F2</button>
+                            <button class="fu-widget active" data-step="3">F3</button>
+                            <button class="fu-widget active" data-step="4">F4</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="fu-job-table">
+                        <thead>
+                            <tr>
+                                <th>Contact</th>
+                                <th class="col-company">Company</th>
+                                <th>Vertical</th>
+                                <th>Step</th>
+                                <th>Scheduled For</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fuJobTableBody">
+                            <tr>
+                                <td colspan="6"
+                                    style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">No
+                                    follow-ups scheduled yet. Schedule a campaign to auto-queue follow-ups.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="btn-group" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="sendDueBtn"
+                        style="display:inline-flex;align-items:center;gap:8px;">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 7h10M9 4l3 3-3 3" stroke="white" stroke-width="1.5" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        Send All Due Now
+                    </button>
+                    <button class="btn btn-secondary" id="refreshFuBtn"
+                        style="display:inline-flex;align-items:center;gap:8px;">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path
+                                d="M2 7a5 5 0 015-5 5 5 0 014.5 2.8M12 7a5 5 0 01-5 5 5 5 0 01-4.5-2.8M2 2v3h3M12 12v-3h-3"
+                                stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
 
         <!-- Analytics Section -->
         <div class="card" id="analyticsSection" style="display: none;">

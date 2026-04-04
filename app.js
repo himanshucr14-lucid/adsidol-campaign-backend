@@ -101,7 +101,7 @@
             } catch (e) { console.error('Failed to load templates from cloud:', e); }
         }
         async function saveContactsToCloud() {
-            if (!currentApiKey || contacts.length === 0) return;
+            if (!currentApiKey) return;
             try {
                 const res = await fetch(`${BACKEND_URL}/api/contacts`, {
                     method: 'POST',
@@ -383,6 +383,7 @@
         // ═══════════════════════════════════════════════
         function updateDashboard() {
             const tbody = document.getElementById('campaignTableBody');
+            updateBulkBar();
             if (filteredContacts.length === 0) {
                 const first = contacts.length === 0;
                 tbody.innerHTML = first
@@ -1100,9 +1101,9 @@
 
         function renderFuDashboard() {
             let jobs = fuJobs;
-            const filterVal = document.getElementById('fuStepFilter')?.value || 'all';
-            if (filterVal !== 'all') {
-                jobs = fuJobs.filter(j => j.step === parseInt(filterVal));
+            const activeSteps = Array.from(document.querySelectorAll('.fu-widget.active')).map(w => parseInt(w.dataset.step));
+            if (activeSteps.length < 4) {
+                jobs = fuJobs.filter(j => activeSteps.includes(j.step));
             }
 
             // Stats
@@ -1977,4 +1978,14 @@
             
             // Start polling if session is already active
             if (currentApiKey) startPolling();
+
+            // Follow-up Widgets Interactivity
+            document.querySelectorAll('.fu-widget').forEach(w => {
+                w.addEventListener('click', () => {
+                    w.classList.toggle('active');
+                    // Ensure at least one is selected
+                    if (!document.querySelector('.fu-widget.active')) w.classList.add('active');
+                    renderFuDashboard();
+                });
+            });
         })();
