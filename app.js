@@ -49,7 +49,7 @@
         function saveState() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    contacts, templates, followupTemplates, darkMode,
+                    contacts, templates, followupTemplates, darkMode, emailSignature,
                     sendTime: document.getElementById('sendTime').value,
                     sendLimit: document.getElementById('sendLimit').value,
                     sendInterval: document.getElementById('sendInterval') ? document.getElementById('sendInterval').value : '15',
@@ -210,6 +210,9 @@
             ];
         });
 
+        // Email signature — appended to every automated email & follow-up
+        let emailSignature = { name: '', title: '', email: '', linkedin: '', teams: '', website: '' };
+
         // ═══════════════════════════════════════════════
         // TIMEZONE MAP
         // ═══════════════════════════════════════════════
@@ -306,7 +309,6 @@
                 filteredContacts = [...contacts];
                 updateDashboard(); updateStats();
                 document.getElementById('scheduleBtn').disabled = false;
-                showColumnPreview(result.headers, result.sample);
                 showToast(`${contacts.length} contacts loaded from ${file.name}`, 'success');
                 saveState();
             };
@@ -338,21 +340,6 @@
             const repeats = newContacts.filter(c => c.previouslySent).length;
             const sample = lines[1]?.split(',').map(v => v.trim().replace(/^["']|["']$/g, '')) || [];
             return { ok: true, headers: lines[0].split(',').map(h => h.trim()), sample, duplicates, repeats };
-        }
-
-        function showColumnPreview(headers, sample) {
-            const expected = ['Name', 'Company', 'Vertical', 'Email', 'Location'];
-            const container = document.getElementById('csvColumnPreview');
-            if (!container) return;
-            container.innerHTML = `<div class="csv-col-header">Column Detection</div>` +
-                expected.map((col, i) => {
-                    const ok = headers[i] && headers[i].toLowerCase().includes(col.toLowerCase());
-                    return `<div class="csv-col-row"><span class="csv-col-name">${col}</span><span class="csv-col-sample">${sample[i] || '—'}</span><span class="csv-col-status">${ok
-                        ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" fill="#10B981"/><path d="M5 8l2 2 4-4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-                        : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14.5 13H1.5L8 2z" fill="#F59E0B"/><path d="M8 6.5v3M8 11v.5" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>'
-                        }</span></div>`;
-                }).join('');
-            container.style.display = 'block';
         }
 
         // ═══════════════════════════════════════════════
@@ -753,6 +740,7 @@
                 const which = tab.dataset.tab;
                 document.getElementById('tabInitial').style.display = which === 'initial' ? 'block' : 'none';
                 document.getElementById('tabFollowups').style.display = which === 'followups' ? 'block' : 'none';
+                document.getElementById('tabSignature').style.display = which === 'signature' ? 'block' : 'none';
                 if (which === 'followups' && currentEditingVertical) renderFollowupSteps(currentEditingVertical);
             });
         });
@@ -762,19 +750,96 @@
         // ═══════════════════════════════════════════════
         function formatEmailPreview(text) {
             if (!text) return '';
-            // Match backend logic v2.2: Split by double-newlines, filter empty, wrap in paragraphs
+            // Match backend logic: split by double-newlines, parse **bold**, wrap in <p>
             return text.trim().split(/\n\s*\n/).filter(p => p.trim()).map(para => {
-                const cleanPara = para.trim().replace(/\r?\n/g, '<br>');
+                const cleanPara = para.trim()
+                    .replace(/\r?\n/g, '<br>')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
                 return `<p style="margin: 0 0 10px 0; padding: 0; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.5; color: #334155;">${cleanPara}</p>`;
             }).join('');
         }
 
+        function buildSignaturePreviewHtml() {
+            if (!emailSignature.name) return '';
+            const rows = [];
+            if (emailSignature.email)    rows.push(`<div class="sig-contact-row"><span class="sig-contact-label">Mail</span><span class="sig-contact-val"><a href="mailto:${emailSignature.email}">${emailSignature.email}</a></span></div>`);
+            if (emailSignature.linkedin) rows.push(`<div class="sig-contact-row"><span class="sig-contact-label">LinkedIn</span><span class="sig-contact-val"><a href="${emailSignature.linkedin}" target="_blank">${emailSignature.linkedin}</a></span></div>`);
+            if (emailSignature.teams)    rows.push(`<div class="sig-contact-row"><span class="sig-contact-label">Teams</span><span class="sig-contact-val"><a href="${emailSignature.teams}" target="_blank">${emailSignature.teams}</a></span></div>`);
+            if (emailSignature.website)  rows.push(`<div class="sig-contact-row"><span class="sig-contact-label">Website</span><span class="sig-contact-val"><a href="${emailSignature.website}" target="_blank">${emailSignature.website}</a></span></div>`);
+            return `<div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--border);">
+                <p class="sig-name" style="font-weight:700;margin:0 0 2px 0;">${escHtml(emailSignature.name)}</p>
+                <p class="sig-title-text" style="margin:0 0 12px 0;font-size:13px;color:var(--text-light);">${escHtml(emailSignature.title||'')}</p>
+                ${rows.join('')}
+            </div>`;
+        }
+
         function renderPreview(subject, body) {
             document.getElementById('previewSubject').innerHTML = subject ? personalisePreview(subject) : '<em style="opacity:0.4">Subject here…</em>';
-            document.getElementById('previewBody').innerHTML = formatEmailPreview(body) || '<em style="opacity:0.4">Body here…</em>';
+            const bodyHtml = formatEmailPreview(body) || '<em style="opacity:0.4">Body here…</em>';
+            document.getElementById('previewBody').innerHTML = bodyHtml + buildSignaturePreviewHtml();
         }
         document.getElementById('subjectLine').addEventListener('input', () => renderPreview(document.getElementById('subjectLine').value, document.getElementById('emailBody').value));
         document.getElementById('emailBody').addEventListener('input', () => renderPreview(document.getElementById('subjectLine').value, document.getElementById('emailBody').value));
+
+        // ── BOLD BUTTON ──────────────────────────────────────────────────────────
+        function applyBold(textarea) {
+            const start = textarea.selectionStart;
+            const end   = textarea.selectionEnd;
+            if (start === end) { showToast('Select some text first, then click Bold', 'info', 2500); return; }
+            const selected = textarea.value.substring(start, end);
+            // Toggle: remove ** if already bold, otherwise add
+            if (selected.startsWith('**') && selected.endsWith('**') && selected.length > 4) {
+                textarea.setRangeText(selected.slice(2, -2), start, end, 'select');
+            } else {
+                textarea.setRangeText(`**${selected}**`, start, end, 'select');
+            }
+            textarea.dispatchEvent(new Event('input'));
+        }
+        document.getElementById('boldBtn').addEventListener('click', () => applyBold(document.getElementById('emailBody')));
+        document.getElementById('emailBody').addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                applyBold(document.getElementById('emailBody'));
+            }
+        });
+
+        // ── SIGNATURE EDITOR ─────────────────────────────────────────────────────
+        function updateSignaturePreview() {
+            const el = document.getElementById('signaturePreview');
+            if (!el) return;
+            el.innerHTML = emailSignature.name
+                ? buildSignaturePreviewHtml()
+                : '<em style="opacity:0.4">Fill in your details to preview the signature...</em>';
+        }
+        document.getElementById('saveSignatureBtn').addEventListener('click', () => {
+            emailSignature = {
+                name:     document.getElementById('sigName').value.trim(),
+                title:    document.getElementById('sigTitle').value.trim(),
+                email:    document.getElementById('sigEmail').value.trim(),
+                linkedin: document.getElementById('sigLinkedin').value.trim(),
+                teams:    document.getElementById('sigTeams').value.trim(),
+                website:  document.getElementById('sigWebsite').value.trim(),
+            };
+            saveState();
+            updateSignaturePreview();
+            renderPreview(document.getElementById('subjectLine').value, document.getElementById('emailBody').value);
+            showToast('Signature saved — it will be appended to all emails you send.', 'success');
+        });
+        // Live preview while typing
+        ['sigName','sigTitle','sigEmail','sigLinkedin','sigTeams','sigWebsite'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', () => {
+                emailSignature = {
+                    name:     document.getElementById('sigName').value.trim(),
+                    title:    document.getElementById('sigTitle').value.trim(),
+                    email:    document.getElementById('sigEmail').value.trim(),
+                    linkedin: document.getElementById('sigLinkedin').value.trim(),
+                    teams:    document.getElementById('sigTeams').value.trim(),
+                    website:  document.getElementById('sigWebsite').value.trim(),
+                };
+                updateSignaturePreview();
+            });
+        });
 
         document.querySelectorAll('.template-card').forEach(card => {
             card.addEventListener('click', () => {
@@ -791,6 +856,7 @@
                 document.querySelector('.tpl-tab[data-tab="initial"]').classList.add('active');
                 document.getElementById('tabInitial').style.display = 'block';
                 document.getElementById('tabFollowups').style.display = 'none';
+                document.getElementById('tabSignature').style.display = 'none';
 
                 renderPreview(templates[currentEditingVertical].subject, templates[currentEditingVertical].body);
                 updateFuCountBadge(currentEditingVertical);
@@ -1340,6 +1406,7 @@
                     scheduledFor: contact.scheduledFor,
                     subject: tpl.subject,
                     body: tpl.body,
+                    signature: emailSignature.name ? emailSignature : null,
                     followups: followups
                 };
             });
@@ -1499,11 +1566,11 @@
         // ═══════════════════════════════════════════════
         (function restoreState() {
             const saved = loadState();
-            const tomorrow = new Date(Date.now() + 86400000);
-            document.getElementById('startDate').valueAsDate = tomorrow;
+            const today = new Date();
+            document.getElementById('startDate').valueAsDate = today;
             
             // Initialization Phase: UI update only (no saveState while still loading)
-            syncDate(tomorrow.toISOString().split('T')[0], true);
+            syncDate(today.toISOString().split('T')[0], true);
             syncTime('11:15', true); 
             syncLimit(50, true);
             if (document.getElementById('sendInterval')) syncInterval(15, true);
@@ -1517,7 +1584,17 @@
             if (saved.sendTime) { document.getElementById('sendTime').value = saved.sendTime; syncTime(saved.sendTime); }
             if (saved.sendLimit) { document.getElementById('sendLimit').value = saved.sendLimit; syncLimit(saved.sendLimit); }
             if (saved.sendInterval && document.getElementById('sendInterval')) { document.getElementById('sendInterval').value = saved.sendInterval; syncInterval(saved.sendInterval); }
-            if (saved.startDate) { document.getElementById('startDate').value = saved.startDate; syncDate(saved.startDate); }
+            // Restore email signature
+            if (saved.emailSignature) {
+                emailSignature = { ...emailSignature, ...saved.emailSignature };
+                const fieldMap = { name:'sigName', title:'sigTitle', email:'sigEmail', linkedin:'sigLinkedin', teams:'sigTeams', website:'sigWebsite' };
+                Object.entries(fieldMap).forEach(([key, id]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = emailSignature[key] || '';
+                });
+                updateSignaturePreview();
+            }
+            // Start date always defaults to today — not restored from saved state
             if (saved.savedTemplatesList) {
                 saved.savedTemplatesList.forEach(v => {
                     savedTemplates.add(v);
