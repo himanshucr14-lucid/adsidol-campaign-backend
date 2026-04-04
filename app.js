@@ -366,7 +366,10 @@
                     <td style="color:var(--blue-600);font-weight:600;">${escHtml(contact.vertical)}</td>
                     <td style="color:var(--text-light);">${escHtml(contact.email)} ${contact.previouslySent ? '<span title="Previously contacted" style="cursor:help;font-size:12px;margin-left:4px;">⚠️</span>' : ''}</td>
                     <td class="col-timezone">${escHtml(contact.location)}<span class="timezone-badge">${tzAbbr}</span></td>
-                    <td style="font-weight:600;">${scheduledDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</td>
+                    <td style="line-height:1.4;">
+                        <div style="font-weight:600;">${new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:2px;">(Local)</span></div>
+                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:10px;font-weight:700;opacity:0.6;">(IST)</span></div>
+                    </td>
                     <td>
                         <span class="status status-${contact.status}"><span class="status-icon"></span>${contact.status}</span>
                         ${hasFu ? `<span title="Follow-ups configured" style="margin-left:6px;display:inline-flex;align-items:center;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6h10M8 3l3 3-3 3" stroke="var(--blue-500)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : ''}
@@ -1077,7 +1080,10 @@
                     <td><strong>${escHtml(job.contact?.name || '')}</strong><br><span style="color:var(--text-muted);font-size:12px;">${escHtml(job.contact?.email || '')}</span></td>
                     <td><span style="color:var(--blue-600);font-weight:600;font-size:12px;">${escHtml(job.contact?.vertical || '')}</span></td>
                     <td><div style="width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--blue-500),var(--indigo-500));display:inline-flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;">F${job.step}</div></td>
-                    <td style="font-size:13px;">${formatDate(job.scheduledFor)}</td>
+                    <td style="line-height:1.4;">
+                        <div style="font-weight:600;">${new Intl.DateTimeFormat('en-US', { timeZone: job.contact?.timezone || 'UTC', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(job.scheduledFor))} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:2px;">(Local)</span></div>
+                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(job.scheduledFor))} <span style="font-size:10px;font-weight:700;opacity:0.6;">(IST)</span></div>
+                    </td>
                     <td><span class="fu-status-badge fu-status-${job.status}">${job.status}</span></td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
                         ${job.status === 'pending' || job.status === 'failed' || job.status === 'cancelled' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button>` : ''}
