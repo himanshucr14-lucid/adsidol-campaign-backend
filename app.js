@@ -585,10 +585,18 @@
         // STATS
         // ═══════════════════════════════════════════════
         function animateCount(el, target) {
-            const start = parseInt(el.textContent) || 0, diff = target - start;
-            if (!diff) return;
+            if (el.animInterval) clearInterval(el.animInterval);
+            const start = parseInt(el.textContent.replace(/,/g, '')) || 0, diff = target - start;
+            if (!diff) { el.textContent = target; return; }
             let step = 0;
-            const iv = setInterval(() => { step++; el.textContent = Math.round(start + diff * (step / 20)); if (step >= 20) clearInterval(iv); }, 16);
+            el.animInterval = setInterval(() => { 
+                step++; 
+                el.textContent = Math.round(start + diff * (step / 20)); 
+                if (step >= 20) { 
+                    el.textContent = target; 
+                    clearInterval(el.animInterval); 
+                } 
+            }, 16);
         }
         let analyticsData = [];
         let pollingInterval = null;
@@ -670,8 +678,6 @@
             const searchVal = document.getElementById('searchHistory').value.toLowerCase();
             const verticalVal = document.getElementById('historyVerticalFilter').value;
             const dateFilter = document.getElementById('historyDateFilter').value;
-            const customStart = document.getElementById('historyStartDate').value;
-            const customEnd = document.getElementById('historyEndDate').value;
 
             // Date calculations
             const now = new Date();
