@@ -110,25 +110,31 @@ module.exports = async (req, res) => {
                 }
 
                 const now = Date.now();
-                const newJobs = followups.slice(0, 4).map((fu, i) => ({
-                    id:                `fu_${now}_${i}_${Math.random().toString(36).slice(2, 7)}`,
-                    userId:            user.id,
-                    userName:          user.name,
-                    step:              fu.step || (i + 1),
-                    contact,
-                    subject:           fu.subject,
-                    body:              fu.body,
-                    signature:         signature || null,
-                    delayDays:         fu.delayDays || (i + 1) * 3,
-                    scheduledFor:      now + (fu.delayDays || (i + 1) * 3) * 86400000,
-                    status:            'pending',
-                    originalMessageId: rfcMessageId || result.data.id || null,
-                    originalThreadId:  result.data.threadId || null,
-                    sentAt:            null,
-                    sentMessageId:     null,
-                    error:             null,
-                    createdAt:         now,
-                }));
+                let cumulativeDelayDays = 0;
+                const newJobs = followups.slice(0, 4).map((fu, i) => {
+                    const stepDelay = fu.delayDays || 3;
+                    cumulativeDelayDays += stepDelay; // Accumulate delay based on previous steps
+
+                    return {
+                        id:                `fu_${now}_${i}_${Math.random().toString(36).slice(2, 7)}`,
+                        userId:            user.id,
+                        userName:          user.name,
+                        step:              fu.step || (i + 1),
+                        contact,
+                        subject:           fu.subject,
+                        body:              fu.body,
+                        signature:         signature || null,
+                        delayDays:         stepDelay,
+                        scheduledFor:      now + (cumulativeDelayDays * 86400000),
+                        status:            'pending',
+                        originalMessageId: rfcMessageId || result.data.id || null,
+                        originalThreadId:  result.data.threadId || null,
+                        sentAt:            null,
+                        sentMessageId:     null,
+                        error:             null,
+                        createdAt:         now,
+                    };
+                });
 
                 for (const job of newJobs) await store.saveJob(job);
                 console.log(`[${user.name}] Auto-queued ${newJobs.length} follow-ups for ${contact.email}`);
