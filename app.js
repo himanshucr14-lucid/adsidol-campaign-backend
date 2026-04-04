@@ -29,6 +29,9 @@
                 this.viewDate = new Date();
                 this.startDate = null; // YYYY-MM-DD
                 this.endDate = null;   // YYYY-MM-DD
+                this.handleViewportUpdate = () => {
+                    if (this.popup?.style.display === 'block') this.positionPopup();
+                };
                 
                 this.initOutsideClick();
             }
@@ -61,6 +64,8 @@
                 if (!p) return;
                 p.style.display = 'block';
                 this.trigger?.classList.add('active');
+                this.positionPopup();
+                this.bindViewportListeners();
                 this.render();
             }
 
@@ -69,6 +74,45 @@
                 if (!p) return;
                 p.style.display = 'none';
                 this.trigger?.classList.remove('active');
+                this.unbindViewportListeners();
+            }
+
+            bindViewportListeners() {
+                window.addEventListener('resize', this.handleViewportUpdate);
+                window.addEventListener('scroll', this.handleViewportUpdate, true);
+            }
+
+            unbindViewportListeners() {
+                window.removeEventListener('resize', this.handleViewportUpdate);
+                window.removeEventListener('scroll', this.handleViewportUpdate, true);
+            }
+
+            positionPopup() {
+                const p = this.popup;
+                const trigger = this.trigger;
+                if (!p || !trigger) return;
+
+                const gap = 12;
+                const margin = 12;
+                const triggerRect = trigger.getBoundingClientRect();
+                const popupWidth = p.offsetWidth || 310;
+                const popupHeight = p.offsetHeight || 380;
+
+                let left = triggerRect.right - popupWidth;
+                left = Math.max(margin, Math.min(left, window.innerWidth - popupWidth - margin));
+
+                let top = triggerRect.bottom + gap;
+                if (top + popupHeight > window.innerHeight - margin) {
+                    const topAbove = triggerRect.top - popupHeight - gap;
+                    top = topAbove >= margin
+                        ? topAbove
+                        : Math.max(margin, window.innerHeight - popupHeight - margin);
+                }
+
+                p.style.position = 'fixed';
+                p.style.left = `${Math.round(left)}px`;
+                p.style.top = `${Math.round(top)}px`;
+                p.style.right = 'auto';
             }
 
             changeMonth(delta) {
@@ -759,6 +803,7 @@
             document.getElementById('historyCalendarContainer').style.display = isCustom ? 'inline-flex' : 'none';
             if (isCustom) historyCalendar.render();
             else {
+                historyCalendar.close();
                 historyCalendar.startDate = null;
                 historyCalendar.endDate = null;
                 document.getElementById('historyDateLabel').textContent = 'Select Range';
