@@ -578,6 +578,7 @@
                 const data = await res.json();
                 if (data.ok) {
                     analyticsData = data.events;
+                    updateHistoryDashboard();
                     syncStatusWithAnalytics(); // Match local contacts with cloud events
                     updateStats();
                     updateSyncTimestamp();
