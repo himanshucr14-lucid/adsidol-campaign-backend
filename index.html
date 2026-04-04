@@ -182,14 +182,14 @@
             </div>
         </div>
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" id="topCardAll" onclick="setTopFilter('')" style="cursor:pointer; transition:all 0.2s;">
                 <div class="stat-value" id="totalContacts">0</div>
                 <div class="stat-label">Total Contacts</div>
                 <div class="stat-progress">
                     <div class="stat-progress-bar" id="progressTotal" style="width:0%"></div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="topCardScheduled" onclick="setTopFilter('scheduled')" style="cursor:pointer; transition:all 0.2s;">
                 <div class="stat-value" id="scheduledCount">0</div>
                 <div class="stat-label">Scheduled</div>
                 <div class="stat-progress">
@@ -197,7 +197,7 @@
                         style="width:0%; background: linear-gradient(90deg, #F59E0B, #D97706)"></div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="topCardSent" onclick="setTopFilter('sent')" style="cursor:pointer; transition:all 0.2s;">
                 <div class="stat-value" id="sentCount">0</div>
                 <div class="stat-label">Sent Today</div>
                 <div class="stat-progress">
@@ -205,7 +205,7 @@
                         style="width:0%; background: linear-gradient(90deg, #10B981, #059669)"></div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="topCardPending" onclick="setTopFilter('pending')" style="cursor:pointer; transition:all 0.2s;">
                 <div class="stat-value" id="pendingCount">0</div>
                 <div class="stat-label">Pending</div>
                 <div class="stat-progress">

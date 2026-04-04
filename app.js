@@ -1024,6 +1024,8 @@
             } catch (e) { fuJobs = []; renderFuDashboard(); }
         }
 
+        if(typeof window.fuStatusFilter === 'undefined') window.fuStatusFilter = 'all';
+
         function renderFuDashboard() {
             let jobs = fuJobs;
             const filterVal = document.getElementById('fuStepFilter')?.value || 'all';
@@ -1034,9 +1036,26 @@
             // Stats
             const total = jobs.length, pending = jobs.filter(j => j.status === 'pending').length,
                 sent = jobs.filter(j => j.status === 'sent').length, failed = jobs.filter(j => j.status === 'failed').length;
+            
             document.getElementById('fuStatsRow').innerHTML = [
-                ['Total', total, 'var(--blue-600)'], ['Pending', pending, '#D97706'], ['Sent', sent, '#059669'], ['Failed', failed, '#EF4444']
-            ].map(([l, v, c]) => `<div class="fu-stat"><div class="fu-stat-val" style="background:none;-webkit-text-fill-color:${c};color:${c}">${v}</div><div class="fu-stat-lbl">${l}</div></div>`).join('');
+                ['all', 'Total', total, 'var(--blue-600)'], 
+                ['pending', 'Pending', pending, '#D97706'], 
+                ['sent', 'Sent', sent, '#059669'], 
+                ['failed', 'Failed', failed, '#EF4444']
+            ].map(([id, l, v, c]) => {
+                const isActive = window.fuStatusFilter === id;
+                const border = isActive ? `1.5px solid ${c}` : `1px solid var(--border)`;
+                const shadow = isActive ? `0 4px 12px ${c}25` : `none`;
+                return `<div class="fu-stat" style="cursor:pointer; border:${border}; box-shadow:${shadow}; transition:all 0.2s; transform:${isActive?'scale(1.02)':'translateY(0)'}; border-radius:12px;" onclick="window.fuStatusFilter='${id}'; renderFuDashboard();">
+                    <div class="fu-stat-val" style="background:none;-webkit-text-fill-color:${c};color:${c}">${v}</div>
+                    <div class="fu-stat-lbl">${l}</div>
+                </div>`;
+            }).join('');
+
+            // Apply status filter to the jobs list shown in the table
+            if (window.fuStatusFilter !== 'all') {
+                jobs = jobs.filter(j => j.status === window.fuStatusFilter);
+            }
 
             const tbody = document.getElementById('fuJobTableBody');
             if (jobs.length === 0) {
@@ -1451,8 +1470,39 @@
         function applyFilters() {
             const search = document.getElementById('searchContacts').value.toLowerCase(), vertical = document.getElementById('filterVertical').value, status = document.getElementById('filterStatus').value;
             filteredContacts = contacts.filter(c => (!search || c.name.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || c.company.toLowerCase().includes(search)) && (!vertical || c.vertical === vertical) && (!status || c.status === status));
+            
+            const cards = [
+                { id: 'topCardAll', val: '', color: 'var(--blue-500)' },
+                { id: 'topCardScheduled', val: 'scheduled', color: '#F59E0B' },
+                { id: 'topCardSent', val: 'sent', color: '#10B981' },
+                { id: 'topCardPending', val: 'pending', color: '#94A3B8' }
+            ];
+
+            cards.forEach(c => {
+                const el = document.getElementById(c.id);
+                if (!el) return;
+                if (status === c.val) {
+                    el.style.border = `1.5px solid ${c.color}`;
+                    el.style.boxShadow = `0 4px 12px ${c.color}25`;
+                    el.style.transform = `scale(1.02)`;
+                    el.style.borderRadius = `12px`;
+                } else {
+                    el.style.border = `1px solid var(--border)`;
+                    el.style.boxShadow = `none`;
+                    el.style.transform = `scale(1)`;
+                    el.style.borderRadius = `12px`;
+                }
+            });
+
             updateDashboard();
         }
+        
+        window.setTopFilter = function(val) {
+            document.getElementById('filterStatus').value = val;
+            applyFilters();
+            const section = document.getElementById('campaignsSection');
+            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
         document.getElementById('selectAll').addEventListener('change', e => { filteredContacts.forEach(c => c.selected = e.target.checked); updateDashboard(); updateBulkBar(); });
 
         // ═══════════════════════════════════════════════
