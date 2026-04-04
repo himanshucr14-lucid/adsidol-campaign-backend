@@ -2050,6 +2050,202 @@
         }
 
         .fu-cancel-btn:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* Follow-up Calendar Filter */
+        .fu-calendar-container {
+            position: relative;
+            margin-right: 12px;
+        }
+
+        .fu-calendar-btn {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .fu-calendar-btn:hover {
+            border-color: var(--blue-400);
+            background: var(--blue-50);
+        }
+
+        .fu-calendar-btn.active {
+            background: var(--blue-600);
+            color: white;
+            border-color: var(--blue-600);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .fu-calendar-popup {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 300px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 1000;
+            display: none;
+            animation: calFadeIn 0.2s ease-out;
+        }
+
+        @keyframes calFadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .cal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .cal-month-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .cal-nav-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .cal-nav-btn:hover {
+            background: var(--border);
+            border-color: var(--text-muted);
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .cal-day-name {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: center;
+            padding-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            user-select: none;
+        }
+
+        .cal-day:hover:not(.other-month) {
+            background: var(--blue-50);
+            color: var(--blue-600);
+        }
+
+        .cal-day.today {
+            color: var(--blue-600);
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .cal-day.selected {
+            background: var(--blue-600) !important;
+            color: white !important;
+        }
+
+        .cal-day.other-month {
+            opacity: 0.25;
+            cursor: default;
+        }
+
+        .cal-count {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            min-width: 16px;
+            height: 16px;
+            background: var(--blue-500);
+            color: white;
+            border-radius: 8px;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            border: 2px solid var(--card);
+            padding: 0 4px;
+        }
+
+        .cal-footer {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cal-clear-btn {
+            font-size: 12px;
+            color: var(--error);
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cal-clear-btn:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .cal-today-btn {
+            font-size: 12px;
+            color: var(--blue-600);
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .fu-cancel-btn:hover {
             border-color: var(--error);
             color: var(--error);
         }

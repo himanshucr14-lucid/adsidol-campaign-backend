@@ -1058,9 +1058,18 @@
                 jobs = jobs.filter(j => j.status === window.fuStatusFilter);
             }
 
+            // Date Filter
+            if (window.fuDateFilter) {
+                jobs = jobs.filter(j => {
+                    const jobDate = new Date(j.scheduledFor).toISOString().split('T')[0];
+                    return jobDate === window.fuDateFilter;
+                });
+            }
+
             const tbody = document.getElementById('fuJobTableBody');
             if (jobs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">No follow-ups scheduled yet.</td></tr>`;
+                const emptyMsg = window.fuDateFilter ? 'No follow-ups scheduled for this date.' : 'No follow-ups scheduled yet.';
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">${emptyMsg}</td></tr>`;
                 return;
             }
             tbody.innerHTML = jobs.map(job => `
@@ -1076,7 +1085,114 @@
                 </tr>`).join('');
 
             if (typeof updateAdvancedAnalytics === 'function') updateAdvancedAnalytics();
+            if (document.getElementById('fuCalendarPopup')?.style.display === 'block') renderFuCalendar();
         }
+
+        // ═══════════════════════════════════════════════
+        // FOLLOW-UP CALENDAR LOGIC
+        // ═══════════════════════════════════════════════
+        window.fuDateFilter = null;
+        window.fuCalendarDate = new Date();
+
+        window.toggleFuCalendar = function() {
+            const popup = document.getElementById('fuCalendarPopup');
+            const btn = document.getElementById('fuCalendarBtn');
+            const isVisible = popup.style.display === 'block';
+            popup.style.display = isVisible ? 'none' : 'block';
+            btn.classList.toggle('active', !isVisible);
+            if (!isVisible) renderFuCalendar();
+        };
+
+        window.changeFuMonth = function(delta) {
+            window.fuCalendarDate.setMonth(window.fuCalendarDate.getMonth() + delta);
+            renderFuCalendar();
+        };
+
+        window.setFuDateFilter = function(dateStr) {
+            window.fuDateFilter = dateStr;
+            const label = document.getElementById('fuDateLabel');
+            if (dateStr) {
+                const [y, m, d] = dateStr.split('-');
+                label.textContent = new Date(y, m-1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                document.getElementById('fuCalendarBtn').classList.add('active');
+            } else {
+                label.textContent = 'Filter by Date';
+                document.getElementById('fuCalendarBtn').classList.remove('active');
+            }
+            document.getElementById('fuCalendarPopup').style.display = 'none';
+            renderFuDashboard();
+        };
+
+        window.setFuDateToToday = function() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            window.fuCalendarDate = new Date(today);
+            setFuDateFilter(dateStr);
+        };
+
+        function renderFuCalendar() {
+            const grid = document.getElementById('calGrid');
+            const title = document.getElementById('calMonthTitle');
+            if (!grid || !title) return;
+            
+            const viewDate = window.fuCalendarDate;
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+
+            title.textContent = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            // Calculate densities (only for pending/scheduled)
+            const counts = {};
+            fuJobs.forEach(j => {
+                if (j.status !== 'pending' && j.status !== 'scheduled' && j.status !== 'failed') return;
+                try {
+                    const dateStr = new Date(j.scheduledFor).toISOString().split('T')[0];
+                    counts[dateStr] = (counts[dateStr] || 0) + 1;
+                } catch(e) {}
+            });
+
+            let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate();
+
+            for (let i = firstDay - 1; i >= 0; i--) {
+                html += `<div class="cal-day other-month">${prevMonthDays - i}</div>`;
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const count = counts[dateStr] || 0;
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === window.fuDateFilter;
+                
+                html += `
+                    <div class="cal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="setFuDateFilter('${dateStr}')">
+                        ${d}
+                        ${count > 0 ? `<span class="cal-count">${count > 99 ? '99+' : count}</span>` : ''}
+                    </div>`;
+            }
+
+            const daysFilled = firstDay + daysInMonth;
+            const totalCells = Math.ceil(daysFilled / 7) * 7;
+            for (let i = 1; i <= (totalCells - daysFilled); i++) {
+                html += `<div class="cal-day other-month">${i}</div>`;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        // Close on click outside
+        document.addEventListener('mousedown', (e) => {
+            const container = document.querySelector('.fu-calendar-container');
+            const popup = document.getElementById('fuCalendarPopup');
+            if (container && !container.contains(e.target) && popup && popup.style.display === 'block') {
+                toggleFuCalendar();
+            }
+        });
 
         window.sendFuNow = async function (jobId) {
             if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
