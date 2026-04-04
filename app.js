@@ -944,6 +944,7 @@
         let fuJobs = []; // local mirror of backend jobs
 
         async function loadFollowupDashboard() {
+            if (!currentApiKey) return; // Not logged in — skip silently
             const dashboard = document.getElementById('followupDashboard');
             dashboard.style.display = 'block';
             if (!BACKEND.baseUrl || BACKEND.baseUrl.includes('CHANGE')) {
