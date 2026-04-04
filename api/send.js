@@ -52,6 +52,30 @@ module.exports = async (req, res) => {
     }
 
     try {
+        const emailLower = contact.email.toLowerCase().trim();
+        const vertical   = contact.vertical;
+
+        // ── DUPLICATE PREVENTION (24-hour window per vertical) ──
+        try {
+            const history = await store.getAnalytics(user.id);
+            const isDuplicate = history.some(e => {
+                const isSameEmail = e.email.toLowerCase().trim() === emailLower;
+                const isSameVertical = e.vertical === vertical;
+                const within24h = (Date.now() - (e.date || 0)) < 86400000;
+                return isSameEmail && isSameVertical && within24h && e.type === 'initial';
+            });
+
+            if (isDuplicate) {
+                console.log(`[${user.name}] Skipping duplicate send to ${emailLower} (Vertical: ${vertical})`);
+                return res.status(200).json({
+                    ok: true,
+                    message: `Skipped: An initial email was already sent to ${emailLower} for ${vertical} in the last 24 hours.`,
+                    skipped: true
+                });
+            }
+        } catch (analyticsErr) {
+            console.warn(`[Duplicate Check] Failed:`, analyticsErr.message);
+        }
         const auth  = getOAuthClient(user);
         const gmail = google.gmail({ version: 'v1', auth });
 
