@@ -26,14 +26,21 @@
         }
 
         body.dark {
-            --bg: #0F172A;
-            --card: #1E293B;
-            --border: #334155;
-            --border-hover: #475569;
-            --text: #F1F5F9;
-            --text-light: #94A3B8;
-            --text-muted: #64748B;
-            --blue-50: rgba(59, 130, 246, 0.08);
+            /* Pure neutral grays — no blue tint, maximum legibility */
+            --bg: #141414;
+            --card: #1E1E1E;
+            --border: #2D2D2D;
+            --border-hover: #404040;
+            --text: #E8E8E8;
+            --text-light: #A0A0A0;
+            --text-muted: #6B6B6B;
+            --blue-50: rgba(59, 130, 246, 0.07);
+        }
+
+        /* Suppress glowing blue ambient gradient in dark mode */
+        body.dark::before {
+            opacity: 0 !important;
+            animation: none !important;
         }
 
         body {
