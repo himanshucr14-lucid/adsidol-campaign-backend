@@ -1207,13 +1207,13 @@
         .sched-tile {
             background: linear-gradient(135deg, var(--bg) 0%, var(--blue-50) 100%);
             border: 2px solid var(--border);
-            border-radius: 20px;
-            padding: 28px 24px 22px;
+            border-radius: 16px;
+            padding: 16px 16px 14px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 4px;
+            gap: 2px;
             transition: border-color 0.2s, box-shadow 0.2s;
             position: relative;
             overflow: hidden;
@@ -1255,7 +1255,7 @@
 
         /* Time tile */
         .sched-time-display {
-            font-size: 36px;
+            font-size: 26px;
             font-weight: 800;
             background: linear-gradient(135deg, var(--blue-600), var(--indigo-600));
             -webkit-background-clip: text;
@@ -1263,7 +1263,7 @@
             background-clip: text;
             letter-spacing: -1px;
             line-height: 1;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
 
         .sched-time-row {
@@ -1288,13 +1288,13 @@
         }
 
         .time-seg-btn {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 8px;
             border: 2px solid var(--border);
             background: var(--card);
             color: var(--blue-600);
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
@@ -1311,15 +1311,15 @@
 
         /* Limit tile */
         .sched-limit-display {
-            font-size: 48px;
+            font-size: 28px;
             font-weight: 800;
             background: linear-gradient(135deg, var(--blue-600), var(--indigo-600));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: -2px;
+            letter-spacing: -1px;
             line-height: 1;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
 
         .sched-limit-row {
@@ -1330,13 +1330,13 @@
         }
 
         .limit-btn {
-            width: 34px;
-            height: 34px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             border: 2px solid var(--border);
             background: var(--card);
             color: var(--blue-600);
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
@@ -1404,10 +1404,10 @@
 
         /* Date tile */
         .sched-date-display {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 800;
             color: var(--text);
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             letter-spacing: -0.5px;
         }
 
@@ -2611,7 +2611,9 @@
             text-transform: uppercase;
             color: var(--text-muted);
             font-weight: 700;
-        }\n\n@keyframes spin {
+        }
+
+        @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
@@ -2622,4 +2624,141 @@
             border-color: var(--blue-500) !important;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
             background: var(--card) !important;
-        }\n\n
+        }
+
+
+        /* ── EDITOR TOOLBAR (Bold etc.) ── */
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding: 7px 12px;
+            background: var(--blue-50);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .toolbar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            line-height: 1;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--blue-600);
+            color: white;
+            border-color: var(--blue-600);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        }
+
+        .toolbar-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ── EMAIL SIGNATURE EDITOR ── */
+        .sig-editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .sig-editor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sig-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sig-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .sig-row-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sig-preview-panel {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 260px;
+            position: sticky;
+            top: 100px;
+        }
+
+        .sig-preview-body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text);
+            flex: 1;
+        }
+
+        .sig-preview-body .sig-divider {
+            border-top: 1px solid var(--border);
+            margin: 16px 0 14px;
+        }
+
+        .sig-preview-body .sig-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+            margin: 0 0 3px;
+        }
+
+        .sig-preview-body .sig-title-text {
+            font-size: 13px;
+            color: var(--text-light);
+            margin: 0 0 14px;
+        }
+
+        .sig-contact-row {
+            display: flex;
+            gap: 14px;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .sig-contact-label {
+            color: var(--text-muted);
+            min-width: 60px;
+            flex-shrink: 0;
+        }
+
+        .sig-contact-val a {
+            color: var(--blue-600);
+            text-decoration: none;
+        }
+
+        .sig-contact-val a:hover {
+            text-decoration: underline;
+        }
