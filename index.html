@@ -797,39 +797,28 @@
                             <option value="thisMonth">This Month</option>
                         </select>
                         <!-- Date Filter -->
-                        <div class="fu-calendar-container">
-                            <button class="fu-calendar-btn" id="fuCalendarBtn" onclick="toggleFuCalendar()" style="height:42px;">
+                        <div class="fu-calendar-container adsidol-cal-container">
+                            <button class="fu-calendar-btn adsidol-cal-trigger" id="fuCalendarBtn" onclick="toggleFuCalendar()">
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                     <rect x="2" y="3" width="10" height="9" rx="2" stroke="currentColor" stroke-width="1.4" />
                                     <path d="M4 2v2M10 2v2M2 6h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
                                 </svg>
                                 <span id="fuDateLabel">Filter by Date</span>
                             </button>
-                            <div class="fu-calendar-popup" id="fuCalendarPopup">
-                                <div class="cal-header">
-                                    <button class="cal-nav-btn" onclick="changeFuMonth(-1)">
-                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                            <path d="M8 10L4 6l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
+                            <div class="adsidol-calendar-popup" id="fuCalendarPopup">
+                                <div class="adsidol-cal-header">
+                                    <button class="adsidol-cal-btn" onclick="changeFuMonth(-1)">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 10L4 6l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
                                     </button>
-                                    <div class="cal-month-title" id="calMonthTitle">April 2026</div>
-                                    <button class="cal-nav-btn" onclick="changeFuMonth(1)">
-                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                            <path d="M4 10l4-4-4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
+                                    <div class="adsidol-cal-month" id="calMonthTitle">April 2026</div>
+                                    <button class="adsidol-cal-btn" onclick="changeFuMonth(1)">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 10l4-4-4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
                                     </button>
                                 </div>
-                                <div class="cal-grid" id="calGrid">
-                                    <!-- JS Injected Content -->
-                                </div>
-                                <div class="cal-footer">
-                                    <button class="cal-clear-btn" onclick="setFuDateFilter(null)">
-                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                            <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                                        </svg>
-                                        Reset
-                                    </button>
-                                    <button class="cal-today-btn" onclick="setFuDateToToday()">Today</button>
+                                <div class="adsidol-cal-grid" id="calGrid"></div>
+                                <div class="adsidol-cal-footer">
+                                    <button class="adsidol-cal-btn" style="color:#ef4444;" onclick="setFuDateFilter(null)">Reset</button>
+                                    <button class="adsidol-cal-btn" onclick="setFuDateToToday()">Today</button>
                                 </div>
                             </div>
                         </div>
@@ -978,10 +967,30 @@
                     <option value="custom">Custom Range...</option>
                 </select>
 
-                <div id="customDateRange" style="display: none; align-items: center; gap: 8px;">
-                    <input type="date" id="historyStartDate" class="btn" style="padding: 6px; height: 38px;">
-                    <span style="color:var(--text-light);font-size:13px;">to</span>
-                    <input type="date" id="historyEndDate" class="btn" style="padding: 6px; height: 38px;">
+                <div id="historyCalendarContainer" class="adsidol-cal-container" style="display: none;">
+                    <button class="fu-calendar-btn adsidol-cal-trigger" id="historyCalendarBtn" onclick="toggleHistoryCalendar()">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <rect x="2" y="3" width="10" height="9" rx="2" stroke="currentColor" stroke-width="1.4" />
+                            <path d="M4 2v2M10 2v2M2 6h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                        </svg>
+                        <span id="historyDateLabel">Select Range</span>
+                    </button>
+                    <div class="adsidol-calendar-popup" id="historyCalendarPopup">
+                        <div class="adsidol-cal-header">
+                            <button class="adsidol-cal-btn" onclick="changeHistoryMonth(-1)">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 10L4 6l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                            </button>
+                            <div class="adsidol-cal-month" id="histCalMonthTitle">April 2026</div>
+                            <button class="adsidol-cal-btn" onclick="changeHistoryMonth(1)">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 10l4-4-4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                            </button>
+                        </div>
+                        <div class="adsidol-cal-grid" id="histCalGrid"></div>
+                        <div class="adsidol-cal-footer">
+                            <button class="adsidol-cal-btn" style="color:#ef4444;" onclick="setHistoryDateFilter(null, null)">Reset</button>
+                            <button class="adsidol-cal-btn" onclick="setHistoryDateToToday()">Today</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

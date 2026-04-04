@@ -571,11 +571,18 @@
                     if (dateFilter === 'lastmonth' && (e.date < startOfLastMonth || e.date > endOfLastMonth)) return false;
                     
                     if (dateFilter === 'custom') {
-                        if (customStart && e.date < new Date(customStart).getTime()) return false;
-                        if (customEnd) {
-                            const endT = new Date(customEnd);
+                        const s = historyCalendar.startDate;
+                        const e = historyCalendar.endDate;
+                        if (s && e) {
+                            const startT = new Date(s).getTime();
+                            const endT = new Date(e);
                             endT.setHours(23, 59, 59, 999);
-                            if (e.date > endT.getTime()) return false;
+                            if (e.date < startT || e.date > endT.getTime()) return false;
+                        } else if (s) {
+                            const startT = new Date(s).getTime();
+                            const endT = new Date(s);
+                            endT.setHours(23,59,59,999);
+                            if (e.date < startT || e.date > endT.getTime()) return false;
                         }
                     }
                 }
@@ -618,14 +625,39 @@
         }
         
         document.getElementById('historyDateFilter').addEventListener('change', (ev) => {
-            document.getElementById('customDateRange').style.display = ev.target.value === 'custom' ? 'flex' : 'none';
+            const isCustom = ev.target.value === 'custom';
+            document.getElementById('historyCalendarContainer').style.display = isCustom ? 'inline-flex' : 'none';
+            if (isCustom) historyCalendar.render();
+            else {
+                historyCalendar.startDate = null;
+                historyCalendar.endDate = null;
+                document.getElementById('historyDateLabel').textContent = 'Select Range';
+            }
             historyCurrentPage = 1;
             updateHistoryDashboard();
         });
-        
-        ['searchHistory', 'historyVerticalFilter', 'historyStartDate', 'historyEndDate'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => { historyCurrentPage = 1; updateHistoryDashboard(); });
+
+        // Initialize History Calendar
+        window.historyCalendar = new AdsidolCalendar({
+            popupId: 'historyCalendarPopup',
+            gridId: 'histCalGrid',
+            titleId: 'histCalMonthTitle',
+            labelId: 'historyDateLabel',
+            triggerId: 'historyCalendarBtn',
+            onSelect: () => {
+                historyCurrentPage = 1;
+                updateHistoryDashboard();
+            }
         });
+
+        window.toggleHistoryCalendar = () => historyCalendar.toggle();
+        window.changeHistoryMonth = (d) => historyCalendar.changeMonth(d);
+        window.setHistoryDateFilter = (s, e) => historyCalendar.setRange(s, e);
+        window.setHistoryDateToToday = () => historyCalendar.setToToday();
+
+        document.getElementById('searchHistory').addEventListener('input', () => { historyCurrentPage = 1; updateHistoryDashboard(); });
+        document.getElementById('historyVerticalFilter').addEventListener('change', () => { historyCurrentPage = 1; updateHistoryDashboard(); });
+
         
         document.getElementById('historyPrevBtn').addEventListener('click', () => {
             if (historyCurrentPage > 1) { historyCurrentPage--; updateHistoryDashboard(); }
@@ -1130,11 +1162,18 @@
                 jobs = jobs.filter(j => j.status === window.fuStatusFilter);
             }
 
-            // Date Filter (Custom single date)
-            if (window.fuDateFilter) {
+            // Date Filter (Unified Calendar)
+            if (fuCalendar.startDate) {
+                const s = fuCalendar.startDate;
+                const e = fuCalendar.endDate;
                 jobs = jobs.filter(j => {
-                    const jobDate = new Date(j.scheduledFor).toISOString().split('T')[0];
-                    return jobDate === window.fuDateFilter;
+                    const jobDateTime = new Date(j.scheduledFor).getTime();
+                    const jobDateStr = new Date(j.scheduledFor).toISOString().split('T')[0];
+                    if (s && e) {
+                        return jobDateStr >= s && jobDateStr <= e;
+                    } else {
+                        return jobDateStr === s;
+                    }
                 });
             }
 
@@ -1207,110 +1246,176 @@
         }
 
         // ═══════════════════════════════════════════════
-        // FOLLOW-UP CALENDAR LOGIC
         // ═══════════════════════════════════════════════
-        window.fuDateFilter = null;
-        window.fuCalendarDate = new Date();
-
-        window.toggleFuCalendar = function() {
-            const popup = document.getElementById('fuCalendarPopup');
-            const btn = document.getElementById('fuCalendarBtn');
-            const isVisible = popup.style.display === 'block';
-            popup.style.display = isVisible ? 'none' : 'block';
-            btn.classList.toggle('active', !isVisible);
-            if (!isVisible) renderFuCalendar();
-        };
-
-        window.changeFuMonth = function(delta) {
-            window.fuCalendarDate.setMonth(window.fuCalendarDate.getMonth() + delta);
-            renderFuCalendar();
-        };
-
-        window.setFuDateFilter = function(dateStr) {
-            window.fuDateFilter = dateStr;
-            const label = document.getElementById('fuDateLabel');
-            if (dateStr) {
-                const [y, m, d] = dateStr.split('-');
-                label.textContent = new Date(y, m-1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                document.getElementById('fuCalendarBtn').classList.add('active');
-            } else {
-                label.textContent = 'Filter by Date';
-                document.getElementById('fuCalendarBtn').classList.remove('active');
-            }
-            document.getElementById('fuCalendarPopup').style.display = 'none';
-            renderFuDashboard();
-        };
-
-        window.setFuDateToToday = function() {
-            const today = new Date();
-            const dateStr = today.toISOString().split('T')[0];
-            window.fuCalendarDate = new Date(today);
-            setFuDateFilter(dateStr);
-        };
-
-        function renderFuCalendar() {
-            const grid = document.getElementById('calGrid');
-            const title = document.getElementById('calMonthTitle');
-            if (!grid || !title) return;
-            
-            const viewDate = window.fuCalendarDate;
-            const year = viewDate.getFullYear();
-            const month = viewDate.getMonth();
-
-            title.textContent = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-            // Calculate densities (only for pending/scheduled)
-            const counts = {};
-            fuJobs.forEach(j => {
-                if (j.status !== 'pending' && j.status !== 'scheduled' && j.status !== 'failed') return;
-                try {
-                    const dateStr = new Date(j.scheduledFor).toISOString().split('T')[0];
-                    counts[dateStr] = (counts[dateStr] || 0) + 1;
-                } catch(e) {}
-            });
-
-            let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-day-name">${d}</div>`).join('');
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const prevMonthDays = new Date(year, month, 0).getDate();
-
-            for (let i = firstDay - 1; i >= 0; i--) {
-                html += `<div class="cal-day other-month">${prevMonthDays - i}</div>`;
-            }
-
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const count = counts[dateStr] || 0;
-                const isToday = dateStr === todayStr;
-                const isSelected = dateStr === window.fuDateFilter;
+        // UNIFIED CALENDAR SYSTEM
+        // ═══════════════════════════════════════════════
+        class AdsidolCalendar {
+            constructor(opts) {
+                this.popup = document.getElementById(opts.popupId);
+                this.grid = document.getElementById(opts.gridId);
+                this.title = document.getElementById(opts.titleId);
+                this.label = document.getElementById(opts.labelId);
+                this.trigger = document.getElementById(opts.triggerId);
+                this.onSelect = opts.onSelect;
+                this.getCounts = opts.getCounts || (() => ({}));
                 
-                html += `
-                    <div class="cal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="setFuDateFilter('${dateStr}')">
-                        ${d}
-                        ${count > 0 ? `<span class="cal-count">${count > 99 ? '99+' : count}</span>` : ''}
-                    </div>`;
+                this.viewDate = new Date();
+                this.startDate = null; // YYYY-MM-DD
+                this.endDate = null;   // YYYY-MM-DD
+                
+                this.initOutsideClick();
             }
 
-            const daysFilled = firstDay + daysInMonth;
-            const totalCells = Math.ceil(daysFilled / 7) * 7;
-            for (let i = 1; i <= (totalCells - daysFilled); i++) {
-                html += `<div class="cal-day other-month">${i}</div>`;
+            initOutsideClick() {
+                document.addEventListener('mousedown', (e) => {
+                    if (this.popup.style.display === 'block') {
+                        const container = this.popup.closest('.adsidol-cal-container');
+                        if (container && !container.contains(e.target)) this.close();
+                    }
+                });
             }
 
-            grid.innerHTML = html;
+            toggle() {
+                const isVisible = this.popup.style.display === 'block';
+                if (isVisible) this.close(); else this.open();
+            }
+
+            open() {
+                this.popup.style.display = 'block';
+                this.trigger.classList.add('active');
+                this.render();
+            }
+
+            close() {
+                this.popup.style.display = 'none';
+                this.trigger.classList.remove('active');
+            }
+
+            changeMonth(delta) {
+                this.viewDate.setMonth(this.viewDate.getMonth() + delta);
+                this.render();
+            }
+
+            setRange(start, end) {
+                this.startDate = start;
+                this.endDate = end;
+                this.updateLabel();
+                this.render();
+                if (this.onSelect) this.onSelect();
+            }
+
+            setToToday() {
+                const today = new Date().toISOString().split('T')[0];
+                this.viewDate = new Date();
+                this.setRange(today, null);
+                this.close();
+            }
+
+            updateLabel() {
+                if (!this.startDate) {
+                    this.label.textContent = 'Select Range';
+                    return;
+                }
+                const fmt = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                if (!this.endDate) {
+                    this.label.textContent = fmt(this.startDate);
+                } else {
+                    this.label.textContent = `${fmt(this.startDate)} - ${fmt(this.endDate)}`;
+                }
+            }
+
+            render() {
+                if (!this.grid || !this.title) return;
+                const year = this.viewDate.getFullYear();
+                const month = this.viewDate.getMonth();
+                const counts = this.getCounts();
+
+                this.title.textContent = this.viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="adsidol-cal-day-name">${d}</div>`).join('');
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const prevMonthDays = new Date(year, month, 0).getDate();
+
+                for (let i = firstDay - 1; i >= 0; i--) html += `<div class="adsidol-cal-day other-month">${prevMonthDays - i}</div>`;
+
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const count = counts[dateStr] || 0;
+                    const isToday = dateStr === todayStr;
+                    const isSelected = dateStr === this.startDate || dateStr === this.endDate;
+                    const inRange = this.startDate && this.endDate && dateStr > this.startDate && dateStr < this.endDate;
+
+                    html += `
+                        <div class="adsidol-cal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${inRange ? 'in-range' : ''}" 
+                             onclick="window.${this.trigger.id === 'fuCalendarBtn' ? 'handleFuDateClick' : 'handleHistDateClick'}('${dateStr}')">
+                            ${d}
+                            ${count > 0 ? `<span class="adsidol-cal-count">${count}</span>` : ''}
+                        </div>`;
+                }
+                this.grid.innerHTML = html;
+            }
         }
 
-        // Close on click outside
-        document.addEventListener('mousedown', (e) => {
-            const container = document.querySelector('.fu-calendar-container');
-            const popup = document.getElementById('fuCalendarPopup');
-            if (container && !container.contains(e.target) && popup && popup.style.display === 'block') {
-                toggleFuCalendar();
-            }
+        // --- Follow-up Calendar Logic ---
+        window.fuCalendar = new AdsidolCalendar({
+            popupId: 'fuCalendarPopup',
+            gridId: 'calGrid',
+            titleId: 'calMonthTitle',
+            labelId: 'fuDateLabel',
+            triggerId: 'fuCalendarBtn',
+            getCounts: () => {
+                const counts = {};
+                fuJobs.forEach(j => {
+                    if (['pending', 'scheduled', 'failed'].includes(j.status)) {
+                        try {
+                            const d = new Date(j.scheduledFor).toISOString().split('T')[0];
+                            counts[d] = (counts[d] || 0) + 1;
+                        } catch(e) {}
+                    }
+                });
+                return counts;
+            },
+            onSelect: () => renderFuDashboard()
         });
+
+        window.toggleFuCalendar = () => fuCalendar.toggle();
+        window.changeFuMonth = (d) => fuCalendar.changeMonth(d);
+        window.setFuDateFilter = (s, e) => fuCalendar.setRange(s, e);
+        window.setFuDateToToday = () => fuCalendar.setToToday();
+
+        window.handleFuDateClick = (dateStr) => {
+            if (!fuCalendar.startDate || (fuCalendar.startDate && fuCalendar.endDate)) {
+                fuCalendar.setRange(dateStr, null);
+            } else {
+                if (dateStr < fuCalendar.startDate) {
+                    fuCalendar.setRange(dateStr, fuCalendar.startDate);
+                } else if (dateStr === fuCalendar.startDate) {
+                    fuCalendar.setRange(null, null);
+                } else {
+                    fuCalendar.setRange(fuCalendar.startDate, dateStr);
+                    fuCalendar.close();
+                }
+            }
+        };
+
+        window.handleHistDateClick = (dateStr) => {
+            if (!historyCalendar.startDate || (historyCalendar.startDate && historyCalendar.endDate)) {
+                historyCalendar.setRange(dateStr, null);
+            } else {
+                if (dateStr < historyCalendar.startDate) {
+                    historyCalendar.setRange(dateStr, historyCalendar.startDate);
+                } else if (dateStr === historyCalendar.startDate) {
+                    historyCalendar.setRange(null, null);
+                } else {
+                    historyCalendar.setRange(historyCalendar.startDate, dateStr);
+                    historyCalendar.close();
+                }
+            }
+        };
+
 
         window.sendFuNow = async function (jobId) {
             if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
