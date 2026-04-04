@@ -26,25 +26,20 @@
         }
 
         body.dark {
-            /* • OLED Dark Mode — true black, high contrast, blue accent atmosphere */
-            --bg: #000000;               /* True OLED black — saves battery, looks stunning */
-            --card: #0D0D0D;             /* Barely lifted surface */
-            --border: #1C1C1C;           /* Ultra-subtle separator */
-            --border-hover: #2E2E2E;     /* Hover highlight */
-            --text: #FFFFFF;             /* Pure white — maximum contrast on OLED */
-            --text-light: #8B8B8B;       /* Clear secondary */
-            --text-muted: #4A4A4A;       /* Muted but still readable */
-            --blue-50: rgba(59, 130, 246, 0.10);
+            /* • OLED Dark Mode — true black, high contrast */
+            --bg: #000000;
+            --card: #0A0A0A;
+            --border: #222222;
+            --border-hover: #333333;
+            --text: #FFFFFF;
+            --text-light: #E2E8F0;
+            --text-muted: #94A3B8;
+            --blue-50: rgba(59, 130, 246, 0.15);
         }
 
-        /* OLED ambient: subtle deep-space blue/indigo orbs — atmospheric, not bluish */
+        /* Disable gradient completely for maximum readability */
         body.dark::before {
-            opacity: 1 !important;
-            animation: none !important;
-            background:
-                radial-gradient(ellipse at 85% 5%,  rgba(59, 130, 246, 0.10) 0%, transparent 45%),
-                radial-gradient(ellipse at 10% 95%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
-                radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0) 0%, transparent 60%);
+            display: none !important;
         }
 
         body {
@@ -2180,24 +2175,31 @@
            ═══════════════════════════════════════════════ */
         .adsidol-calendar-popup {
             position: absolute;
-            top: calc(100% + 12px);
+            top: calc(100% + 8px);
             right: 0;
             width: 310px;
+            max-width: 95vw;
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 18px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.18);
-            padding: 20px;
-            z-index: 2000;
-            display: none;
-            backdrop-filter: blur(10px);
-            animation: adsidolCalFadeIn 0.25s cubic-bezier(0.2, 0, 0, 1);
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            padding: 22px;
+            z-index: 9999;
+            backdrop-filter: blur(12px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+            transform-origin: top right;
+            transform: scale(0.95) translateY(-5px);
+        }
+        .adsidol-calendar-popup.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translateY(0);
         }
 
-        @keyframes adsidolCalFadeIn {
-            from { opacity: 0; transform: translateY(12px) scale(0.96); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
+        /* ═══════════════════════════════════════════════ */
+
 
         .adsidol-cal-header {
             display: flex;
