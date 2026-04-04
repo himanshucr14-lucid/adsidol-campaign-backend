@@ -56,6 +56,9 @@
                     startDate: document.getElementById('startDate').value,
                     savedTemplatesList: [...savedTemplates]
                 }));
+                // Cloud Sync
+                saveContactsToCloud();
+                saveTemplatesToCloud();
             } catch (e) { }
         }
         function loadState() {
@@ -97,7 +100,40 @@
                 }
             } catch (e) { console.error('Failed to load templates from cloud:', e); }
         }
+        async function saveContactsToCloud() {
+            if (!currentApiKey || contacts.length === 0) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/contacts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': currentApiKey },
+                    body: JSON.stringify({ contacts })
+                });
+                const data = await res.json();
+                if (!data.ok) console.warn('Cloud contact sync failed:', data.error);
+            } catch (e) { console.error('Cloud contact sync error:', e); }
+        }
 
+        async function loadContactsFromCloud() {
+            if (!currentApiKey) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/contacts`, {
+                    headers: { 'x-api-key': currentApiKey }
+                });
+                const data = await res.json();
+                if (data.ok && data.data && data.data.length > 0) {
+                    contacts = data.data;
+                    filteredContacts = [...contacts];
+                    document.getElementById('uploadPreview').style.display = 'block';
+                    document.getElementById('uploadedFileName').textContent = 'Synced from Cloud';
+                    document.getElementById('previewCount').textContent = contacts.length;
+                    document.getElementById('scheduleBtn').disabled = false;
+                    const pb = document.getElementById('persistBadge'); if (pb) pb.style.display = 'inline-flex';
+                    updateDashboard();
+                    updateStats();
+                    console.log('Contacts synced from cloud');
+                }
+            } catch (e) { console.error('Failed to load contacts from cloud:', e); }
+        }
         // ═══════════════════════════════════════════════
         // TOAST
         // ═══════════════════════════════════════════════
@@ -1878,6 +1914,7 @@
             if (loadSession()) {
                 fetchCloudAnalytics(); // Fetch analytics on load
                 loadTemplatesFromCloud(); // Sync templates on load
+                loadContactsFromCloud(); // Sync contacts on load
             }
             updateStats();
             loadFollowupDashboard(); // Load follow-up queue on page load
