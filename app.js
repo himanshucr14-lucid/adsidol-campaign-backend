@@ -1080,7 +1080,10 @@
                     <td style="font-size:13px;">${formatDate(job.scheduledFor)}</td>
                     <td><span class="fu-status-badge fu-status-${job.status}">${job.status}</span></td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
-                        ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button><button class="fu-send-now-btn" style="background:#F59E0B;" onclick="openRescheduleModal('${job.id}', ${job.scheduledFor}, ${job.step}, '${job.contact?.email}')">Reschedule</button><button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : '—'}
+                        ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button>` : ''}
+                        ${job.status === 'pending' || job.status === 'failed' || job.status === 'cancelled' ? `<button class="fu-send-now-btn" style="background:#F59E0B;" onclick="openRescheduleModal('${job.id}', ${job.scheduledFor}, ${job.step}, '${job.contact?.email}')">Reschedule</button>` : ''}
+                        ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : ''}
+                        ${job.status === 'sent' ? '—' : ''}
                     </td>
                 </tr>`).join('');
 
