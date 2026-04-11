@@ -333,39 +333,20 @@
         });
 
         // ═══════════════════════════════════════════════
-        // ═══════════════════════════════════════════════
         // SECTION NAV (SPA Tab Switching)
         // ═══════════════════════════════════════════════
         function scrollToSection(section) {
-            // Map legacy ids
             if(section === 'upload' || section === 'audience') section = 'contacts';
             if(section === 'campaigns' || section === 'schedule') section = 'dashboard';
-            
             const targetId = 'sec-' + section;
             const targetEl = document.getElementById(targetId);
             if (!targetEl) return;
-
-            // Hide all tab sections
             document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-            
-            // Show target section via CSS class
             targetEl.classList.add('active');
-            
-            // Specific load logic
             if (section === 'followups') loadFollowupDashboard();
-            
-            // Update Canvas Header title
-            const titles = {
-                'dashboard': 'Home',
-                'contacts': 'Contact List',
-                'templates': 'Templates',
-                'followups': 'Automation',
-                'analytics': 'Analytics'
-            };
+            const titles = { 'dashboard':'Home','contacts':'Contact List','templates':'Templates','followups':'Automation','analytics':'Analytics' };
             const titleEl = document.getElementById('topNavTitle');
             if (titleEl) titleEl.textContent = titles[section] || 'Campaign Manager';
-            
-            // Reset scroll position for new view
             const mc = document.querySelector('.main-content');
             if (mc) mc.scrollTo({ top: 0, behavior: 'instant' });
         }
@@ -379,148 +360,89 @@
         });
 
         // ═════════════════════════════════════════════════════════════
-        // OVERSCROLL NAV ENGINE — Intentional Hard-Scroll to Jump Tabs
-        // Rules:
-        //   1. Must be at the very top/bottom of the panel (within 2px)
-        //   2. Scroll velocity must be ≥ 8px per event (no slow drift)
-        //   3. Must accumulate 400px of qualifying overscroll
-        //   4. 1.5s cooldown after any jump — can't cascade accidentally
-        //   5. Bidirectional: up at top → prev section, down at bottom → next
+        // OVERSCROLL NAV ENGINE v2 — Pill Indicator + No-Gap Wobble
         // ═════════════════════════════════════════════════════════════
         const mainContentEl = document.querySelector('.main-content');
         const sectionsOrder = ['dashboard', 'contacts', 'followups', 'analytics', 'templates'];
+        const sectionLabels = { dashboard:'Home', contacts:'Contact List', followups:'Automation', analytics:'Analytics', templates:'Templates' };
+        let osAccum=0, osDir=0, osLocked=false;
+        const OS_THRESHOLD=400, OS_MIN_VEL=8, OS_COOLDOWN=1500;
 
-        // State
-        let osAccum = 0;          // accumulated overscroll px
-        let osDir = 0;            // +1 = going next, -1 = going prev
-        let osLocked = false;     // true during jump + 1.5s cooldown
-        const OS_THRESHOLD = 400; // px of hard scroll needed
-        const OS_MIN_VEL = 8;     // px per event minimum velocity gate
-        const OS_COOLDOWN = 1500; // ms lockout after a jump
-
-        // Progress indicator element — thin bar on the right or left edge
-        let osBar = null;
-        function ensureOsBar() {
-            if (osBar) return;
-            osBar = document.createElement('div');
-            osBar.id = 'osProgressBar';
-            osBar.style.cssText = `
-                position: fixed; right: 0; top: 0; width: 3px;
-                height: 0%; background: linear-gradient(180deg, var(--blue-500,#3B82F6), var(--indigo-600,#4F46E5));
-                border-radius: 3px 0 0 3px; z-index: 9999;
-                transition: height 0.05s linear, opacity 0.3s ease;
-                opacity: 0; pointer-events: none;
-            `;
-            document.body.appendChild(osBar);
+        let osPill=null, osFill=null, osHideTimer=null;
+        function ensurePill() {
+            if (osPill) return;
+            osPill = document.createElement('div');
+            osPill.id = 'osIndicator';
+            osPill.innerHTML = '<span class="os-icon" id="osIcon">↓</span><span class="os-label" id="osLabel">Next section</span><div class="os-track"><div class="os-fill" id="osFill"></div></div>';
+            document.body.appendChild(osPill);
+            osFill = document.getElementById('osFill');
         }
-
-        function updateOsBar(pct, dir) {
-            ensureOsBar();
-            const clampedPct = Math.min(100, pct);
-            // For "going up", pin bar to bottom instead of top
-            if (dir === -1) {
-                osBar.style.top = 'auto';
-                osBar.style.bottom = '0';
-                osBar.style.background = 'linear-gradient(0deg, var(--blue-500,#3B82F6), var(--indigo-600,#4F46E5))';
-            } else {
-                osBar.style.top = '0';
-                osBar.style.bottom = 'auto';
-                osBar.style.background = 'linear-gradient(180deg, var(--blue-500,#3B82F6), var(--indigo-600,#4F46E5))';
-            }
-            osBar.style.height = clampedPct + '%';
-            osBar.style.opacity = clampedPct > 1 ? '1' : '0';
-        }
-
-        function resetOsBar() {
-            if (!osBar) return;
-            osBar.style.opacity = '0';
-            setTimeout(() => { if (osBar) osBar.style.height = '0%'; }, 300);
-        }
-
-        function getCurrentSection() {
-            const activeNav = document.querySelector('.nav-menu .nav-link.active');
-            return activeNav ? activeNav.dataset.section : sectionsOrder[0];
-        }
-
-        function jumpToSection(dir) {
+        function showPill(pct, dir) {
+            ensurePill(); clearTimeout(osHideTimer);
             const curr = getCurrentSection();
-            const currIdx = sectionsOrder.indexOf(curr);
-            const nextIdx = currIdx + dir;
-            if (nextIdx < 0 || nextIdx >= sectionsOrder.length) return; // Nothing to jump to
-
-            const target = sectionsOrder[nextIdx];
-            document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
-            const nextNav = document.querySelector(`.nav-menu .nav-link[data-section="${target}"]`);
-            if (nextNav) nextNav.classList.add('active');
-            scrollToSection(target);
+            const ti = sectionsOrder.indexOf(curr) + dir;
+            const lbl = (ti>=0 && ti<sectionsOrder.length) ? sectionLabels[sectionsOrder[ti]] : null;
+            if (!lbl) return;
+            document.getElementById('osIcon').textContent = dir===1?'↓':'↑';
+            document.getElementById('osLabel').textContent = (dir===1?'Next: ':'Back: ') + lbl;
+            osFill.style.width = Math.min(100,pct)+'%';
+            osPill.classList.add('visible');
         }
-
+        function hidePill() {
+            if (!osPill) return;
+            osFill.style.width = '0%';
+            clearTimeout(osHideTimer);
+            osHideTimer = setTimeout(()=>osPill.classList.remove('visible'), 150);
+        }
+        function getCurrentSection() {
+            const a = document.querySelector('.nav-menu .nav-link.active');
+            return a ? a.dataset.section : sectionsOrder[0];
+        }
+        function jumpToSection(dir) {
+            const ni = sectionsOrder.indexOf(getCurrentSection()) + dir;
+            if (ni<0 || ni>=sectionsOrder.length) return;
+            const t = sectionsOrder[ni];
+            document.querySelectorAll('.nav-menu .nav-link').forEach(l=>l.classList.remove('active'));
+            const nv = document.querySelector('.nav-menu .nav-link[data-section="'+t+'"]');
+            if (nv) nv.classList.add('active');
+            scrollToSection(t);
+        }
         function handleOverscroll(delta) {
-            if (osLocked) { osAccum = 0; return; }
-
-            // Velocity gate: ignore slow, lazy scrolls
-            if (Math.abs(delta) < OS_MIN_VEL) { osAccum = 0; resetOsBar(); return; }
-
-            const scrollTop = mainContentEl.scrollTop;
-            const atTop    = scrollTop <= 2;
-            const atBottom = mainContentEl.scrollHeight - scrollTop <= mainContentEl.clientHeight + 2;
-
-            const goingDown = delta > 0;
-            const goingUp   = delta < 0;
-
-            // Only accumulate when at the relevant edge
-            if (goingDown && atBottom) {
-                if (osDir !== 1) { osAccum = 0; osDir = 1; } // direction changed, reset
-                osAccum += Math.abs(delta);
-                updateOsBar((osAccum / OS_THRESHOLD) * 100, 1);
-            } else if (goingUp && atTop) {
-                if (osDir !== -1) { osAccum = 0; osDir = -1; }
-                osAccum += Math.abs(delta);
-                updateOsBar((osAccum / OS_THRESHOLD) * 100, -1);
+            if (osLocked) { osAccum=0; return; }
+            if (Math.abs(delta)<OS_MIN_VEL) { osAccum=0; hidePill(); return; }
+            const st = mainContentEl.scrollTop;
+            const atTop = st<=2;
+            const atBot = (mainContentEl.scrollHeight-st)<=(mainContentEl.clientHeight+2);
+            const dn = delta>0, up = delta<0;
+            if (dn && atBot) {
+                if (osDir!==1) { osAccum=0; osDir=1; }
+                osAccum+=Math.abs(delta); showPill((osAccum/OS_THRESHOLD)*100,1);
+            } else if (up && atTop) {
+                if (osDir!==-1) { osAccum=0; osDir=-1; }
+                osAccum+=Math.abs(delta); showPill((osAccum/OS_THRESHOLD)*100,-1);
             } else {
-                // Left the edge — decay accumulator quickly
-                osAccum = Math.max(0, osAccum - Math.abs(delta) * 2);
-                if (osAccum === 0) { osDir = 0; resetOsBar(); }
-                return;
+                osAccum=Math.max(0,osAccum-Math.abs(delta)*2);
+                if (osAccum===0) { osDir=0; hidePill(); } return;
             }
-
-            // Threshold crossed — FIRE
-            if (osAccum >= OS_THRESHOLD) {
-                osAccum = 0;
-                osDir = 0;
-                osLocked = true;
-                resetOsBar();
-
-                // Wobble animation on the panel
+            if (osAccum>=OS_THRESHOLD) {
+                const fd=dn?1:-1; osAccum=0; osDir=0; osLocked=true; hidePill();
                 mainContentEl.classList.add('wobble-jump');
-                setTimeout(() => {
-                    jumpToSection(goingDown ? 1 : -1);
-                    setTimeout(() => {
-                        mainContentEl.classList.remove('wobble-jump');
-                    }, 400);
-                }, 80);
-
-                // Cooldown
-                setTimeout(() => { osLocked = false; }, OS_COOLDOWN);
+                mainContentEl.addEventListener('animationend', function onEnd(){
+                    mainContentEl.classList.remove('wobble-jump');
+                    mainContentEl.removeEventListener('animationend',onEnd);
+                },{ once:true });
+                setTimeout(()=>jumpToSection(fd),80);
+                setTimeout(()=>{ osLocked=false; }, OS_COOLDOWN);
             }
         }
-
         if (mainContentEl) {
-            // Mouse wheel / trackpad
-            mainContentEl.addEventListener('wheel', (e) => handleOverscroll(e.deltaY), { passive: true });
-
-            // Touch swipe (mobile)
-            let lastTouchY = 0;
-            mainContentEl.addEventListener('touchstart', (e) => {
-                lastTouchY = e.touches[0].clientY;
-                osAccum = 0; osDir = 0;
-            }, { passive: true });
-            mainContentEl.addEventListener('touchmove', (e) => {
-                const dy = lastTouchY - e.touches[0].clientY; // positive = swiping up (scrolling down)
-                lastTouchY = e.touches[0].clientY;
-                handleOverscroll(dy);
-            }, { passive: true });
+            mainContentEl.addEventListener('wheel',(e)=>handleOverscroll(e.deltaY),{passive:true});
+            let lty=0;
+            mainContentEl.addEventListener('touchstart',(e)=>{ lty=e.touches[0].clientY; osAccum=0; osDir=0; },{passive:true});
+            mainContentEl.addEventListener('touchmove',(e)=>{ const dy=lty-e.touches[0].clientY; lty=e.touches[0].clientY; handleOverscroll(dy); },{passive:true});
+            mainContentEl.addEventListener('scroll',()=>{ if(!osLocked){osAccum=0;osDir=0;hidePill();} },{passive:true});
         }
+
 
         // ═══════════════════════════════════════════════
         // STATE

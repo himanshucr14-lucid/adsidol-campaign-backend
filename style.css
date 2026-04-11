@@ -3428,17 +3428,80 @@
         }
 
         /* ── OVERSCROLL BOUNCE ANIMATION ── */
+        /* Uses scale instead of translateY to avoid gaps */
         @keyframes wobbleJump {
-            0% { transform: translateY(0); }
-            20% { transform: translateY(-25px); }
-            40% { transform: translateY(8px); }
-            60% { transform: translateY(-12px); }
-            80% { transform: translateY(4px); }
-            100% { transform: translateY(0); }
+            0%   { transform: scaleY(1);    }
+            15%  { transform: scaleY(0.968); }
+            35%  { transform: scaleY(1.012); }
+            55%  { transform: scaleY(0.988); }
+            75%  { transform: scaleY(1.005); }
+            100% { transform: scaleY(1);    }
         }
-        
+
         .wobble-jump {
-            animation: wobbleJump 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform-origin: center center;
+            animation: wobbleJump 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        /* ── OVERSCROLL PROGRESS INDICATOR ── */
+        #osIndicator {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 100px;
+            padding: 8px 16px 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 9999;
+            min-width: 200px;
+            max-width: 280px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
+
+        #osIndicator.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #osIndicator .os-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        #osIndicator .os-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
+            white-space: nowrap;
+            flex: 1;
+            font-family: 'Inter', 'Outfit', sans-serif;
+        }
+
+        #osIndicator .os-track {
+            width: 60px;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        #osIndicator .os-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #3B82F6, #818CF8);
+            width: 0%;
+            transition: width 0.06s linear;
         }
 
         /* ── MOBILE BACKDROP ── */
