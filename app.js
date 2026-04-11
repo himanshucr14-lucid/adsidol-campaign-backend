@@ -298,28 +298,37 @@
             darkMode = on;
             document.body.classList.toggle('dark', on);
             document.getElementById('desktopDarkToggle').classList.toggle('on', on);
-            document.getElementById('mobileDarkToggle').classList.toggle('on', on);
             saveState();
         }
         document.getElementById('desktopDarkToggle').addEventListener('click', () => setDark(!darkMode));
-        document.getElementById('mobileDarkToggle').addEventListener('click', () => setDark(!darkMode));
 
         // ═══════════════════════════════════════════════
         // MOBILE MENU
         // ═══════════════════════════════════════════════
         const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
         const mobileBackdrop = document.getElementById('mobileBackdrop');
-        function openMobileMenu() { mobileMenu.classList.add('open'); hamburgerBtn.classList.add('open'); document.body.style.overflow = 'hidden'; }
-        function closeMobileMenu() { mobileMenu.classList.remove('open'); hamburgerBtn.classList.remove('open'); document.body.style.overflow = ''; }
-        hamburgerBtn.addEventListener('click', () => mobileMenu.classList.contains('open') ? closeMobileMenu() : openMobileMenu());
+        const sidebarEl = document.querySelector('.sidebar');
+        
+        function openMobileMenu() { 
+            sidebarEl.classList.add('mobile-open'); 
+            hamburgerBtn.classList.add('open'); 
+            mobileBackdrop.style.display = 'block';
+            document.body.style.overflow = 'hidden'; 
+        }
+        function closeMobileMenu() { 
+            sidebarEl.classList.remove('mobile-open'); 
+            hamburgerBtn.classList.remove('open'); 
+            mobileBackdrop.style.display = 'none';
+            document.body.style.overflow = ''; 
+        }
+        
+        hamburgerBtn.addEventListener('click', () => sidebarEl.classList.contains('mobile-open') ? closeMobileMenu() : openMobileMenu());
         mobileBackdrop.addEventListener('click', closeMobileMenu);
-        document.querySelectorAll('.mobile-menu-panel [data-section]').forEach(link => {
+        
+        // Ensure nav links close mobile menu when tapped
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
             link.addEventListener('click', () => {
-                scrollToSection(link.dataset.section);
-                document.querySelectorAll('.mobile-menu-panel [data-section]').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                closeMobileMenu();
+                if(window.innerWidth <= 1024) closeMobileMenu();
             });
         });
 
@@ -357,7 +366,7 @@
             if (titleEl) titleEl.textContent = titles[section] || 'Campaign Manager';
             
             // Reset scroll position for new view
-            window.scrollTo({ top: 0, behavior: 'instant' });
+            document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'instant' });
         }
 
         document.querySelectorAll('.nav-menu .nav-link').forEach(link => {
@@ -367,6 +376,67 @@
                 scrollToSection(link.dataset.section);
             });
         });
+
+        // ═══════════════════════════════════════════════
+        // OVERSCROLL WOBBLE & JUMP (PULL TO SWITCH TABS)
+        // ═══════════════════════════════════════════════
+        const mainContentEl = document.querySelector('.main-content');
+        const sectionsOrder = ['dashboard', 'contacts', 'followups', 'analytics', 'templates'];
+        let overscrollAccumulator = 0;
+        let isWobbling = false;
+        
+        function handleOverscroll(delta) {
+            if (isWobbling) return;
+            const isAtBottom = mainContentEl.scrollHeight - mainContentEl.scrollTop <= mainContentEl.clientHeight + 2;
+            
+            if (isAtBottom && delta > 0) {
+                overscrollAccumulator += delta;
+                if (overscrollAccumulator > 150) { // Threshold for a "hard pull"
+                    triggerWobbleJump();
+                }
+            } else {
+                overscrollAccumulator = 0;
+            }
+        }
+        
+        function triggerWobbleJump() {
+            isWobbling = true;
+            overscrollAccumulator = 0;
+            mainContentEl.classList.add('wobble-jump');
+            
+            setTimeout(() => {
+                const activeNav = document.querySelector('.nav-menu .nav-link.active');
+                const currSection = activeNav ? activeNav.dataset.section : 'dashboard';
+                const currIdx = sectionsOrder.indexOf(currSection);
+                
+                if (currIdx !== -1 && currIdx < sectionsOrder.length - 1) {
+                    const nextSection = sectionsOrder[currIdx + 1];
+                    document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
+                    const nextNav = document.querySelector(`.nav-menu .nav-link[data-section="${nextSection}"]`);
+                    if (nextNav) nextNav.classList.add('active');
+                    scrollToSection(nextSection);
+                }
+                setTimeout(() => {
+                    mainContentEl.classList.remove('wobble-jump');
+                    isWobbling = false;
+                }, 400); // Wait for wobble completion
+            }, 100);
+        }
+
+        // Catch Wheel
+        mainContentEl.addEventListener('wheel', (e) => handleOverscroll(e.deltaY), { passive: true });
+
+        // Catch Mobile swipe
+        let lastTouchY = 0;
+        mainContentEl.addEventListener('touchstart', (e) => {
+            lastTouchY = e.touches[0].clientY;
+            overscrollAccumulator = 0;
+        }, { passive: true });
+        mainContentEl.addEventListener('touchmove', (e) => {
+            const currentY = e.touches[0].clientY;
+            handleOverscroll(lastTouchY - currentY);
+            lastTouchY = currentY;
+        }, { passive: true });
 
         // ═══════════════════════════════════════════════
         // STATE

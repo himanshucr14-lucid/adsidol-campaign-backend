@@ -15,80 +15,8 @@
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu">
-        <div class="mobile-menu-backdrop" id="mobileBackdrop"></div>
-        <div class="mobile-menu-panel">
-            <div class="mobile-menu-logo">Adsidol</div>
-            <button class="mobile-nav-link active" data-section="upload">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                Upload Contacts</button>
-            <button class="mobile-nav-link" data-section="templates">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                </svg>
-                Templates</button>
-            <button class="mobile-nav-link" data-section="schedule">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M5 2v2m6-2v2M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                </svg>
-                Schedule</button>
-            <button class="mobile-nav-link" data-section="campaigns">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor"
-                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                Campaigns</button>
-            <button class="mobile-nav-link" data-section="analytics">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
-                Analytics</button>
-            <div class="mobile-menu-divider"></div>
-            <div class="mobile-dark-toggle">
-                <span style="display:flex;align-items:center;gap:8px;">
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                        <path d="M13 8.5A5.5 5.5 0 016.5 2a5.5 5.5 0 100 11A5.5 5.5 0 0013 8.5z" stroke="currentColor"
-                            stroke-width="1.4" stroke-linejoin="round" />
-                    </svg>
-                    Dark Mode
-                </span>
-                <button class="dark-toggle" id="mobileDarkToggle">
-                    <span class="tog-sun">
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                            <circle cx="7" cy="7" r="3" fill="white"/>
-                            <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M3.05 3.05l1.06 1.06M9.89 9.89l1.06 1.06M10.95 3.05l-1.06 1.06M4.11 9.89l-1.06 1.06" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                    <span class="tog-moon">
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                            <path d="M12 8.5A6 6 0 015.5 2a6 6 0 100 10 6 6 0 006.5-3.5z" fill="white"/>
-                        </svg>
-                    </span>
-                </button>
-            </div>
-            <div class="mobile-menu-divider"></div>
-            <div style="padding: 10px 16px; display: flex; align-items: center; gap: 10px;">
-                <div class="status-dot" id="mobileGmailDot"></div>
-                <span style="font-size:14px; font-weight:600; color: var(--text-light);" id="mobileGmailStatus">Gmail
-                    Not Connected</span>
-            </div>
-            <button class="btn btn-primary" id="mobileConnectGmail"
-                style="margin: 8px 0; width: 100%; justify-content: center; display:inline-flex; align-items:center; gap:8px;">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                Connect Gmail
-            </button>
-        </div>
-    </div>
+    <!-- Mobile Backdrop -->
+    <div class="mobile-backdrop" id="mobileBackdrop"></div>
 
     <!-- Layout Wrapper representing SPA structure -->
     <div class="layout-wrapper">
