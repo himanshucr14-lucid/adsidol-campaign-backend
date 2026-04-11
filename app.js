@@ -527,6 +527,15 @@
                 const tzAbbr = new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, timeZoneName: 'short' }).format(scheduledDate).split(' ').pop();
                 const realIdx = contacts.indexOf(contact);
                 const hasFu = followupTemplates[contact.vertical]?.length > 0;
+                
+                let scheduledCellHtml = '<span style="color:var(--text-muted);font-size:13px;">—</span>';
+                if (contact.scheduledFor) {
+                    scheduledCellHtml = `
+                        <div style="font-weight:600;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:4px;">(Local)</span></div>
+                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:10px;font-weight:700;opacity:0.6;margin-left:4px;">(IST)</span></div>
+                    `;
+                }
+
                 return `<tr>
                     <td><input type="checkbox" class="checkbox contact-checkbox" data-real="${realIdx}" ${contact.selected ? 'checked' : ''}></td>
                     <td style="font-weight:600;">${escHtml(contact.name)}</td>
@@ -545,8 +554,7 @@
                         </div>
                     </td>
                     <td style="line-height:1.4;">
-                        <div style="font-weight:600;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:4px;">(Local)</span></div>
-                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:10px;font-weight:700;opacity:0.6;margin-left:4px;">(IST)</span></div>
+                        ${scheduledCellHtml}
                     </td>
                     <td>
                         <div style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;">
@@ -968,7 +976,7 @@
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); showToast(`${sel.length} marked as scheduled`, 'warning'); saveState();
         });
         document.getElementById('bulkPending').addEventListener('click', () => {
-            const sel = contacts.filter(c => c.selected); sel.forEach(c => { c.status = 'pending'; c.selected = false; });
+            const sel = contacts.filter(c => c.selected); sel.forEach(c => { c.status = 'pending'; c.scheduledFor = null; c.selected = false; });
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); showToast(`${sel.length} reset to pending`, 'info'); saveState();
         });
         document.getElementById('bulkClose').addEventListener('click', () => { contacts.forEach(c => c.selected = false); filteredContacts = [...contacts]; updateDashboard(); });
@@ -1372,7 +1380,7 @@
                     <td><span class="fu-status-badge fu-status-${job.status}">${job.status}</span></td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
                         ${job.status === 'pending' || job.status === 'failed' || job.status === 'cancelled' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${job.id}')">Send now</button>` : ''}
-                        ${job.status === 'pending' || job.status === 'failed' || job.status === 'cancelled' ? `<button class="fu-send-now-btn" style="background:#F59E0B;" onclick="openRescheduleModal('${job.id}', ${job.scheduledFor}, ${job.step}, '${job.contact?.email}')">Reschedule</button>` : ''}
+                        ${job.status === 'pending' || job.status === 'failed' || job.status === 'cancelled' ? `<button class="fu-send-now-btn" style="background:#F59E0B;" onclick="openRescheduleModal('${job.id}', ${job.scheduledFor}, ${job.step}, '${job.contact?.email}', '${tz}')">Reschedule</button>` : ''}
                         ${job.status === 'pending' || job.status === 'failed' ? `<button class="fu-cancel-btn" onclick="cancelFuJob('${job.id}')">Cancel</button>` : ''}
                         ${job.status === 'sent' ? '—' : ''}
                     </td>
@@ -1461,22 +1469,32 @@
             } catch (e) { showToast('Network error', 'error'); }
         };
 
-        window.openRescheduleModal = function (jobId, scheduledFor, step, email) {
+        window.openRescheduleModal = function (jobId, scheduledFor, step, email, tz) {
             document.getElementById('reschedJobId').value = jobId;
             document.getElementById('reschedSubtitle').textContent = `Step ${step} for ${email}`;
             
-            // Format current scheduledFor into local date/time inputs
             let timeToUse = scheduledFor;
             if (timeToUse < Date.now()) {
-                timeToUse = Date.now() + 5 * 60000; // default to 5 minutes from now if the original was in the past
+                timeToUse = Date.now() + 5 * 60000;
             }
             
-            const dateObj = new Date(timeToUse);
-            const dateStr = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
-            const timeStr = String(dateObj.getHours()).padStart(2, '0') + ':' + String(dateObj.getMinutes()).padStart(2, '0');
+            // Format time in target tz
+            const fmt = new Intl.DateTimeFormat('en-US', {
+                timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: false
+            });
+            const parts = fmt.formatToParts(new Date(timeToUse));
+            const getP = (type) => parts.find(p => p.type === type).value;
+            
+            let hr = getP('hour');
+            if (hr === '24') hr = '00';
+            
+            const dateStr = `${getP('year')}-${getP('month')}-${getP('day')}`;
+            const timeStr = `${hr}:${getP('minute')}`;
             
             document.getElementById('reschedDate').value = dateStr;
             document.getElementById('reschedTime').value = timeStr;
+            document.getElementById('rescheduleModal').dataset.tz = tz;
             
             document.getElementById('rescheduleModal').style.display = 'flex';
         };
@@ -1489,12 +1507,18 @@
             const jobId = document.getElementById('reschedJobId').value;
             const dateVal = document.getElementById('reschedDate').value;
             const timeVal = document.getElementById('reschedTime').value;
+            const tz = document.getElementById('rescheduleModal').dataset.tz;
             
             if (!dateVal || !timeVal) { showToast('Please select both date and time', 'warning'); return; }
             
-            const [y, m, d] = dateVal.split('-');
-            const [hr, min] = timeVal.split(':');
-            const newTimestamp = new Date(Date.parse(`${y}-${m}-${d}T${hr}:${min}:00`)).getTime();
+            const [y, m, d] = dateVal.split('-').map(Number);
+            const [hr, min] = timeVal.split(':').map(Number);
+            
+            const utcGuess = new Date(Date.UTC(y, m - 1, d, hr, min, 0));
+            const formattedLocalStr = utcGuess.toLocaleString('en-US', { timeZone: tz });
+            const formattedDate = new Date(formattedLocalStr);
+            const offsetMs = formattedDate.getTime() - utcGuess.getTime();
+            const newTimestamp = utcGuess.getTime() - offsetMs;
             
             if (newTimestamp <= Date.now()) {
                 showToast('Scheduled time must be in the future', 'warning'); return;
@@ -1878,7 +1902,9 @@
                         company_name: contact.company,
                         vertical: contact.vertical,
                         name: contact.name,
-                        company: contact.company
+                        company: contact.company,
+                        timezone: contact.timezone,
+                        location: contact.location
                     },
                     scheduledFor: contact.scheduledFor,
                     subject: tpl.subject,
