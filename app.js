@@ -529,7 +529,7 @@
                 const hasFu = followupTemplates[contact.vertical]?.length > 0;
                 
                 let scheduledCellHtml = '<span style="color:var(--text-muted);font-size:13px;">—</span>';
-                if (contact.scheduledFor) {
+                if (contact.scheduledFor && contact.status !== 'pending') {
                     scheduledCellHtml = `
                         <div style="font-weight:600;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:4px;">(Local)</span></div>
                         <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:10px;font-weight:700;opacity:0.6;margin-left:4px;">(IST)</span></div>
