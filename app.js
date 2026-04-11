@@ -328,8 +328,8 @@
         // SECTION NAV (SPA Tab Switching)
         // ═══════════════════════════════════════════════
         function scrollToSection(section) {
-            // Map legacy ids directly if needed (e.g. mobile links)
-            if(section === 'upload') section = 'audience';
+            // Map legacy ids
+            if(section === 'upload' || section === 'audience') section = 'contacts';
             if(section === 'campaigns' || section === 'schedule') section = 'dashboard';
             
             const targetId = 'sec-' + section;
@@ -348,7 +348,7 @@
             // Update Canvas Header title
             const titles = {
                 'dashboard': 'Campaign Dashboard',
-                'audience': 'Audience Lists',
+                'contacts': 'Contact List',
                 'templates': 'Template Library',
                 'followups': 'Follow-up Engine',
                 'analytics': 'Campaign Analytics'
