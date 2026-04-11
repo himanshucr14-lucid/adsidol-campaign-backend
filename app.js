@@ -366,7 +366,8 @@
             if (titleEl) titleEl.textContent = titles[section] || 'Campaign Manager';
             
             // Reset scroll position for new view
-            document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'instant' });
+            const mc = document.querySelector('.main-content');
+            if (mc) mc.scrollTo({ top: 0, behavior: 'instant' });
         }
 
         document.querySelectorAll('.nav-menu .nav-link').forEach(link => {
@@ -385,58 +386,52 @@
         let overscrollAccumulator = 0;
         let isWobbling = false;
         
-        function handleOverscroll(delta) {
-            if (isWobbling) return;
-            const isAtBottom = mainContentEl.scrollHeight - mainContentEl.scrollTop <= mainContentEl.clientHeight + 2;
-            
-            if (isAtBottom && delta > 0) {
-                overscrollAccumulator += delta;
-                if (overscrollAccumulator > 150) { // Threshold for a "hard pull"
-                    triggerWobbleJump();
+        if (mainContentEl) {
+            function handleOverscroll(delta) {
+                if (isWobbling) return;
+                const isAtBottom = mainContentEl.scrollHeight - mainContentEl.scrollTop <= mainContentEl.clientHeight + 2;
+                if (isAtBottom && delta > 0) {
+                    overscrollAccumulator += delta;
+                    if (overscrollAccumulator > 150) triggerWobbleJump();
+                } else {
+                    overscrollAccumulator = 0;
                 }
-            } else {
-                overscrollAccumulator = 0;
             }
-        }
-        
-        function triggerWobbleJump() {
-            isWobbling = true;
-            overscrollAccumulator = 0;
-            mainContentEl.classList.add('wobble-jump');
             
-            setTimeout(() => {
-                const activeNav = document.querySelector('.nav-menu .nav-link.active');
-                const currSection = activeNav ? activeNav.dataset.section : 'dashboard';
-                const currIdx = sectionsOrder.indexOf(currSection);
-                
-                if (currIdx !== -1 && currIdx < sectionsOrder.length - 1) {
-                    const nextSection = sectionsOrder[currIdx + 1];
-                    document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
-                    const nextNav = document.querySelector(`.nav-menu .nav-link[data-section="${nextSection}"]`);
-                    if (nextNav) nextNav.classList.add('active');
-                    scrollToSection(nextSection);
-                }
+            function triggerWobbleJump() {
+                isWobbling = true;
+                overscrollAccumulator = 0;
+                mainContentEl.classList.add('wobble-jump');
                 setTimeout(() => {
-                    mainContentEl.classList.remove('wobble-jump');
-                    isWobbling = false;
-                }, 400); // Wait for wobble completion
-            }, 100);
+                    const activeNav = document.querySelector('.nav-menu .nav-link.active');
+                    const currSection = activeNav ? activeNav.dataset.section : 'dashboard';
+                    const currIdx = sectionsOrder.indexOf(currSection);
+                    if (currIdx !== -1 && currIdx < sectionsOrder.length - 1) {
+                        const nextSection = sectionsOrder[currIdx + 1];
+                        document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
+                        const nextNav = document.querySelector(`.nav-menu .nav-link[data-section="${nextSection}"]`);
+                        if (nextNav) nextNav.classList.add('active');
+                        scrollToSection(nextSection);
+                    }
+                    setTimeout(() => {
+                        mainContentEl.classList.remove('wobble-jump');
+                        isWobbling = false;
+                    }, 400);
+                }, 100);
+            }
+
+            mainContentEl.addEventListener('wheel', (e) => handleOverscroll(e.deltaY), { passive: true });
+            let lastTouchY = 0;
+            mainContentEl.addEventListener('touchstart', (e) => {
+                lastTouchY = e.touches[0].clientY;
+                overscrollAccumulator = 0;
+            }, { passive: true });
+            mainContentEl.addEventListener('touchmove', (e) => {
+                const currentY = e.touches[0].clientY;
+                handleOverscroll(lastTouchY - currentY);
+                lastTouchY = currentY;
+            }, { passive: true });
         }
-
-        // Catch Wheel
-        mainContentEl.addEventListener('wheel', (e) => handleOverscroll(e.deltaY), { passive: true });
-
-        // Catch Mobile swipe
-        let lastTouchY = 0;
-        mainContentEl.addEventListener('touchstart', (e) => {
-            lastTouchY = e.touches[0].clientY;
-            overscrollAccumulator = 0;
-        }, { passive: true });
-        mainContentEl.addEventListener('touchmove', (e) => {
-            const currentY = e.touches[0].clientY;
-            handleOverscroll(lastTouchY - currentY);
-            lastTouchY = currentY;
-        }, { passive: true });
 
         // ═══════════════════════════════════════════════
         // STATE
@@ -1785,12 +1780,8 @@
                     gmailConnected = true;
                     document.getElementById('headerGmailDot').classList.add('connected');
                     document.getElementById('headerGmailStatus').textContent = data.email || 'Connected';
-                    document.getElementById('mobileGmailDot').classList.add('connected');
-                    document.getElementById('mobileGmailStatus').textContent = data.email || 'Connected';
                     document.getElementById('headerConnectGmail').innerHTML = `✅ ${currentUser?.name || 'Connected'}`;
                     document.getElementById('headerConnectGmail').style.cssText = 'background:linear-gradient(135deg,var(--success),#059669);color:white;padding:9px 16px;font-size:13px;border-radius:14px;cursor:pointer;border:none;';
-                    document.getElementById('mobileConnectGmail').innerHTML = `✅ ${data.email || 'Gmail'}`;
-                    document.getElementById('mobileConnectGmail').style.background = 'linear-gradient(135deg,var(--success),#059669)';
                     const banner = document.querySelector('.demo-banner');
                     if (banner) banner.style.display = 'none';
                     showToast(`Gmail connected — sending as ${data.senderEmail || data.email}`, 'success');
@@ -1812,12 +1803,8 @@
                     gmailConnected = true;
                     document.getElementById('headerGmailDot').classList.add('connected');
                     document.getElementById('headerGmailStatus').textContent = data.email || 'Connected';
-                    document.getElementById('mobileGmailDot').classList.add('connected');
-                    document.getElementById('mobileGmailStatus').textContent = data.email || 'Connected';
                     document.getElementById('headerConnectGmail').innerHTML = `✅ ${currentUser?.name || 'Connected'}`;
                     document.getElementById('headerConnectGmail').style.cssText = 'background:linear-gradient(135deg,var(--success),#059669);color:white;padding:9px 16px;font-size:13px;border-radius:14px;cursor:pointer;border:none;';
-                    document.getElementById('mobileConnectGmail').innerHTML = `✅ ${data.email || 'Gmail'}`;
-                    document.getElementById('mobileConnectGmail').style.background = 'linear-gradient(135deg,var(--success),#059669)';
                     const banner = document.querySelector('.demo-banner');
                     if (banner) banner.style.display = 'none';
                     showToast(`Gmail connected — sending as ${data.senderEmail || data.email}`, 'success');
@@ -1837,8 +1824,9 @@
                 }
             } catch (e) { showToast('Could not reach backend — check BACKEND_URL', 'error', 7000); }
         }
-        document.getElementById('headerConnectGmail').addEventListener('click', checkGmailStatus);
-        document.getElementById('mobileConnectGmail').addEventListener('click', () => { checkGmailStatus(); closeMobileMenu(); });
+        if (document.getElementById('headerConnectGmail')) {
+            document.getElementById('headerConnectGmail').addEventListener('click', checkGmailStatus);
+        }
 
         // ═══════════════════════════════════════════════
         // LOGIN MODAL LOGIC
