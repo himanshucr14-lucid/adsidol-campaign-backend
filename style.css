@@ -632,14 +632,22 @@
 
         /* Cards */
         .card {
-            background: var(--card);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 24px;
             padding: 40px;
             margin-bottom: 32px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.04);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             animation: fadeInUp 0.6s ease backwards;
+        }
+
+        body.dark .card {
+            background: rgba(10, 10, 10, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .card:nth-child(1) {
@@ -3209,4 +3217,13 @@
 
         .row-action-btn:active {
             transform: scale(0.95);
+        }
+
+        body.compact-table table {
+            border-spacing: 0 4px;
+        }
+        
+        body.compact-table th, body.compact-table td {
+            padding: 8px 12px;
+            font-size: 13px;
         }

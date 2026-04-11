@@ -500,10 +500,11 @@
                     if (existingEmails.has(email.toLowerCase())) { duplicates++; continue; }
                     existingEmails.add(email.toLowerCase());
                     const previouslySent = sentEmails.has(email.toLowerCase());
-                    newContacts.push({ name, company, vertical, email, location: location || 'Unknown', timezone: detectTimezone(location || company || 'United States'), status: 'pending', scheduledFor: null, selected: false, sentMessageId: null, sentThreadId: null, previouslySent });
+                    newContacts.push({ name, company, vertical, email, location: location || 'Unknown', timezone: detectTimezone(location || company || 'United States'), status: 'pending', scheduledFor: null, selected: false, sentMessageId: null, sentThreadId: null, previouslySent, tags: [] });
                 }
             }
             contacts = [...contacts, ...newContacts];
+            if (typeof updateTagFilterOptions === 'function') updateTagFilterOptions();
             const repeats = newContacts.filter(c => c.previouslySent).length;
             const sample = lines[1]?.split(',').map(v => v.trim().replace(/^["']|["']$/g, '')) || [];
             return { ok: true, headers: lines[0].split(',').map(h => h.trim()), sample, duplicates, repeats };
@@ -541,6 +542,11 @@
                     <td style="font-weight:600;">${escHtml(contact.name)}</td>
                     <td class="col-company">${escHtml(contact.company)}</td>
                     <td style="color:var(--blue-600);font-weight:600;">${escHtml(contact.vertical)}</td>
+                    <td class="col-tags">
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                            ${(contact.tags || []).map(t => `<span style="background:var(--indigo-500);color:white;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;">${escHtml(t)}</span>`).join('')}
+                        </div>
+                    </td>
                     <td style="color:var(--text-light);">
                         <div style="display:flex;align-items:center;flex-wrap:nowrap;">
                             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;" title="${escHtml(contact.email)}">${escHtml(contact.email)}</span>
@@ -980,6 +986,28 @@
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); showToast(`${sel.length} reset to pending`, 'info'); saveState();
         });
         document.getElementById('bulkClose').addEventListener('click', () => { contacts.forEach(c => c.selected = false); filteredContacts = [...contacts]; updateDashboard(); });
+        document.getElementById('bulkAddTag').addEventListener('click', () => {
+            const tag = prompt("Enter a tag to add to selected contacts (e.g., VIP, Hot Lead):");
+            if (tag && tag.trim()) {
+                const sel = contacts.filter(c => c.selected);
+                sel.forEach(c => {
+                    if (!c.tags) c.tags = [];
+                    if (!c.tags.includes(tag.trim())) c.tags.push(tag.trim());
+                    c.selected = false;
+                });
+                filteredContacts = [...contacts]; updateTagFilterOptions(); updateDashboard(); updateStats(); showToast(`Added tag '${tag.trim()}' to ${sel.length} contact(s)`, 'success'); saveState();
+            }
+        });
+        function updateTagFilterOptions() {
+            const tagSet = new Set();
+            contacts.forEach(c => (c.tags || []).forEach(t => tagSet.add(t)));
+            const ft = document.getElementById('filterTag');
+            if (!ft) return;
+            const currentVal = ft.value;
+            ft.innerHTML = '<option value="">All Tags</option>' + Array.from(tagSet).map(t => `<option value="${t}">${t}</option>`).join('');
+            ft.value = currentVal;
+        }
+
 
         // ═══════════════════════════════════════════════
         // TEMPLATE TABS
@@ -1953,9 +1981,10 @@
         document.getElementById('searchContacts').addEventListener('input', applyFilters);
         document.getElementById('filterVertical').addEventListener('change', applyFilters);
         document.getElementById('filterStatus').addEventListener('change', applyFilters);
+        document.getElementById('filterTag').addEventListener('change', applyFilters);
         function applyFilters() {
-            const search = document.getElementById('searchContacts').value.toLowerCase(), vertical = document.getElementById('filterVertical').value, status = document.getElementById('filterStatus').value;
-            filteredContacts = contacts.filter(c => (!search || c.name.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || c.company.toLowerCase().includes(search)) && (!vertical || c.vertical === vertical) && (!status || c.status === status));
+            const search = document.getElementById('searchContacts').value.toLowerCase(), vertical = document.getElementById('filterVertical').value, status = document.getElementById('filterStatus').value, tag = document.getElementById('filterTag').value;
+            filteredContacts = contacts.filter(c => (!search || c.name.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || c.company.toLowerCase().includes(search)) && (!vertical || c.vertical === vertical) && (!status || c.status === status) && (!tag || (c.tags && c.tags.includes(tag))));
             
             const cards = [
                 { id: 'topCardAll', val: '', color: 'var(--blue-500)' },
@@ -2171,4 +2200,12 @@
                     renderFuDashboard();
                 });
             });
+
+            // Density Toggle
+            const densityBtn = document.getElementById('densityBtn');
+            if (densityBtn) {
+                densityBtn.addEventListener('click', () => {
+                    document.body.classList.toggle('compact-table');
+                });
+            }
         })();
