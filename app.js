@@ -349,7 +349,10 @@
             if (titleEl) titleEl.textContent = titles[section] || 'Campaign Manager';
             const mc = document.querySelector('.main-content');
             if (mc) mc.scrollTo({ top: 0, behavior: 'instant' });
+            // Reset overscroll state — prevent pill firing immediately on new section
+            if (typeof window._osMarkUnsettled === 'function') window._osMarkUnsettled();
         }
+
 
         document.querySelectorAll('.nav-menu .nav-link').forEach(link => {
             link.addEventListener('click', () => {
@@ -455,14 +458,40 @@
             }
 
             // ── Input handler ─────────────────────────────────────────
-            function feedDelta(delta) {
-                if (osLocked) return;
+            // osSettled: false for 350ms after any section navigation,
+            // prevents the pill firing the moment you land on a new page
+            let osSettled = true;
+            let osSettleTimer = null;
 
-                const st   = mainContentEl.scrollTop;
-                const atTop = st <= 1;
-                const atBot = (mainContentEl.scrollHeight - st) <= (mainContentEl.clientHeight + 1);
-                const dn   = delta > 0;
-                const up   = delta < 0;
+            function markUnsettled() {
+                osSettled = false;
+                clearTimeout(osSettleTimer);
+                osEnergy = 0; osDir = 0; osDisplayPct = 0; hidePill();
+                osSettleTimer = setTimeout(() => { osSettled = true; }, 350);
+            }
+
+            // Expose so scrollToSection can call it
+            window._osMarkUnsettled = markUnsettled;
+
+            function feedDelta(delta) {
+                if (osLocked || !osSettled) return;
+
+                const sh  = mainContentEl.scrollHeight;
+                const ch  = mainContentEl.clientHeight;
+                const st  = mainContentEl.scrollTop;
+
+                // Is this section actually scrollable?
+                const isScrollable = sh > ch + 8;
+
+                const atTop = st <= 4;
+                // For scrollable sections: only at bottom when truly scrolled to end
+                // For short sections (fit in viewport): treat scrolling down as "at bottom"
+                const atBot = isScrollable
+                    ? (sh - st - ch) <= 4          // ← precise: remaining px ≤ 4
+                    : true;                          // ← fits in viewport: always "at bottom"
+
+                const dn = delta > 0;
+                const up = delta < 0;
 
                 const qualifying = (dn && atBot) || (up && atTop);
                 if (!qualifying) {
