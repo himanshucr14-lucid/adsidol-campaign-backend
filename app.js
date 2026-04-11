@@ -347,11 +347,11 @@
             
             // Update Canvas Header title
             const titles = {
-                'dashboard': 'Campaign Dashboard',
+                'dashboard': 'Home',
                 'contacts': 'Contact List',
-                'templates': 'Template Library',
-                'followups': 'Follow-up Engine',
-                'analytics': 'Campaign Analytics'
+                'templates': 'Templates',
+                'followups': 'Automation',
+                'analytics': 'Analytics'
             };
             const titleEl = document.getElementById('topNavTitle');
             if (titleEl) titleEl.textContent = titles[section] || 'Campaign Manager';

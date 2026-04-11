@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adsidol Campaign Manager</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 
 <body>
@@ -99,27 +99,32 @@
             </div>
 
             <nav class="nav-menu">
-                <button class="nav-link active" data-section="dashboard"><svg class="nav-icon" viewBox="0 0 16 16"
+                <div class="nav-section-label">Main</div>
+                <button class="nav-link active" data-section="dashboard"><svg class="nav-icon" viewBox="0 0 18 18"
                         fill="none">
-                        <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                    </svg> Dashboard</button>
-                <button class="nav-link" data-section="contacts"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                    </svg> Home</button>
+                <button class="nav-link" data-section="contacts"><svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                        <circle cx="9" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M3 16c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg> Contact List</button>
-                <button class="nav-link" data-section="templates"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
-                        <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                    </svg> Templates</button>
-                <button class="nav-link" data-section="followups"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 8h12M10 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                <button class="nav-link" data-section="followups"><svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                        <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                             stroke-linejoin="round" />
-                    </svg> Follow-ups</button>
-                <button class="nav-link" data-section="analytics"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    </svg> Automation</button>
+                <button class="nav-link" data-section="analytics"><svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                        <path d="M3 14l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                             stroke-linejoin="round" />
                     </svg> Analytics</button>
+
+                <div class="nav-section-label">Tools</div>
+                <button class="nav-link" data-section="templates"><svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                        <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M6 7h6M6 10h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg> Templates</button>
             </nav>
         </aside>
 
@@ -131,8 +136,10 @@
                     <button class="hamburger" id="hamburgerBtn" aria-label="Menu" style="display:none;">
                         <span></span><span></span><span></span>
                     </button>
-                    <!-- Context placeholder, updated via js -->
-                    <h2 class="view-title" id="topNavTitle">Campaign Dashboard</h2>
+                    <div>
+                        <h2 class="view-title" id="topNavTitle">Home</h2>
+                        <p style="font-size:12px;color:var(--text-muted);margin:0;font-weight:500;">Campaign Manager</p>
+                    </div>
                 </div>
                 
                 <div class="header-actions">
@@ -217,31 +224,43 @@
         </div>
         <div class="stats-grid">
             <div class="stat-card" id="topCardAll" onclick="setTopFilter('')" style="cursor:pointer; transition:all 0.2s;">
+                <div class="stat-card-header">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="var(--blue-500)" stroke-width="1.4"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" stroke="var(--blue-500)" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    <span class="stat-label">Total Contacts</span>
+                </div>
                 <div class="stat-value" id="totalContacts">0</div>
-                <div class="stat-label">Total Contacts</div>
                 <div class="stat-progress">
                     <div class="stat-progress-bar" id="progressTotal" style="width:0%"></div>
                 </div>
             </div>
             <div class="stat-card" id="topCardScheduled" onclick="setTopFilter('scheduled')" style="cursor:pointer; transition:all 0.2s;">
+                <div class="stat-card-header">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="var(--warning)" stroke-width="1.4"/><path d="M5 2v2m6-2v2M2 7h12" stroke="var(--warning)" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    <span class="stat-label">Scheduled</span>
+                </div>
                 <div class="stat-value" id="scheduledCount">0</div>
-                <div class="stat-label">Scheduled</div>
                 <div class="stat-progress">
                     <div class="stat-progress-bar" id="progressScheduled"
                         style="width:0%; background: linear-gradient(90deg, #F59E0B, #D97706)"></div>
                 </div>
             </div>
             <div class="stat-card" id="topCardSent" onclick="setTopFilter('sent')" style="cursor:pointer; transition:all 0.2s;">
+                <div class="stat-card-header">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="var(--success)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="stat-label">Emails Sent</span>
+                </div>
                 <div class="stat-value" id="sentCount">0</div>
-                <div class="stat-label">Sent Today</div>
                 <div class="stat-progress">
                     <div class="stat-progress-bar" id="progressSent"
                         style="width:0%; background: linear-gradient(90deg, #10B981, #059669)"></div>
                 </div>
             </div>
             <div class="stat-card" id="topCardPending" onclick="setTopFilter('pending')" style="cursor:pointer; transition:all 0.2s;">
+                <div class="stat-card-header">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="var(--text-muted)" stroke-width="1.4"/><path d="M8 5v3l2 2" stroke="var(--text-muted)" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    <span class="stat-label">Pending</span>
+                </div>
                 <div class="stat-value" id="pendingCount">0</div>
-                <div class="stat-label">Pending</div>
                 <div class="stat-progress">
                     <div class="stat-progress-bar" id="progressPending"
                         style="width:0%; background: linear-gradient(90deg, #94A3B8, #64748B)"></div>
