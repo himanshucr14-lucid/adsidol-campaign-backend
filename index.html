@@ -90,81 +90,85 @@
         </div>
     </div>
 
-    <!-- Header Navigation -->
-    <header class="header">
-        <div class="header-content">
+    <!-- Layout Wrapper representing SPA structure -->
+    <div class="layout-wrapper">
+        <!-- Persistent Sidebar -->
+        <aside class="sidebar desktop-sidebar">
             <div class="logo-section">
-                <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
-                    <span></span><span></span><span></span>
-                </button>
                 <div class="logo">Adsidol</div>
             </div>
 
             <nav class="nav-menu">
-                <button class="nav-link active" data-section="upload"><svg class="nav-icon" viewBox="0 0 16 16"
+                <button class="nav-link active" data-section="dashboard"><svg class="nav-icon" viewBox="0 0 16 16"
                         fill="none">
                         <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5"
                             stroke-linecap="round" stroke-linejoin="round" />
-                    </svg> Upload</button>
+                    </svg> Dashboard</button>
+                <button class="nav-link" data-section="audience"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg> Audience</button>
                 <button class="nav-link" data-section="templates"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
                         <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
                         <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg> Templates</button>
-                <button class="nav-link" data-section="schedule"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5" />
-                        <path d="M5 2v2m6-2v2M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                    </svg> Schedule</button>
-                <button class="nav-link" data-section="campaigns"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor"
-                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg> Campaigns</button>
-                <button class="nav-link" data-section="analytics"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg> Analytics</button>
                 <button class="nav-link" data-section="followups"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
                         <path d="M2 8h12M10 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                             stroke-linejoin="round" />
                     </svg> Follow-ups</button>
+                <button class="nav-link" data-section="analytics"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg> Analytics</button>
             </nav>
+        </aside>
 
-            <div class="header-actions">
-                <div class="gmail-indicator">
-                    <div class="status-dot" id="headerGmailDot"></div>
-                    <span id="headerGmailStatus">Gmail disconnected</span>
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Top Nav Canvas Info -->
+            <header class="top-nav">
+                <div class="top-nav-left">
+                    <button class="hamburger" id="hamburgerBtn" aria-label="Menu" style="display:none;">
+                        <span></span><span></span><span></span>
+                    </button>
+                    <!-- Context placeholder, updated via js -->
+                    <h2 class="view-title" id="topNavTitle">Campaign Dashboard</h2>
                 </div>
-                <div class="sync-indicator" id="headerSyncIndicator">
-                    <div class="sync-dot polling"></div>
-                    <span>LIVE SYNC</span>
-                    <span class="last-updated-text" id="headerLastUpdated"></span>
+                
+                <div class="header-actions">
+                    <div class="gmail-indicator">
+                        <div class="status-dot" id="headerGmailDot"></div>
+                        <span id="headerGmailStatus">Gmail disconnected</span>
+                    </div>
+                    <div class="sync-indicator" id="headerSyncIndicator">
+                        <div class="sync-dot polling"></div>
+                        <span>LIVE SYNC</span>
+                        <span class="last-updated-text" id="headerLastUpdated"></span>
+                    </div>
+                    <button class="nav-link" id="headerConnectGmail" style="background:var(--blue-600);color:white;padding:9px 16px;font-size:13px;border-radius:14px;cursor:pointer;border:none;">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Connect
+                    </button>
+                    <button class="dark-toggle" id="desktopDarkToggle" title="Toggle dark mode">
+                        <span class="tog-sun">
+                            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                                <circle cx="7" cy="7" r="3" fill="white"/>
+                                <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M3.05 3.05l1.06 1.06M9.89 9.89l1.06 1.06M10.95 3.05l-1.06 1.06M4.11 9.89l-1.06 1.06" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="tog-moon">
+                            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                                <path d="M12 8.5A6 6 0 015.5 2a6 6 0 100 10 6 6 0 006.5-3.5z" fill="white"/>
+                            </svg>
+                        </span>
+                    </button>
                 </div>
-                <button class="nav-link" id="headerConnectGmail" style="background:var(--blue-600);color:white;padding:9px 16px;font-size:13px;border-radius:14px;cursor:pointer;border:none;">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    Connect Gmail
-                </button>
-                <button class="dark-toggle" id="desktopDarkToggle" title="Toggle dark mode">
-                    <!-- Sun (light mode) -->
-                    <span class="tog-sun">
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                            <circle cx="7" cy="7" r="3" fill="white"/>
-                            <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M3.05 3.05l1.06 1.06M9.89 9.89l1.06 1.06M10.95 3.05l-1.06 1.06M4.11 9.89l-1.06 1.06" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                    <!-- Moon (dark mode) -->
-                    <span class="tog-moon">
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                            <path d="M12 8.5A6 6 0 015.5 2a6 6 0 100 10 6 6 0 006.5-3.5z" fill="white"/>
-                        </svg>
-                    </span>
-                </button>
-            </div>
-        </div>
-    </header>
+            </header>
 
-    <div class="container">
+            <div class="container container-canvas">
         <!-- Bulk Action Bar -->
         <div id="bulkBar">
             <span class="bulk-count" id="bulkCount">0 selected</span>
@@ -192,11 +196,11 @@
             <button class="bulk-btn bulk-btn-close" id="bulkClose" title="Deselect all">✕</button>
         </div>
 
-        <!-- Hero Section -->
-        <div class="hero">
-            <h1 class="hero-title">Email Campaign Manager</h1>
-            <p class="hero-subtitle">Schedule personalized emails across timezones with intelligent automation</p>
-        </div>
+        <!-- Hero Section is removed as it's fully contained in the Dashboard layout now -->
+
+        <!-- Section: Dashboard (Active initially) -->
+        <section class="app-section active" id="sec-dashboard">
+
 
         <!-- Stats Overview -->
         <div class="stats-header">
@@ -245,9 +249,13 @@
             </div>
         </div>
 
-        <!-- Upload Section -->
-        <div class="card" id="uploadSection">
-            <div class="card-header">
+        </section>
+
+        <!-- Section: Audience / Upload Tools -->
+        <section class="app-section" id="sec-audience">
+            <!-- Upload Section -->
+            <div class="card" id="uploadSection">
+                <div class="card-header">
                 <h2 class="card-title">
                     <span class="step-badge">1</span>
                     Upload Contact List
@@ -384,11 +392,14 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
-        </div>
+            </div> <!-- EOF Table container -->
+        </div> <!-- EOF Dashboard Card -->
+        </section>
 
-
+        <!-- Section: Templates -->
+        <section class="app-section" id="sec-templates">
         <!-- Pitch Templates -->
+
         <div class="card" id="templatesSection">
             <div class="card-header">
                 <h2 class="card-title">
@@ -789,6 +800,10 @@
             </div>
         </div>
 
+        </section>
+
+        <!-- Section: Follow Ups / Queue -->
+        <section class="app-section" id="sec-followups">
         <!-- Follow-up Queue Section -->
 <!-- Follow-up Dashboard -->
             <div class="card" id="followupDashboard">
@@ -938,6 +953,10 @@
             </div>
         </div>
 
+        </section>
+
+        <!-- Section: Analytics -->
+        <section class="app-section" id="sec-analytics">
         <!-- Sent Emails History Section -->
         <div class="card" id="historySection">
             <div class="card-header">
@@ -1035,8 +1054,10 @@
                 <button class="btn btn-secondary" id="historyNextBtn" disabled>Next</button>
             </div>
         </div>
-    </div>
-
+        </section>
+    </div> <!-- .container-canvas END -->
+    </main> <!-- .main-content END -->
+    </div> <!-- .layout-wrapper END -->
     <!-- Edit Contact Modal -->
     <div class="modal-overlay" id="editModal" style="display:none;">
         <div class="modal">

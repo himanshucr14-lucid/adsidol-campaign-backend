@@ -324,16 +324,42 @@
         });
 
         // ═══════════════════════════════════════════════
-        // SECTION NAV
+        // ═══════════════════════════════════════════════
+        // SECTION NAV (SPA Tab Switching)
         // ═══════════════════════════════════════════════
         function scrollToSection(section) {
-            const map = { upload: 'uploadSection', templates: 'templatesSection', schedule: 'scheduleSection', campaigns: 'campaignsSection', analytics: 'analyticsSection', followups: 'followupDashboard' };
-            const el = document.getElementById(map[section]);
-            if (!el) return;
-            if (section === 'analytics') el.style.display = 'block';
-            if (section === 'followups') { el.style.display = 'block'; loadFollowupDashboard(); }
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Map legacy ids directly if needed (e.g. mobile links)
+            if(section === 'upload') section = 'audience';
+            if(section === 'campaigns' || section === 'schedule') section = 'dashboard';
+            
+            const targetId = 'sec-' + section;
+            const targetEl = document.getElementById(targetId);
+            if (!targetEl) return;
+
+            // Hide all tab sections
+            document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+            
+            // Show target section via CSS class
+            targetEl.classList.add('active');
+            
+            // Specific load logic
+            if (section === 'followups') loadFollowupDashboard();
+            
+            // Update Canvas Header title
+            const titles = {
+                'dashboard': 'Campaign Dashboard',
+                'audience': 'Audience Lists',
+                'templates': 'Template Library',
+                'followups': 'Follow-up Engine',
+                'analytics': 'Campaign Analytics'
+            };
+            const titleEl = document.getElementById('topNavTitle');
+            if (titleEl) titleEl.textContent = titles[section] || 'Campaign Manager';
+            
+            // Reset scroll position for new view
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
+
         document.querySelectorAll('.nav-menu .nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
