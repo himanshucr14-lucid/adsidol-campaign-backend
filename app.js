@@ -360,88 +360,178 @@
         });
 
         // ═════════════════════════════════════════════════════════════
-        // OVERSCROLL NAV ENGINE v2 — Pill Indicator + No-Gap Wobble
+        // OVERSCROLL NAV ENGINE v3 — RAF-based, seamless, top-notch UX
+        // Design:
+        //   • No velocity gate — works on all trackpads/mice
+        //   • RAF smooth-decay: accumulator drains if you stop scrolling
+        //   • Pill fill always reflects live progress (0-100%)
+        //   • Single cooldown after jump, no accidental triggers
+        //   • Bidirectional: bottom→next, top→prev
         // ═════════════════════════════════════════════════════════════
         const mainContentEl = document.querySelector('.main-content');
-        const sectionsOrder = ['dashboard', 'contacts', 'followups', 'analytics', 'templates'];
-        const sectionLabels = { dashboard:'Home', contacts:'Contact List', followups:'Automation', analytics:'Analytics', templates:'Templates' };
-        let osAccum=0, osDir=0, osLocked=false;
-        const OS_THRESHOLD=400, OS_MIN_VEL=8, OS_COOLDOWN=1500;
-
-        let osPill=null, osFill=null, osHideTimer=null;
-        function ensurePill() {
-            if (osPill) return;
-            osPill = document.createElement('div');
-            osPill.id = 'osIndicator';
-            osPill.innerHTML = '<span class="os-icon" id="osIcon">↓</span><span class="os-label" id="osLabel">Next section</span><div class="os-track"><div class="os-fill" id="osFill"></div></div>';
-            document.body.appendChild(osPill);
-            osFill = document.getElementById('osFill');
-        }
-        function showPill(pct, dir) {
-            ensurePill(); clearTimeout(osHideTimer);
-            const curr = getCurrentSection();
-            const ti = sectionsOrder.indexOf(curr) + dir;
-            const lbl = (ti>=0 && ti<sectionsOrder.length) ? sectionLabels[sectionsOrder[ti]] : null;
-            if (!lbl) return;
-            document.getElementById('osIcon').textContent = dir===1?'↓':'↑';
-            document.getElementById('osLabel').textContent = (dir===1?'Next: ':'Back: ') + lbl;
-            osFill.style.width = Math.min(100,pct)+'%';
-            osPill.classList.add('visible');
-        }
-        function hidePill() {
-            if (!osPill) return;
-            osFill.style.width = '0%';
-            clearTimeout(osHideTimer);
-            osHideTimer = setTimeout(()=>osPill.classList.remove('visible'), 150);
-        }
-        function getCurrentSection() {
-            const a = document.querySelector('.nav-menu .nav-link.active');
-            return a ? a.dataset.section : sectionsOrder[0];
-        }
-        function jumpToSection(dir) {
-            const ni = sectionsOrder.indexOf(getCurrentSection()) + dir;
-            if (ni<0 || ni>=sectionsOrder.length) return;
-            const t = sectionsOrder[ni];
-            document.querySelectorAll('.nav-menu .nav-link').forEach(l=>l.classList.remove('active'));
-            const nv = document.querySelector('.nav-menu .nav-link[data-section="'+t+'"]');
-            if (nv) nv.classList.add('active');
-            scrollToSection(t);
-        }
-        function handleOverscroll(delta) {
-            if (osLocked) { osAccum=0; return; }
-            if (Math.abs(delta)<OS_MIN_VEL) { osAccum=0; hidePill(); return; }
-            const st = mainContentEl.scrollTop;
-            const atTop = st<=2;
-            const atBot = (mainContentEl.scrollHeight-st)<=(mainContentEl.clientHeight+2);
-            const dn = delta>0, up = delta<0;
-            if (dn && atBot) {
-                if (osDir!==1) { osAccum=0; osDir=1; }
-                osAccum+=Math.abs(delta); showPill((osAccum/OS_THRESHOLD)*100,1);
-            } else if (up && atTop) {
-                if (osDir!==-1) { osAccum=0; osDir=-1; }
-                osAccum+=Math.abs(delta); showPill((osAccum/OS_THRESHOLD)*100,-1);
-            } else {
-                osAccum=Math.max(0,osAccum-Math.abs(delta)*2);
-                if (osAccum===0) { osDir=0; hidePill(); } return;
-            }
-            if (osAccum>=OS_THRESHOLD) {
-                const fd=dn?1:-1; osAccum=0; osDir=0; osLocked=true; hidePill();
-                mainContentEl.classList.add('wobble-jump');
-                mainContentEl.addEventListener('animationend', function onEnd(){
-                    mainContentEl.classList.remove('wobble-jump');
-                    mainContentEl.removeEventListener('animationend',onEnd);
-                },{ once:true });
-                setTimeout(()=>jumpToSection(fd),80);
-                setTimeout(()=>{ osLocked=false; }, OS_COOLDOWN);
-            }
-        }
         if (mainContentEl) {
-            mainContentEl.addEventListener('wheel',(e)=>handleOverscroll(e.deltaY),{passive:true});
-            let lty=0;
-            mainContentEl.addEventListener('touchstart',(e)=>{ lty=e.touches[0].clientY; osAccum=0; osDir=0; },{passive:true});
-            mainContentEl.addEventListener('touchmove',(e)=>{ const dy=lty-e.touches[0].clientY; lty=e.touches[0].clientY; handleOverscroll(dy); },{passive:true});
-            mainContentEl.addEventListener('scroll',()=>{ if(!osLocked){osAccum=0;osDir=0;hidePill();} },{passive:true});
+            const sectionsOrder = ['dashboard', 'contacts', 'followups', 'analytics', 'templates'];
+            const sectionLabels = { dashboard:'Home', contacts:'Contact List', followups:'Automation', analytics:'Analytics', templates:'Templates' };
+
+            // ── State ────────────────────────────────────────────────
+            const OS_THRESHOLD = 320;   // px to accumulate before jump fires
+            const OS_COOLDOWN  = 1400;  // ms between jumps
+            const OS_DECAY_MS  = 280;   // ms to decay to 0 after input stops
+
+            let osEnergy   = 0;         // 0..OS_THRESHOLD, current overscroll energy
+            let osDir      = 0;         // +1 or -1
+            let osLocked   = false;     // true during cooldown
+            let osLastInput = 0;        // timestamp of last meaningful input
+            let osRafId    = null;
+            let osDisplayPct = 0;       // what the pill is currently showing (smoothed)
+
+            // ── Pill DOM (created lazily) ─────────────────────────────
+            let pill=null, pillFill=null, pillIcon=null, pillLabel=null;
+
+            function buildPill() {
+                if (pill) return;
+                pill = document.createElement('div');
+                pill.id = 'osIndicator';
+                pill.innerHTML = `
+                    <span class="os-icon" id="osIcon">↓</span>
+                    <span class="os-label" id="osLabel">Next: Contact List</span>
+                    <div class="os-track"><div class="os-fill" id="osFill"></div></div>
+                `;
+                document.body.appendChild(pill);
+                pillFill  = pill.querySelector('#osFill');
+                pillIcon  = pill.querySelector('#osIcon');
+                pillLabel = pill.querySelector('#osLabel');
+            }
+
+            function getPillTarget() {
+                const a = document.querySelector('.nav-menu .nav-link.active');
+                const curr = a ? a.dataset.section : sectionsOrder[0];
+                const ci = sectionsOrder.indexOf(curr);
+                const ni = ci + osDir;
+                return (ni >= 0 && ni < sectionsOrder.length) ? sectionLabels[sectionsOrder[ni]] : null;
+            }
+
+            function updatePillUI(pct) {
+                buildPill();
+                const target = getPillTarget();
+                if (!target) { hidePill(); return; }
+                pillIcon.textContent  = osDir === 1 ? '↓' : '↑';
+                pillLabel.textContent = (osDir === 1 ? 'Next: ' : 'Back: ') + target;
+                pillFill.style.width  = pct.toFixed(1) + '%';
+                if (pct > 0.5) pill.classList.add('visible');
+            }
+
+            function hidePill() {
+                if (!pill) return;
+                pill.classList.remove('visible');
+                if (pillFill) pillFill.style.width = '0%';
+            }
+
+            // ── RAF render loop — drives smooth decay + pill fill ─────
+            function rafLoop(ts) {
+                osRafId = null;
+                if (osLocked) { osEnergy = 0; osDisplayPct = 0; hidePill(); return; }
+
+                const msSinceInput = ts - osLastInput;
+
+                if (msSinceInput > 80 && osEnergy > 0) {
+                    // No recent input → decay smoothly
+                    const decayFactor = Math.max(0, 1 - (msSinceInput / OS_DECAY_MS));
+                    osEnergy = osEnergy * decayFactor;
+                    if (osEnergy < 1) { osEnergy = 0; osDir = 0; hidePill(); return; }
+                }
+
+                if (osEnergy > 0) {
+                    // Smooth interpolation toward actual percentage
+                    const targetPct = (osEnergy / OS_THRESHOLD) * 100;
+                    osDisplayPct += (targetPct - osDisplayPct) * 0.35;
+                    updatePillUI(Math.min(100, osDisplayPct));
+                    osRafId = requestAnimationFrame(rafLoop);
+                }
+            }
+
+            function scheduleRaf() {
+                if (!osRafId) osRafId = requestAnimationFrame(rafLoop);
+            }
+
+            // ── Input handler ─────────────────────────────────────────
+            function feedDelta(delta) {
+                if (osLocked) return;
+
+                const st   = mainContentEl.scrollTop;
+                const atTop = st <= 1;
+                const atBot = (mainContentEl.scrollHeight - st) <= (mainContentEl.clientHeight + 1);
+                const dn   = delta > 0;
+                const up   = delta < 0;
+
+                const qualifying = (dn && atBot) || (up && atTop);
+                if (!qualifying) {
+                    // Moving away from edge — bleed off energy fast
+                    if (osEnergy > 0) { osEnergy = Math.max(0, osEnergy - Math.abs(delta) * 3); if (osEnergy < 1) { osEnergy=0; osDir=0; hidePill(); return; } }
+                    return;
+                }
+
+                const newDir = dn ? 1 : -1;
+                if (newDir !== osDir) { osEnergy = 0; osDir = newDir; } // direction flip
+
+                // Check target even exists
+                if (!getPillTarget()) return;
+
+                osEnergy += Math.abs(delta);
+                osLastInput = performance.now();
+                scheduleRaf();
+
+                // Fire!
+                if (osEnergy >= OS_THRESHOLD) {
+                    const fireDir = osDir;
+                    osEnergy = 0; osDir = 0; osLocked = true;
+                    osDisplayPct = 0;
+                    hidePill();
+
+                    // Wobble (scaleY — no gap)
+                    mainContentEl.classList.add('wobble-jump');
+                    mainContentEl.addEventListener('animationend', function onEnd() {
+                        mainContentEl.classList.remove('wobble-jump');
+                        mainContentEl.removeEventListener('animationend', onEnd);
+                    }, { once: true });
+
+                    // Jump slightly after wobble starts for a punchy feel
+                    setTimeout(() => doJump(fireDir), 70);
+                    setTimeout(() => { osLocked = false; }, OS_COOLDOWN);
+                }
+            }
+
+            function doJump(dir) {
+                const a = document.querySelector('.nav-menu .nav-link.active');
+                const curr = a ? a.dataset.section : sectionsOrder[0];
+                const ni = sectionsOrder.indexOf(curr) + dir;
+                if (ni < 0 || ni >= sectionsOrder.length) return;
+                const target = sectionsOrder[ni];
+                document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
+                const nv = document.querySelector(`.nav-menu .nav-link[data-section="${target}"]`);
+                if (nv) nv.classList.add('active');
+                scrollToSection(target);
+            }
+
+            // ── Wire up events ────────────────────────────────────────
+            // Wheel (mouse + trackpad)
+            mainContentEl.addEventListener('wheel', (e) => {
+                feedDelta(e.deltaY);
+            }, { passive: true });
+
+            // Touch swipe
+            let touchY = 0;
+            mainContentEl.addEventListener('touchstart', (e) => {
+                touchY = e.touches[0].clientY;
+                osEnergy = 0; osDir = 0;
+            }, { passive: true });
+            mainContentEl.addEventListener('touchmove', (e) => {
+                const dy = touchY - e.touches[0].clientY; // +ve = scrolling down
+                touchY = e.touches[0].clientY;
+                feedDelta(dy);
+            }, { passive: true });
         }
+
 
 
         // ═══════════════════════════════════════════════

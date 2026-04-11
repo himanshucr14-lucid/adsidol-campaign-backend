@@ -3446,25 +3446,26 @@
         /* ── OVERSCROLL PROGRESS INDICATOR ── */
         #osIndicator {
             position: fixed;
-            bottom: 24px;
+            bottom: 28px;
             left: 50%;
-            transform: translateX(-50%) translateY(12px);
-            background: rgba(15, 23, 42, 0.88);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.12);
+            transform: translateX(-50%) translateY(16px);
+            background: rgba(10, 14, 26, 0.90);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 100px;
-            padding: 8px 16px 8px 12px;
+            padding: 9px 14px 9px 12px;
             display: flex;
             align-items: center;
             gap: 10px;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            /* Only animate the slide-in/out, NOT the fill width */
+            transition: opacity 0.2s ease, transform 0.2s ease;
             z-index: 9999;
-            min-width: 200px;
-            max-width: 280px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            min-width: 190px;
+            max-width: 260px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
         }
 
         #osIndicator.visible {
@@ -3473,9 +3474,10 @@
         }
 
         #osIndicator .os-icon {
-            font-size: 14px;
+            font-size: 13px;
             flex-shrink: 0;
             line-height: 1;
+            color: rgba(255,255,255,0.5);
         }
 
         #osIndicator .os-label {
