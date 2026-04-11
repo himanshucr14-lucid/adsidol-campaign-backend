@@ -86,6 +86,7 @@ module.exports = async (req, res) => {
             subject: personalise(subject, contact),
             body:    personalise(body, contact),
             signature,
+            cc:      signature?.cc || null,
         });
 
         const result = await gmail.users.messages.send({

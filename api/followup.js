@@ -90,6 +90,7 @@ async function executeJob(job) {
         inReplyTo: job.originalMessageId,
         references: job.originalMessageId,
         signature: job.signature || null,
+        cc: job.signature?.cc || null,
     });
 
     const params = { userId: 'me', requestBody: { raw } };
