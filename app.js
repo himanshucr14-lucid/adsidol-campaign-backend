@@ -377,8 +377,8 @@
             ];
         });
 
-        // Email signature — appended to every automated email & follow-up
-        let emailSignature = { name: '', title: '', email: '', linkedin: '', teams: '', website: '' };
+        // Email signature & CC
+        let emailSignature = { name: '', title: '', email: '', linkedin: '', teams: '', website: '', cc: '' };
 
         // ═══════════════════════════════════════════════
         // TIMEZONE MAP
@@ -1070,6 +1070,7 @@
                 linkedin: document.getElementById('sigLinkedin').value.trim(),
                 teams:    document.getElementById('sigTeams').value.trim(),
                 website:  document.getElementById('sigWebsite').value.trim(),
+                cc:       document.getElementById('sigCc') ? document.getElementById('sigCc').value.trim() : '',
             };
             saveState();
             updateSignaturePreview();
@@ -1077,7 +1078,7 @@
             showToast('Signature saved — it will be appended to all emails you send.', 'success');
         });
         // Live preview while typing
-        ['sigName','sigTitle','sigEmail','sigLinkedin','sigTeams','sigWebsite'].forEach(id => {
+        ['sigName','sigTitle','sigEmail','sigLinkedin','sigTeams','sigWebsite','sigCc'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', () => {
                 emailSignature = {
@@ -1087,6 +1088,7 @@
                     linkedin: document.getElementById('sigLinkedin').value.trim(),
                     teams:    document.getElementById('sigTeams').value.trim(),
                     website:  document.getElementById('sigWebsite').value.trim(),
+                    cc:       document.getElementById('sigCc') ? document.getElementById('sigCc').value.trim() : '',
                 };
                 updateSignaturePreview();
             });
@@ -1630,7 +1632,7 @@
                         subject: tpl.subject, 
                         body: tpl.body,
                         followups: followupTemplates[contact.vertical] || [],
-                        signature: emailSignature
+                        signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null
                     }) 
                 });
                 const data = await res.json();
@@ -1909,7 +1911,7 @@
                     scheduledFor: contact.scheduledFor,
                     subject: tpl.subject,
                     body: tpl.body,
-                    signature: emailSignature.name ? emailSignature : null,
+                    signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null,
                     followups: followups
                 };
             });

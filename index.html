@@ -483,7 +483,7 @@
                         <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
                             <path d="M2 4h14v10a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l7 5 7-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Signature
+                        Signature & CC
                     </button>
                 </div>
 
@@ -604,7 +604,12 @@
                                 <label>Website</label>
                                 <input type="text" id="sigWebsite" placeholder="https://adsidol.com">
                             </div>
-                            <div class="btn-group" style="margin-top:8px;">
+                            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                                <label>Global CC Emails</label>
+                                <input type="text" id="sigCc" placeholder="manager@adsidol.com, logs@adsidol.com">
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">These will be CC'd on all emails & follow-ups sent.</div>
+                            </div>
+                            <div class="btn-group" style="margin-top:16px;">
                                 <button class="btn btn-primary" id="saveSignatureBtn" style="display:inline-flex;align-items:center;gap:8px;">
                                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                         <path d="M2 2h8l2 2v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2zm3 0v4h4V2M4 11v-3h6v3" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
