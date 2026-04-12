@@ -1175,15 +1175,18 @@
                 });
                 const data = await res.json();
                 if (data.ok) {
+                    await saveContactsToCloud();
                     showToast(`${validContacts.length} marked & scheduled via Upstash...`, 'success');
                 } else {
-                    showToast('Scheduling failed: ' + (data.error || 'Unknown error'), 'error');
                     validContacts.forEach(c => c.status = 'pending');
+                    await saveContactsToCloud();
+                    showToast('Scheduling failed: ' + (data.error || 'Unknown error'), 'error');
                 }
             } catch (e) {
                 console.error('Schedule Error:', e);
-                showToast('Failed to connect to backend.', 'error');
                 validContacts.forEach(c => c.status = 'pending');
+                await saveContactsToCloud();
+                showToast('Failed to connect to backend.', 'error');
             }
 
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
