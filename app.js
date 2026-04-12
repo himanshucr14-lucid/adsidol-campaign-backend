@@ -527,32 +527,41 @@
         function calculateSendTime(contact, sendTimeStr) {
             const tz = contact.timezone || 'UTC';
             const [h, m] = sendTimeStr.split(':').map(Number);
-            const now = new Date();
+            
+            let startDateVal = document.getElementById('startDate') ? document.getElementById('startDate').value : '';
+            if (!startDateVal) {
+                startDateVal = new Date().toISOString().split('T')[0];
+            }
+            const parts = startDateVal.split('-');
+            const targetYear = parseInt(parts[0]);
+            const targetMonth = parseInt(parts[1]) - 1;
+            const targetDay = parseInt(parts[2]);
 
-            // 1. Get current date components in the target timezone
-            const fmt = new Intl.DateTimeFormat('en-US', {
-                timeZone: tz, year: 'numeric', month: 'numeric', day: 'numeric',
+            // We accurately find the UTC timestamp that matches the requested wall-clock time in tz
+            let d = new Date(Date.UTC(targetYear, targetMonth, targetDay, h, m, 0));
+            let formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: tz, year: 'numeric', month: 'numeric', day: 'numeric', 
                 hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
             });
-            const parts = fmt.formatToParts(now);
-            const getPart = (t) => parseInt(parts.find(p => p.type === t).value);
-
-            // 2. Construct a "Target Local Date" (The wall clock time in their city)
-            const targetDate = new Date(getPart('year'), getPart('month') - 1, getPart('day'), h, m, 0);
-
-            // 3. Calculate the actual UTC delay
-            // We find the difference between actual NOW and what the target wall clock says now
-            const targetWallClockNow = new Date(now.toLocaleString('en-US', { timeZone: tz }));
-            const diff = targetWallClockNow.getTime() - now.getTime();
-
-            // The actual UTC time = target wall clock goal - the timezone difference
-            let finalUtc = new Date(targetDate.getTime() - diff);
-
-            // 4. If that time is already passed today in their country, move to tomorrow
-            if (finalUtc < now) {
-                finalUtc.setDate(finalUtc.getDate() + 1);
+            
+            for(let i=0; i<3; i++) {
+                let partsFmt = formatter.formatToParts(d);
+                let y = parseInt(partsFmt.find(p => p.type === 'year').value);
+                let mo = parseInt(partsFmt.find(p => p.type === 'month').value) - 1;
+                let da = parseInt(partsFmt.find(p => p.type === 'day').value);
+                let hLocal = parseInt(partsFmt.find(p => p.type === 'hour').value);
+                if (hLocal === 24) hLocal = 0;
+                let mLocal = parseInt(partsFmt.find(p => p.type === 'minute').value);
+                
+                let wallDate = new Date(Date.UTC(y, mo, da, hLocal, mLocal, 0));
+                let targetWallDate = new Date(Date.UTC(targetYear, targetMonth, targetDay, h, m, 0));
+                
+                let err = wallDate.getTime() - targetWallDate.getTime();
+                if (err === 0) break;
+                d.setTime(d.getTime() - err);
             }
-            return finalUtc;
+
+            return d;
         }
         function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
         function personalisePreview(text) {
@@ -1093,15 +1102,90 @@
             contacts = contacts.filter(c => !c.selected); filteredContacts = [...contacts];
             updateDashboard(); updateStats(); showToast(`Deleted ${count} contact${count !== 1 ? 's' : ''}`, 'success'); saveState();
         });
-        document.getElementById('bulkSchedule').addEventListener('click', () => {
+        document.getElementById('bulkSchedule').addEventListener('click', async () => {
             const sendTime = document.getElementById('sendTime').value;
             const sel = contacts.filter(c => c.selected); 
-            sel.forEach(c => { 
+            if (sel.length === 0) return;
+
+            const nowTime = Date.now();
+            const validContacts = [];
+            const invalidContacts = [];
+
+            for (let c of sel) {
+                const t = calculateSendTime(c, sendTime);
+                if (t.getTime() < nowTime) {
+                    invalidContacts.push(c);
+                } else {
+                    validContacts.push(c);
+                }
+            }
+
+            if (validContacts.length === 0) {
+                showToast('You are trying to schedule in a past time (not possible). Please choose a future time or date.', 'error', 6000);
+                return;
+            }
+
+            if (invalidContacts.length > 0) {
+                showToast(`Skipped ${invalidContacts.length} contacts because their local time has passed.`, 'warning', 6000);
+            }
+
+            validContacts.forEach(c => { 
                 c.status = 'scheduled'; 
-                c.scheduledFor = calculateSendTime(c, sendTime);
+                c.scheduledFor = calculateSendTime(c, sendTime).getTime();
                 c.selected = false; 
             });
-            filteredContacts = [...contacts]; updateDashboard(); updateStats(); showToast(`${sel.length} marked as scheduled`, 'warning'); saveState();
+            // Untoggle visual selection for skipped ones too
+            invalidContacts.forEach(c => c.selected = false);
+
+            const intervalSecondsStr = document.getElementById('sendInterval') ? document.getElementById('sendInterval').value : "15";
+            const intervalSeconds = parseInt(intervalSecondsStr);
+
+            const batch = validContacts.map(contact => {
+                const tpl = templates[contact.vertical] || templates[Object.keys(templates)[0]];
+                let followups = [];
+                const fuSteps = followupTemplates[contact.vertical];
+                if (fuSteps && fuSteps.some(f => f.subject && f.body)) {
+                    followups = fuSteps.filter(f => f.subject && f.body);
+                }
+                return {
+                    contact: {
+                        email: contact.email,
+                        first_name: contact.name ? contact.name.split(' ')[0] : '',
+                        company_name: contact.company,
+                        vertical: contact.vertical,
+                        name: contact.name,
+                        company: contact.company,
+                        timezone: contact.timezone,
+                        location: contact.location
+                    },
+                    scheduledFor: contact.scheduledFor,
+                    subject: tpl.subject,
+                    body: tpl.body,
+                    signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null,
+                    followups: followups
+                };
+            });
+
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/schedule-batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey },
+                    body: JSON.stringify({ batch, intervalSeconds })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`${validContacts.length} marked & scheduled via Upstash...`, 'success');
+                } else {
+                    showToast('Scheduling failed: ' + (data.error || 'Unknown error'), 'error');
+                    validContacts.forEach(c => c.status = 'pending');
+                }
+            } catch (e) {
+                console.error('Schedule Error:', e);
+                showToast('Failed to connect to backend.', 'error');
+                validContacts.forEach(c => c.status = 'pending');
+            }
+
+            filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
         });
         document.getElementById('bulkPending').addEventListener('click', () => {
             const sel = contacts.filter(c => c.selected); sel.forEach(c => { c.status = 'pending'; c.scheduledFor = null; c.selected = false; });
@@ -2024,16 +2108,40 @@
             const intervalSeconds = parseInt(intervalSecondsStr);
             const toSend = pending.slice(0, dailyLimit);
 
-            toSend.forEach(c => { c.status = 'scheduled'; c.scheduledFor = calculateSendTime(c, sendTime); });
+            const nowTime = Date.now();
+            const validContacts = [];
+            const invalidContacts = [];
+
+            for (let c of toSend) {
+                const t = calculateSendTime(c, sendTime);
+                if (t.getTime() < nowTime) {
+                    invalidContacts.push(c);
+                } else {
+                    validContacts.push(c);
+                }
+            }
+
+            if (validContacts.length === 0) {
+                showToast('You are trying to schedule in a past time (not possible). Please choose a future time or date.', 'error', 6000);
+                return;
+            }
+
+            if (invalidContacts.length > 0) {
+                showToast(`Skipped ${invalidContacts.length} contacts because their local time has passed.`, 'warning', 6000);
+            }
+            
+            const finalToSend = validContacts;
+
+            finalToSend.forEach(c => { c.status = 'scheduled'; c.scheduledFor = calculateSendTime(c, sendTime).getTime(); });
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
-            showToast(`Scheduling ${toSend.length} emails in the cloud via Upstash...`, 'info', 5000);
+            showToast(`Scheduling ${finalToSend.length} emails in the cloud via Upstash...`, 'info', 5000);
 
             const scheduleBtn = document.getElementById('scheduleBtn');
             const originalText = scheduleBtn.innerHTML;
             scheduleBtn.disabled = true;
             scheduleBtn.innerHTML = '<span class="icon-3d icon-3d-slate"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg></span> Scheduling...';
 
-            const batch = toSend.map(contact => {
+            const batch = finalToSend.map(contact => {
                 const tpl = templates[contact.vertical] || templates[Object.keys(templates)[0]];
                 let followups = [];
                 const fuSteps = followupTemplates[contact.vertical];
@@ -2072,12 +2180,12 @@
                     showToast('Campaign successfully scheduled online! You can safely close this tab.', 'success', 8000);
                 } else {
                     showToast('Scheduling failed: ' + (data.error || 'Unknown error'), 'error', 8000);
-                    toSend.forEach(c => c.status = 'pending');
+                    finalToSend.forEach(c => c.status = 'pending');
                 }
             } catch (e) {
                 console.error('Schedule Error:', e);
                 showToast('Failed to connect to backend.', 'error');
-                toSend.forEach(c => c.status = 'pending');
+                finalToSend.forEach(c => c.status = 'pending');
             }
 
             scheduleBtn.disabled = false;
