@@ -2179,14 +2179,17 @@
 
                 if (data.ok) {
                     showToast('Campaign successfully scheduled online! You can safely close this tab.', 'success', 8000);
+                    saveContactsToCloud(); // FIXED: Ensures the "Scheduled" UI state persists across page refreshes
                 } else {
                     showToast('Scheduling failed: ' + (data.error || 'Unknown error'), 'error', 8000);
                     finalToSend.forEach(c => c.status = 'pending');
+                    saveContactsToCloud(); // Ensure reverting to pending is also synced
                 }
             } catch (e) {
                 console.error('Schedule Error:', e);
                 showToast('Failed to connect to backend.', 'error');
                 finalToSend.forEach(c => c.status = 'pending');
+                saveContactsToCloud(); // Ensure reverting to pending is also synced
             }
 
             scheduleBtn.disabled = false;
