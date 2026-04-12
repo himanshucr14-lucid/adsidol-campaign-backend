@@ -1433,7 +1433,7 @@
             let jobs = fuJobs;
             const activeSteps = Array.from(document.querySelectorAll('.fu-widget.active')).map(w => parseInt(w.dataset.step));
             if (activeSteps.length < 4) {
-                jobs = fuJobs.filter(j => activeSteps.includes(j.step));
+                jobs = fuJobs.filter(j => activeSteps.includes(Number(j.step)));
             }
 
             // Stats
