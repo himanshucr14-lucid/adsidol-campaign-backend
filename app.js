@@ -530,7 +530,8 @@
             
             let startDateVal = document.getElementById('startDate') ? document.getElementById('startDate').value : '';
             if (!startDateVal) {
-                startDateVal = new Date().toISOString().split('T')[0];
+                const now = new Date();
+                startDateVal = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
             }
             const parts = startDateVal.split('-');
             const targetYear = parseInt(parts[0]);
@@ -2355,15 +2356,46 @@
         (function restoreState() {
             const saved = loadState();
             const today = new Date();
-            document.getElementById('startDate').valueAsDate = today;
+            const localDateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            document.getElementById('startDate').value = localDateStr;
             
             // Initialization Phase: UI update only (no saveState while still loading)
-            syncDate(today.toISOString().split('T')[0], true);
+            syncDate(localDateStr, true);
             syncTime('11:15', true); 
             syncLimit(50, true);
             if (document.getElementById('sendInterval')) syncInterval(15, true);
 
+            if (loadSession()) {
+                fetchCloudAnalytics(); // Fetch analytics on load
+                loadTemplatesFromCloud(); // Sync templates on load
+                loadContactsFromCloud(); // Sync contacts on load
+            }
+            
+            // Follow-up Widgets Interactivity
+            document.querySelectorAll('.fu-widget').forEach(w => {
+                w.addEventListener('click', () => {
+                    w.classList.toggle('active');
+                    // Ensure at least one is selected
+                    if (!document.querySelector('.fu-widget.active')) w.classList.add('active');
+                    renderFuDashboard();
+                });
+            });
+
+            // Density Toggle
+            const densityBtn = document.getElementById('densityBtn');
+            if (densityBtn) {
+                densityBtn.addEventListener('click', () => {
+                    document.body.classList.toggle('compact-table');
+                });
+            }
+
+            // Start polling if session is already active
+            if (currentApiKey) startPolling();
+            
+            loadFollowupDashboard(); // Load follow-up queue on page load
+
             if (!saved) { updateStats(); return; }
+            
             if (saved.darkMode) setDark(true);
             if (saved.templates) templates = saved.templates;
             if (saved.followupTemplates) {
@@ -2403,32 +2435,5 @@
                 updateDashboard();
                 showToast(`${contacts.length} contacts restored from last session`, 'info');
             }
-            if (loadSession()) {
-                fetchCloudAnalytics(); // Fetch analytics on load
-                loadTemplatesFromCloud(); // Sync templates on load
-                loadContactsFromCloud(); // Sync contacts on load
-            }
             updateStats();
-            loadFollowupDashboard(); // Load follow-up queue on page load
-            
-            // Start polling if session is already active
-            if (currentApiKey) startPolling();
-
-            // Follow-up Widgets Interactivity
-            document.querySelectorAll('.fu-widget').forEach(w => {
-                w.addEventListener('click', () => {
-                    w.classList.toggle('active');
-                    // Ensure at least one is selected
-                    if (!document.querySelector('.fu-widget.active')) w.classList.add('active');
-                    renderFuDashboard();
-                });
-            });
-
-            // Density Toggle
-            const densityBtn = document.getElementById('densityBtn');
-            if (densityBtn) {
-                densityBtn.addEventListener('click', () => {
-                    document.body.classList.toggle('compact-table');
-                });
-            }
         })();
