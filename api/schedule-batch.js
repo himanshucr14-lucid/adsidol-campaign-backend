@@ -6,13 +6,20 @@
 // This allows the browser to close immediately while Upstash handles the rest.
 
 const { getUserByApiKey } = require('../lib/users');
+const store             = require('../lib/store');
 
 function cors(req, res) {
     const origin = req.headers.origin || req.headers.referer || '*';
     if (origin.includes('adsidol.com') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
         res.setHeader('Access-Control-Allow-Origin', origin.replace(/\/$/, ""));
     } else {
-        res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+        // Secure Dynamic CORS for Adsidol
+    const reqOrigin = req.headers.origin || req.headers.referer || '';
+    if (reqOrigin.includes('adsidol.com') || reqOrigin.includes('localhost') || reqOrigin.includes('127.0.0.1')) {
+        res.setHeader('Access-Control-Allow-Origin', reqOrigin.replace(/\/$/, ""));
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://www.adsidol.com');
+    }
     }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-api-key');
@@ -79,6 +86,46 @@ module.exports = async (req, res) => {
             const data = await response.json();
             if (!data.error) {
                 scheduledCount++;
+                
+                // ── PRE-QUEUE FOLLOW-UPS (Visual Placeholders) ──
+                if (payload.followups && Array.isArray(payload.followups) && payload.followups.length > 0) {
+                    try {
+                        const now = Date.now();
+                        let cumulativeDelayDays = 0;
+                        const baseUnixMs = payload.scheduledFor ? new Date(payload.scheduledFor).getTime() : now;
+                        const executeAtMs = baseUnixMs + (delaySeconds * 1000);
+                        
+                        const newJobs = payload.followups.slice(0, 4).map((fu, idx) => {
+                            const stepDelay = fu.delayDays || 3;
+                            cumulativeDelayDays += stepDelay;
+                            
+                            return {
+                                id:                `fu_${now}_${idx}_${Math.random().toString(36).slice(2, 7)}`,
+                                userId:            user.id,
+                                userName:          user.name,
+                                step:              fu.step || (idx + 1),
+                                contact:           payload.contact,
+                                subject:           fu.subject,
+                                body:              fu.body,
+                                signature:         payload.signature || null,
+                                delayDays:         stepDelay,
+                                scheduledFor:      executeAtMs + (cumulativeDelayDays * 86400000),
+                                status:            'pending', // Ensures it visualizes gracefully
+                                originalMessageId: null, // To be properly stamped later by /api/send
+                                originalThreadId:  null,
+                                sentAt:            null,
+                                sentMessageId:     null,
+                                error:             null,
+                                createdAt:         now,
+                            };
+                        });
+                        
+                        for (const job of newJobs) await store.saveJob(job);
+                        console.log(`[QStash] Pre-queued ${newJobs.length} follow-ups for ${payload.contact.email}`);
+                    } catch (fuErr) {
+                        console.error(`[QStash] Failed to pre-queue follow-ups:`, fuErr.message);
+                    }
+                }
             } else {
                 console.error(`[QStash] Failed to schedule:`, data.error);
             }
