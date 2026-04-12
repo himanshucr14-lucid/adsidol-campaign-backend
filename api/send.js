@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
             const isDuplicate = history.some(e => {
                 const isSameEmail = e.email.toLowerCase().trim() === emailLower;
                 const isSameVertical = e.vertical === vertical;
-                const within24h = (Date.now() - (e.date || 0)) < 86400000;
+                const within24h = (Date.now() - (e.date || 0)) < 300000; // REDUCED TO 5 MINS FOR EASIER TESTING
                 return isSameEmail && isSameVertical && within24h && e.type === 'initial';
             });
 
