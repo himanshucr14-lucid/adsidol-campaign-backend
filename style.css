@@ -3227,3 +3227,243 @@
             padding: 8px 12px;
             font-size: 13px;
         }
+
+        /* ═══════════════════════════════════════════════
+           SIDEBAR LAYOUT — left rail + main content
+           ═══════════════════════════════════════════════ */
+
+        .layout-wrapper {
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar (left rail) ── */
+        .desktop-sidebar {
+            width: 220px;
+            min-width: 220px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            padding: 0;
+            z-index: 50;
+            transition: background 0.3s;
+            overflow: hidden;
+        }
+
+        body.dark .desktop-sidebar {
+            background: var(--card);
+            border-right-color: var(--border);
+        }
+
+        .desktop-sidebar .logo-section {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .desktop-sidebar .logo {
+            font-size: 24px;
+        }
+
+        .desktop-sidebar .nav-menu {
+            flex-direction: column;
+            gap: 4px;
+            padding: 16px 12px;
+            flex: 1;
+            overflow-y: auto;
+            align-items: stretch;
+        }
+
+        /* Sidebar nav links — step style */
+        .desktop-sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .desktop-sidebar .nav-link:hover {
+            background: var(--blue-50);
+            color: var(--blue-600);
+        }
+
+        .desktop-sidebar .nav-link.active {
+            background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08));
+            color: var(--blue-600);
+            font-weight: 700;
+        }
+
+        body.dark .desktop-sidebar .nav-link.active {
+            background: rgba(59,130,246,0.15);
+        }
+
+        /* Active indicator bar on left edge */
+        .desktop-sidebar .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            height: 60%;
+            width: 3px;
+            background: linear-gradient(180deg, var(--blue-500), var(--indigo-600));
+            border-radius: 0 3px 3px 0;
+        }
+
+        .desktop-sidebar .nav-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .desktop-sidebar .nav-link.active .nav-icon,
+        .desktop-sidebar .nav-link:hover .nav-icon {
+            opacity: 1;
+        }
+
+        /* Step number badge inside sidebar links */
+        .sidebar-step {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            background: var(--border);
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 800;
+            flex-shrink: 0;
+            margin-left: auto;
+            transition: all 0.2s;
+        }
+
+        .desktop-sidebar .nav-link.active .sidebar-step,
+        .desktop-sidebar .nav-link:hover .sidebar-step {
+            background: linear-gradient(135deg, var(--blue-500), var(--indigo-500));
+            color: white;
+        }
+
+        /* ── Main content area ── */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Top nav bar ── */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(250,251,252,0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+
+        body.dark .top-nav {
+            background: rgba(10,10,10,0.92);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .view-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── Section show/hide & fade animation ── */
+        .app-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .app-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: sectionFadeIn 0.25s ease forwards;
+        }
+
+        @keyframes sectionFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Container inside main content ── */
+        .container-canvas {
+            flex: 1;
+        }
+
+        /* ── Responsive: collapse sidebar on small screens ── */
+        @media (max-width: 900px) {
+            .desktop-sidebar {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex !important;
+            }
+
+            .top-nav {
+                padding: 0 16px;
+            }
+
+            .container.container-canvas {
+                padding: 20px 16px;
+            }
+        }
+
+        @media (min-width: 901px) {
+            .hamburger {
+                display: none !important;
+            }
+        }

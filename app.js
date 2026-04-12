@@ -316,7 +316,7 @@
         mobileBackdrop.addEventListener('click', closeMobileMenu);
         document.querySelectorAll('.mobile-menu-panel [data-section]').forEach(link => {
             link.addEventListener('click', () => {
-                scrollToSection(link.dataset.section);
+                switchSection(link.dataset.section);
                 document.querySelectorAll('.mobile-menu-panel [data-section]').forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
                 closeMobileMenu();
@@ -324,23 +324,68 @@
         });
 
         // ═══════════════════════════════════════════════
-        // SECTION NAV
+        // SECTION NAV — tab-style section switching
         // ═══════════════════════════════════════════════
-        function scrollToSection(section) {
-            const map = { upload: 'uploadSection', templates: 'templatesSection', schedule: 'scheduleSection', campaigns: 'campaignsSection', analytics: 'analyticsSection', followups: 'followupDashboard' };
-            const el = document.getElementById(map[section]);
-            if (!el) return;
-            if (section === 'analytics') el.style.display = 'block';
-            if (section === 'followups') { el.style.display = 'block'; loadFollowupDashboard(); }
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const SECTION_META = {
+            dashboard:  { sectionId: 'sec-dashboard',  title: 'Campaign Dashboard' },
+            audience:   { sectionId: 'sec-audience',   title: 'Audience' },
+            templates:  { sectionId: 'sec-templates',  title: 'Pitch Templates' },
+            followups:  { sectionId: 'sec-followups',  title: 'Follow-up Queue' },
+            analytics:  { sectionId: 'sec-analytics',  title: 'Analytics' },
+        };
+
+        function switchSection(section) {
+            const meta = SECTION_META[section];
+            if (!meta) return;
+
+            // Hide all sections
+            document.querySelectorAll('.app-section').forEach(s => {
+                s.classList.remove('active');
+                s.style.display = 'none';
+            });
+
+            // Show target section
+            const target = document.getElementById(meta.sectionId);
+            if (target) {
+                target.style.display = 'block';
+                // Trigger reflow for animation
+                requestAnimationFrame(() => target.classList.add('active'));
+            }
+
+            // Update top nav title
+            const titleEl = document.getElementById('topNavTitle');
+            if (titleEl) titleEl.textContent = meta.title;
+
+            // Side effects
+            if (section === 'followups') loadFollowupDashboard();
+            if (section === 'analytics') updateHistoryDashboard();
+
+            // Scroll main content to top
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) mainContent.scrollTop = 0;
         }
+
+        // Backward-compat shim for legacy scrollToSection calls in other parts of the code
+        function scrollToSection(section) {
+            // Map old section names to new ones
+            const legacyMap = { upload: 'audience', campaigns: 'audience', schedule: 'templates' };
+            const resolved = legacyMap[section] || section;
+            switchSection(resolved);
+            // Update sidebar active state
+            document.querySelectorAll('.nav-menu .nav-link').forEach(l => {
+                l.classList.toggle('active', l.dataset.section === resolved);
+            });
+        }
+
         document.querySelectorAll('.nav-menu .nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
-                scrollToSection(link.dataset.section);
+                switchSection(link.dataset.section);
             });
         });
+
+        // (mobile menu listeners already wired above at line 317)
 
         // ═══════════════════════════════════════════════
         // STATE
@@ -2208,4 +2253,16 @@
                     document.body.classList.toggle('compact-table');
                 });
             }
+
+            // ── BOOT: Initialize the default visible section ──
+            // Hide every section first, then show dashboard
+            document.querySelectorAll('.app-section').forEach(s => {
+                s.classList.remove('active');
+                s.style.display = 'none';
+            });
+            switchSection('dashboard');
+            // Ensure sidebar Dashboard link is active
+            document.querySelectorAll('.nav-menu .nav-link').forEach(l => {
+                l.classList.toggle('active', l.dataset.section === 'dashboard');
+            });
         })();
