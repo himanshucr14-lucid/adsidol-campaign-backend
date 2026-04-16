@@ -176,12 +176,13 @@
         // ═══════════════════════════════════════════════
         // PERSISTENCE
         // ═══════════════════════════════════════════════
-        // Keys are user-scoped so Paramjit, Moni, Ujjwal, Hemleta
-        // never share cached data when using the same browser.
-        const STORAGE_KEY         = () => `adsidol_v6_${currentUser?.id || 'default'}`;
+        // Client state key is NOT user-scoped on purpose:
+        // it is used at page load before login. Cloud sync (x-api-key) handles
+        // per-user isolation for the authoritative data.
+        const STORAGE_KEY = 'adsidol_v6';
         function saveState() {
             try {
-                localStorage.setItem(STORAGE_KEY(), JSON.stringify({
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
                     contacts, templates, followupTemplates, darkMode, emailSignature,
                     sendTime: document.getElementById('sendTime').value,
                     sendLimit: document.getElementById('sendLimit').value,
@@ -195,7 +196,7 @@
             } catch (e) { }
         }
         function loadState() {
-            try { return JSON.parse(localStorage.getItem(STORAGE_KEY())); } catch (e) { return null; }
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; }
         }
 
         async function saveTemplatesToCloud() {
@@ -2359,8 +2360,11 @@
             const titleEl = document.getElementById('topNavTitle');
             if (titleEl) titleEl.textContent = mode === 'agency' ? 'Agency Dashboard' : 'Campaign Dashboard';
 
-            // Save preference — user-scoped
-            try { localStorage.setItem(MODE_STORAGE_KEY(), mode); } catch(e) {}
+            // Save preference — also write to a plain key for backward compat
+            try {
+                localStorage.setItem('adsidol_mode', mode);
+                if (currentUser?.id) localStorage.setItem(`adsidol_mode_${currentUser.id}`, mode);
+            } catch(e) {}
 
             // Refresh content
             if (mode === 'agency') {
@@ -2889,7 +2893,11 @@
 
         function saveAgencyState() {
             try {
-                localStorage.setItem(AGENCY_STORAGE_KEY(), JSON.stringify({
+                // Use user-scoped key if logged in, generic fallback if not
+                const key = currentUser?.id
+                    ? `adsidol_agency_v1_${currentUser.id}`
+                    : 'adsidol_agency_v1';
+                localStorage.setItem(key, JSON.stringify({
                     agencyContacts, agencyTemplate, agencyFollowups
                 }));
             } catch(e) {}
@@ -2899,7 +2907,11 @@
 
         function loadAgencyState() {
             try {
-                const saved = JSON.parse(localStorage.getItem(AGENCY_STORAGE_KEY()));
+                // Try user-scoped key first, then generic fallback (before login)
+                const key = currentUser?.id
+                    ? `adsidol_agency_v1_${currentUser.id}`
+                    : 'adsidol_agency_v1';
+                const saved = JSON.parse(localStorage.getItem(key));
                 if (!saved) return;
                 if (saved.agencyContacts) {
                     agencyContacts = saved.agencyContacts;
@@ -2923,15 +2935,18 @@
             } catch(e) {}
         }
 
-        // Also restore mode preference (user-scoped)
+        // Also restore mode preference and agency data
+        // These are read AFTER the page loads. currentUser may be null here (not logged in yet),
+        // so we use a safe fallback key and re-load from cloud on login.
         (function restoreMode() {
-            const savedMode = localStorage.getItem(MODE_STORAGE_KEY());
+            // Safe: read mode from a neutral key; user-specific key is set on next save
+            const savedMode = localStorage.getItem('adsidol_mode');
             if (savedMode === 'agency') {
                 setTimeout(() => setAppMode('agency'), 50);
             }
-            // Load from localStorage first (instant), then cloud will overwrite with latest
+            // Load agency state from localStorage (fast, immediate)
             loadAgencyState();
-            // If already logged in, pull from cloud immediately
+            // If a session is already active (page refresh while logged in), pull from cloud
             if (currentApiKey) loadAgencyFromCloud();
         })();
 
