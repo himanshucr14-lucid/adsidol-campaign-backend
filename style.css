@@ -13,6 +13,8 @@
             --indigo-500: #6366F1;
             --indigo-600: #4F46E5;
             --sky-400: #38BDF8;
+            --agency-purple: #7C3AED;
+            --agency-purple-dark: #6D28D9;
             --bg: #FAFBFC;
             --card: #FFFFFF;
             --border: #E5E9F0;
@@ -705,8 +707,8 @@
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
             margin-bottom: 40px;
         }
 
@@ -831,7 +833,7 @@
         /* Template Grid */
         .template-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 32px;
         }
@@ -2663,19 +2665,11 @@
         }
 
         /* Responsive */
-        @media (max-width: 1300px) {
-            .container {
-                padding: 30px 24px;
-            }
-            .card {
-                padding: 24px;
-            }
-        }
-
         @media (max-width: 1100px) {
             .template-editor-grid {
                 grid-template-columns: 1fr;
             }
+
             .preview-panel {
                 position: static;
             }
@@ -3237,249 +3231,136 @@
         }
 
         /* ═══════════════════════════════════════════════
-           SIDEBAR LAYOUT — left rail + main content
+           CLIENT / AGENCY MODE TOGGLE PILL
            ═══════════════════════════════════════════════ */
-
-        .layout-wrapper {
+        .mode-pill-toggle {
             display: flex;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        /* ── Sidebar (left rail) ── */
-        .desktop-sidebar {
-            width: 220px;
-            min-width: 220px;
-            height: 100vh;
-            position: sticky;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            background: var(--card);
-            border-right: 1px solid var(--border);
-            padding: 0;
-            z-index: 50;
-            transition: background 0.3s;
-            overflow: hidden;
-        }
-
-        body.dark .desktop-sidebar {
-            background: var(--card);
-            border-right-color: var(--border);
-        }
-
-        .desktop-sidebar .logo-section {
-            padding: 24px 20px 16px;
-            border-bottom: 1px solid var(--border);
+            align-items: center;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 3px;
+            gap: 2px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             flex-shrink: 0;
         }
 
-        .desktop-sidebar .logo {
-            font-size: 24px;
-        }
-
-        .desktop-sidebar .nav-menu {
-            flex-direction: column;
-            gap: 4px;
-            padding: 16px 12px;
-            flex: 1;
-            overflow-y: auto;
-            align-items: stretch;
-        }
-
-        /* Sidebar nav links — step style */
-        .desktop-sidebar .nav-link {
+        .mode-pill-btn {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 11px 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-light);
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 16px;
             border: none;
-            background: none;
+            background: transparent;
             font-family: 'Outfit', sans-serif;
-            transition: all 0.2s ease;
-            position: relative;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
+            position: relative;
+            z-index: 1;
         }
 
-        .desktop-sidebar .nav-link:hover {
+        .mode-pill-btn.active {
+            background: var(--blue-600);
+            color: white;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Agency active pill uses purple */
+        body[data-mode='agency'] #modeAgencyBtn.active {
+            background: linear-gradient(135deg, var(--agency-purple), var(--agency-purple-dark));
+            box-shadow: 0 2px 10px rgba(124, 58, 237, 0.45);
+        }
+
+        body[data-mode='agency'] #modeClientBtn {
+            color: var(--text-muted);
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .mode-pill-btn:hover:not(.active) {
             background: var(--blue-50);
             color: var(--blue-600);
         }
 
-        .desktop-sidebar .nav-link.active {
-            background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08));
-            color: var(--blue-600);
-            font-weight: 700;
+        body[data-mode='agency'] .mode-pill-btn:hover:not(.active) {
+            background: rgba(124, 58, 237, 0.08);
+            color: var(--agency-purple);
         }
 
-        body.dark .desktop-sidebar .nav-link.active {
-            background: rgba(59,130,246,0.15);
+        /* Agency mode accent on nav sidebar */
+        body[data-mode='agency'] .nav-link.active {
+            background: rgba(124, 58, 237, 0.10);
+            color: var(--agency-purple);
         }
 
-        /* Active indicator bar on left edge */
-        .desktop-sidebar .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 20%;
-            height: 60%;
-            width: 3px;
-            background: linear-gradient(180deg, var(--blue-500), var(--indigo-600));
-            border-radius: 0 3px 3px 0;
+        body[data-mode='agency'] .nav-link:hover {
+            background: rgba(124, 58, 237, 0.06);
+            color: var(--agency-purple);
         }
 
-        .desktop-sidebar .nav-icon {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-            opacity: 0.7;
-            transition: opacity 0.2s;
+        /* ═══════════════════════════════════════════════
+           MODE SHOW/HIDE — driven by body[data-mode]
+           ═══════════════════════════════════════════════ */
+
+        /* Client mode: show client divs, hide agency divs (default) */
+        .mode-client { display: block; }
+        .mode-agency { display: none; }
+
+        /* When agency mode is active: flip visibility */
+        body[data-mode='agency'] .mode-client { display: none !important; }
+        body[data-mode='agency'] .mode-agency { display: block !important; }
+
+        /* Agency mode: purple-tinted top bar accent */
+        body[data-mode='agency'] .top-nav {
+            border-bottom-color: rgba(124, 58, 237, 0.15);
         }
 
-        .desktop-sidebar .nav-link.active .nav-icon,
-        .desktop-sidebar .nav-link:hover .nav-icon {
-            opacity: 1;
+        body[data-mode='agency'] .step-badge {
+            background: linear-gradient(135deg, var(--agency-purple), var(--agency-purple-dark));
         }
 
-        /* Step number badge inside sidebar links */
-        .sidebar-step {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            border-radius: 6px;
-            background: var(--border);
-            color: var(--text-muted);
-            font-size: 11px;
-            font-weight: 800;
-            flex-shrink: 0;
-            margin-left: auto;
-            transition: all 0.2s;
-        }
-
-        .desktop-sidebar .nav-link.active .sidebar-step,
-        .desktop-sidebar .nav-link:hover .sidebar-step {
-            background: linear-gradient(135deg, var(--blue-500), var(--indigo-500));
-            color: white;
-        }
-
-        /* ── Main content area ── */
-        .main-content {
-            flex: 1;
-            min-width: 0;
-            height: 100vh;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ── Top nav bar ── */
-        .top-nav {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            background: rgba(250,251,252,0.92);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-shrink: 0;
-            transition: background 0.3s;
-        }
-
-        body.dark .top-nav {
-            background: rgba(10,10,10,0.92);
-        }
-
-        .top-nav-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            min-width: 0;
-        }
-
-        .view-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* ── Section show/hide & fade animation ── */
-        .app-section {
+        /* Agency mode header badge */
+        .agency-mode-badge {
             display: none;
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(109,40,217,0.08));
+            border: 1px solid rgba(124,58,237,0.25);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--agency-purple);
+            letter-spacing: 0.3px;
+            animation: pulseAgency 2.5s ease-in-out infinite;
         }
 
-        .app-section.active {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-            animation: sectionFadeIn 0.25s ease forwards;
+        body[data-mode='agency'] .agency-mode-badge {
+            display: flex;
         }
 
-        @keyframes sectionFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes pulseAgency {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); }
+            50%       { box-shadow: 0 0 0 4px rgba(124,58,237,0.12); }
         }
 
-        /* ── Container inside main content ── */
-        .container-canvas {
-            flex: 1;
+        /* Agency upload zone hover colour */
+        #agencyUploadZone:hover,
+        #agencyUploadZone.dragover {
+            border-color: var(--agency-purple) !important;
         }
 
-        /* ── Responsive: collapse sidebar on small screens ── */
-        @media (max-width: 900px) {
-            .desktop-sidebar {
-                display: none;
-            }
-
-            .hamburger {
-                display: flex !important;
-            }
-
-            .top-nav {
-                padding: 0 16px;
-            }
-
-            .container.container-canvas {
-                padding: 20px 16px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .template-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* Agency schedule btn shimmer pulse while disabled */
+        #agencyScheduleBtn:not(:disabled) {
+            animation: agencyPulse 2.5s ease-in-out infinite;
         }
-
-        @media (min-width: 901px) {
-            .hamburger {
-                display: none !important;
-            }
+        @keyframes agencyPulse {
+            0%, 100% { box-shadow: 0 4px 16px rgba(124,58,237,0.35); }
+            50%       { box-shadow: 0 6px 24px rgba(124,58,237,0.55); }
         }

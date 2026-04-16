@@ -99,43 +99,27 @@
             </div>
 
             <nav class="nav-menu">
-                <button class="nav-link active" data-section="dashboard">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-                        <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-                        <rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-                        <rect x="9" y="9" width="5.5" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-                    </svg>
-                    Dashboard
-                </button>
-                <button class="nav-link" data-section="audience">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Audience
-                    <span class="sidebar-step">1</span>
-                </button>
-                <button class="nav-link" data-section="templates">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    Templates
-                    <span class="sidebar-step">2</span>
-                </button>
-                <button class="nav-link" data-section="followups">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 8h12M10 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Follow-ups
-                    <span class="sidebar-step">3</span>
-                </button>
-                <button class="nav-link" data-section="analytics">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Analytics
-                </button>
+                <button class="nav-link active" data-section="dashboard"><svg class="nav-icon" viewBox="0 0 16 16"
+                        fill="none">
+                        <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg> Dashboard</button>
+                <button class="nav-link" data-section="audience"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg> Audience</button>
+                <button class="nav-link" data-section="templates"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg> Templates</button>
+                <button class="nav-link" data-section="followups"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 8h12M10 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg> Follow-ups</button>
+                <button class="nav-link" data-section="analytics"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg> Analytics</button>
             </nav>
         </aside>
 
@@ -149,9 +133,36 @@
                     </button>
                     <!-- Context placeholder, updated via js -->
                     <h2 class="view-title" id="topNavTitle">Campaign Dashboard</h2>
+                    <!-- Agency mode badge — shows only in agency mode -->
+                    <div class="agency-mode-badge" id="agencyModeBadge">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <rect x="1" y="3" width="10" height="7.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+                            <path d="M3.5 3V2.5a2.5 2.5 0 015 0V3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                            <path d="M3.5 7h5M6 6v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                        Agency Mode
+                    </div>
                 </div>
                 
                 <div class="header-actions">
+                    <!-- Client / Agency Mode Toggle -->
+                    <div class="mode-pill-toggle" id="modePillToggle" title="Switch between Client and Agency mode">
+                        <button class="mode-pill-btn active" id="modeClientBtn" onclick="setAppMode('client')">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <circle cx="7" cy="4.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                                <path d="M2 12c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            </svg>
+                            Client
+                        </button>
+                        <button class="mode-pill-btn" id="modeAgencyBtn" onclick="setAppMode('agency')">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <rect x="1.5" y="4" width="11" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                                <path d="M4.5 4V3a2.5 2.5 0 015 0v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                                <path d="M4.5 8.5h5M7 7v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            </svg>
+                            Agency
+                        </button>
+                    </div>
                     <div class="gmail-indicator">
                         <div class="status-dot" id="headerGmailDot"></div>
                         <span id="headerGmailStatus">Gmail disconnected</span>
@@ -269,7 +280,9 @@
 
         <!-- Section: Audience / Upload Tools -->
         <section class="app-section" id="sec-audience">
-            <!-- Upload Section -->
+
+            <!-- ══ CLIENT MODE: Upload Section ══ -->
+            <div class="mode-client">
             <div class="card" id="uploadSection">
                 <div class="card-header">
                 <h2 class="card-title">
@@ -410,10 +423,128 @@
                 </table>
             </div> <!-- EOF Table container -->
         </div> <!-- EOF Dashboard Card -->
+            </div> <!-- EOF mode-client -->
+
+            <!-- ══ AGENCY MODE: Upload + Dashboard ══ -->
+            <div class="mode-agency" style="display:none;">
+
+                <!-- Agency Upload Card -->
+                <div class="card" id="agencyUploadSection">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="step-badge" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <rect x="2" y="5" width="14" height="10.5" rx="2" stroke="white" stroke-width="1.6"/>
+                                    <path d="M5.5 5V4a3.5 3.5 0 017 0v1" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+                                    <path d="M5.5 10.5h7M9 9v3" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            Upload Agency List
+                        </h2>
+                        <div style="font-size:13px;color:var(--text-muted);">CSV: Name, Agency, Contact, Email, Location</div>
+                    </div>
+                    <div class="upload-zone" id="agencyUploadZone">
+                        <div class="upload-icon-wrap" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">
+                            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                                <path d="M18 8v16M18 8l-6 6m6-6l6 6" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M6 28h24" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <div class="upload-text">Drop agency CSV here or click to browse</div>
+                        <div class="upload-hint">Required columns: Name, Agency, Contact, Email, Location</div>
+                        <input type="file" id="agencyFileInput" accept=".csv">
+                    </div>
+                    <div id="agencyUploadPreview" style="display:none;">
+                        <div class="success-preview">
+                            <div class="success-icon-wrap" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">
+                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                                    <path d="M5 11l4 4 8-8" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <div style="flex:1;">
+                                <div class="success-title" id="agencyUploadedFileName"></div>
+                                <div class="success-subtitle"><span id="agencyPreviewCount">0</span> agencies loaded • Ready to configure</div>
+                            </div>
+                            <button class="btn btn-secondary" id="agencyExportBtn" style="padding:10px 20px;display:inline-flex;align-items:center;gap:8px;">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                    <path d="M7 1v8M7 9l-3-3m-3 3l3-3M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agency Contacts Dashboard -->
+                <div class="card" id="agencyDashboardSection">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="step-badge" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">2</span>
+                            Agency Contacts
+                        </h2>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-controls">
+                            <div class="search-box">
+                                <span class="search-icon">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <circle cx="7" cy="7" r="4.5" stroke="var(--text-muted)" stroke-width="1.5" />
+                                        <path d="M10.5 10.5l3 3" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" />
+                                    </svg>
+                                </span>
+                                <input type="text" id="agencySearch" placeholder="Search agencies...">
+                            </div>
+                            <select id="agencyFilterStatus" style="width:auto;min-width:150px;">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="sent">Sent</option>
+                            </select>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" class="checkbox" id="agencySelectAll"></th>
+                                    <th>Contact Name</th>
+                                    <th class="col-company">Agency</th>
+                                    <th>Email</th>
+                                    <th class="col-timezone">Location</th>
+                                    <th>Scheduled For</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agencyTableBody">
+                                <tr>
+                                    <td colspan="8">
+                                        <div class="empty-state">
+                                            <div style="margin-bottom:16px;">
+                                                <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(145deg,#7C3AED,#6D28D9);box-shadow:0 8px 24px rgba(124,58,237,0.3);display:inline-flex;align-items:center;justify-content:center;opacity:0.6;">
+                                                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                                        <rect x="3" y="7" width="26" height="18" rx="3" stroke="white" stroke-width="2"/>
+                                                        <path d="M8 7V6a8 8 0 0116 0v1" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                                        <path d="M10 18h12M16 15v6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div class="empty-text">No agencies uploaded yet. Upload a CSV to get started.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div> <!-- EOF mode-agency -->
+
         </section>
 
         <!-- Section: Templates -->
         <section class="app-section" id="sec-templates">
+
+            <!-- ══ CLIENT MODE templates ══ -->
+            <div class="mode-client">
         <!-- Pitch Templates -->
 
         <div class="card" id="templatesSection">
@@ -676,8 +807,133 @@
 
             
         </div>
+            </div> <!-- EOF mode-client templates -->
 
+            <!-- ══ AGENCY MODE: Single Pitch Template ══ -->
+            <div class="mode-agency" style="display:none;">
+                <div class="card" id="agencyTemplateSection">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="step-badge" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">3</span>
+                            Agency Pitch Template
+                        </h2>
+                        <div style="font-size:13px;color:var(--text-muted);">One universal pitch sent to all agencies</div>
+                    </div>
 
+                    <!-- Agency Template Tab Bar -->
+                    <div class="tpl-tabs">
+                        <button class="tpl-tab active" data-agency-tab="initial">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M2 3.5h10v7a1 1 0 01-1 1H3a1 1 0 01-1-1v-7zm0 0l5 4 5-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Pitch Email
+                        </button>
+                        <button class="tpl-tab" data-agency-tab="followups">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M2 7h10M8 4l4 3-4 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Follow-ups (4 Fixed)
+                        </button>
+                    </div>
+
+                    <!-- TAB: Pitch Email -->
+                    <div id="agencyTabInitial" class="tab-pane">
+                        <div class="template-editor-grid">
+                            <div class="template-editor-fields">
+                                <div style="margin-bottom:24px;">
+                                    <label>Subject Line</label>
+                                    <input type="text" id="agencySubjectLine" placeholder="{{contact_name}}, partnership opportunity with {{agency_name}}?">
+                                </div>
+                                <div>
+                                    <label>Email Body</label>
+                                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;padding:12px;background:var(--bg);border-radius:10px;">
+                                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="display:inline;vertical-align:middle">
+                                            <path d="M6.5 2a3 3 0 00-1.5 5.6V9h3V7.6A3 3 0 006.5 2zM5 10h3m-2.5 1h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                                        </svg>
+                                        Use <code style="background:var(--card);padding:3px 8px;border-radius:6px;font-weight:600;">{{contact_name}}</code>, <code style="background:var(--card);padding:3px 8px;border-radius:6px;font-weight:600;">{{agency_name}}</code>
+                                    </div>
+                                    <div class="editor-toolbar">
+                                        <button type="button" class="toolbar-btn" id="agencyBoldBtn" title="Bold selected text">
+                                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                                                <path d="M3.5 2H7a2 2 0 010 4H3.5V2zM3.5 6H7.5a2.5 2.5 0 010 5H3.5V6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                                            </svg>
+                                            Bold
+                                        </button>
+                                        <span class="toolbar-hint">Select text + click, or Ctrl+B</span>
+                                    </div>
+                                    <textarea id="agencyEmailBody" style="min-height:200px;" placeholder="Hi {{contact_name}},&#10;&#10;I came across {{agency_name}} and I'm impressed by your work.&#10;&#10;At Adsidol, we specialize in high-converting user acquisition campaigns. We'd love to explore a partnership opportunity.&#10;&#10;Would you be open to a quick call this week?"></textarea>
+                                </div>
+                                <div class="btn-group" style="margin-top:16px;">
+                                    <button class="btn btn-primary" id="agencySaveTemplate" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);display:inline-flex;align-items:center;gap:8px;">
+                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                            <path d="M2 2h8l2 2v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2zm3 0v4h4V2M4 11v-3h6v3" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        Save Pitch
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="preview-panel">
+                                <div class="preview-header">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                        <ellipse cx="7" cy="7" rx="5" ry="3.5" stroke="currentColor" stroke-width="1.4" />
+                                        <circle cx="7" cy="7" r="1.5" fill="currentColor" />
+                                    </svg>
+                                    Live Preview <span style="font-weight:400;opacity:0.7;">— sample data</span>
+                                </div>
+                                <div class="preview-subject">
+                                    <div class="preview-subject-label">Subject</div>
+                                    <div class="preview-subject-value" id="agencyPreviewSubject">—</div>
+                                </div>
+                                <div class="preview-body" id="agencyPreviewBody">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB: Agency Follow-ups (4 Fixed) -->
+                    <div id="agencyTabFollowups" class="tab-pane" style="display:none;">
+                        <p style="font-size:14px;color:var(--text-light);margin-bottom:20px;">4 fixed follow-up steps for agency outreach. Each threads into the original conversation automatically.</p>
+                        <div class="followup-steps" id="agencyFollowupSteps"></div>
+                        <div class="btn-group" style="margin-top:24px;">
+                            <button class="btn btn-primary" id="agencySaveFollowups" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);display:inline-flex;align-items:center;gap:8px;">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                    <path d="M2 2h8l2 2v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2zm3 0v4h4V2M4 11v-3h6v3" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Save All Follow-ups
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agency Schedule Card -->
+                <div class="card" id="agencyScheduleCard">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="step-badge" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">4</span>
+                            Schedule Agency Campaign
+                        </h2>
+                    </div>
+                    <div class="info-box" style="margin-top:0;border-left:3px solid #7C3AED;">
+                        <div class="info-title" style="color:#7C3AED;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6.5" stroke="#7C3AED" stroke-width="1.4"/>
+                                <path d="M8 5v4M8 11v.5" stroke="#7C3AED" stroke-width="1.4" stroke-linecap="round"/>
+                            </svg>
+                            Agency Mode — Same Smart Scheduling
+                        </div>
+                        <div class="info-text">Uses the same Send Time, Daily Limit, and Interval from your Schedule &amp; Launch settings below. Single pitch + 4 fixed follow-ups will be queued automatically.</div>
+                    </div>
+                    <div class="btn-group" style="margin-top:20px;">
+                        <button class="btn btn-primary" id="agencyScheduleBtn" disabled style="background:linear-gradient(135deg,#7C3AED,#6D28D9);display:inline-flex;align-items:center;gap:10px;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="1.5" y="2" width="13" height="12" rx="2" stroke="white" stroke-width="1.5" />
+                                <path d="M1.5 6h13M5 1v2m6-2v2" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                                <path d="M8 9l1.5 1.5L12 8" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Schedule Agency Campaign
+                        </button>
+                    </div>
+                </div>
+            </div> <!-- EOF mode-agency templates -->
 
         <!-- Schedule Configuration -->
         <div class="card" id="scheduleSection">
@@ -820,6 +1076,8 @@
 
         <!-- Section: Follow Ups / Queue -->
         <section class="app-section" id="sec-followups">
+            <!-- ══ CLIENT MODE follow-ups ══ -->
+            <div class="mode-client">
         <!-- Follow-up Queue Section -->
 <!-- Follow-up Dashboard -->
             <div class="card" id="followupDashboard">
@@ -923,9 +1181,53 @@
                     </button>
                 </div>
             </div>
+            </div> <!-- EOF mode-client followups -->
+
+            <!-- ══ AGENCY MODE: Follow-up Queue ══ -->
+            <div class="mode-agency" style="display:none;">
+                <div class="card" id="agencyFuDashboard">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="step-badge" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <path d="M2 9h14M12 5l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </span>
+                            Agency Follow-up Queue
+                        </h2>
+                        <div class="card-subtitle">4 fixed steps per agency contact</div>
+                    </div>
+                    <div class="fu-stats-row" id="agencyFuStatsRow"></div>
+                    <div class="table-container">
+                        <table class="fu-job-table">
+                            <thead>
+                                <tr>
+                                    <th>Contact</th>
+                                    <th class="col-company">Agency</th>
+                                    <th>Step</th>
+                                    <th>Scheduled For</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agencyFuTableBody">
+                                <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">No agency follow-ups scheduled yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="btn-group" style="margin-top:16px;">
+                        <button class="btn btn-secondary" id="agencyRefreshFuBtn" style="display:inline-flex;align-items:center;gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M2 7a5 5 0 015-5 5 5 0 014.5 2.8M12 7a5 5 0 01-5 5 5 5 0 01-4.5-2.8M2 2v3h3M12 12v-3h-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+            </div> <!-- EOF mode-agency followups -->
 
         <!-- Analytics Section -->
-        <div class="card" id="analyticsSection">
+        <div class="card" id="analyticsSection" style="display: none;">
             <div class="card-header">
                 <h2 class="card-title">
                     <span class="step-badge">
