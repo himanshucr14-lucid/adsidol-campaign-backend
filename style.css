@@ -3640,7 +3640,7 @@
             .upload-hint { font-size: 13px; }
 
             /* Template grid */
-            .template-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+            .template-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
             .template-card { padding: 20px; border-radius: 16px; }
             .template-vertical { font-size: 15px; }
 
