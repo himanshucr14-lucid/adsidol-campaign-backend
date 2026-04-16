@@ -52,6 +52,201 @@
             transition: background 0.3s, color 0.3s;
         }
 
+        /* ── LAYOUT SYSTEM ── */
+        .layout-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+            background: var(--bg);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            position: relative;
+            padding-bottom: 40px;
+        }
+
+        .logo-section {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--blue-600), var(--indigo-600));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        /* Nav links */
+        .nav-menu {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            text-align: left;
+            width: 100%;
+        }
+
+        .nav-link:hover {
+            background: var(--blue-50);
+            color: var(--blue-600);
+        }
+
+        .nav-link.active {
+            background: var(--blue-50);
+            color: var(--blue-600);
+            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+        }
+
+        /* ── SIDEBAR MODE TOGGLE ── */
+        .sidebar-mode-toggle {
+            margin: 10px 20px 20px;
+            padding: 6px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .smt-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .smt-btn.active {
+            background: var(--card);
+            color: var(--blue-600);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .smt-track {
+            width: 36px;
+            height: 20px;
+            background: var(--blue-500);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .smt-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Agency mode states */
+        body[data-mode="agency"] .smt-track {
+            background: var(--agency-purple);
+        }
+
+        body[data-mode="agency"] .smt-thumb {
+            transform: translateX(16px);
+        }
+
+        body[data-mode="agency"] #modeAgencyBtn.smt-btn {
+            color: var(--agency-purple);
+        }
+
+        /* Header */
+        .top-nav {
+            height: 70px;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(250, 251, 252, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        body.dark .top-nav {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .view-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+
         /* Animated gradient background */
         body::before {
             content: '';
@@ -457,177 +652,7 @@
             transform: translateY(-50%) scale(1) rotate(0deg);
         }
 
-        /* ═══════════════════════════════════════════════
-           VERTICAL SIDEBAR LAYOUT
-           ═══════════════════════════════════════════════ */
-        .layout-wrapper {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Left sidebar column */
-        .sidebar {
-            width: 216px;
-            min-width: 216px;
-            background: var(--card);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 50;
-            flex-shrink: 0;
-            transition: background 0.3s, border-color 0.3s;
-        }
-
-        /* Right content area */
-        .main-content {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Top bar inside main-content (title + actions) */
-        .top-nav {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            height: 64px;
-            gap: 12px;
-            transition: background 0.3s;
-        }
-        body.dark .top-nav {
-            background: rgba(10,10,10,0.95);
-        }
-        body[data-mode='agency'] .top-nav {
-            border-bottom-color: rgba(124,58,237,0.2);
-        }
-
-        .top-nav-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .view-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        /* Sidebar logo area */
-        .sidebar .logo-section {
-            padding: 22px 18px 18px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-        }
-
-        /* Sidebar nav — VERTICAL */
-        .sidebar .nav-menu {
-            flex-direction: column;
-            padding: 10px 10px;
-            gap: 2px;
-        }
-
-        .sidebar .nav-link {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-align: left;
-            justify-content: flex-start;
-            font-size: 13.5px;
-        }
-
-        /* Sidebar toggle wrapper */
-        .sidebar-mode-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .smt-btn {
-            font-family: 'Outfit', sans-serif;
-            font-size: 12.5px;
-            font-weight: 500;
-            color: var(--text-muted);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            transition: color 0.2s, font-weight 0.2s;
-            white-space: nowrap;
-        }
-        body:not([data-mode='agency']) #modeClientBtn { color: var(--blue-600); font-weight: 700; }
-        body[data-mode='agency'] #modeAgencyBtn       { color: var(--agency-purple, #7C3AED); font-weight: 700; }
-
-        .smt-track {
-            width: 40px;
-            height: 22px;
-            border-radius: 11px;
-            background: var(--blue-600);
-            position: relative;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: background 0.3s;
-            box-shadow: 0 1px 6px rgba(37,99,235,0.25);
-        }
-        body[data-mode='agency'] .smt-track {
-            background: var(--agency-purple, #7C3AED);
-            box-shadow: 0 1px 6px rgba(124,58,237,0.3);
-        }
-        .smt-thumb {
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        body[data-mode='agency'] .smt-thumb { transform: translateX(18px); }
-
-        /* Dark mode sidebar */
-        body.dark .sidebar { background: var(--card); }
-        body.dark:not([data-mode='agency']) #modeClientBtn { color: #60A5FA; }
-        body.dark[data-mode='agency'] #modeAgencyBtn       { color: #A78BFA; }
-
-        /* Agency accent on sidebar nav */
-        body[data-mode='agency'] .sidebar .nav-link.active {
-            background: rgba(124,58,237,0.10);
-            color: var(--agency-purple);
-        }
-        body[data-mode='agency'] .sidebar .nav-link:hover {
-            background: rgba(124,58,237,0.06);
-            color: var(--agency-purple);
-        }
-        body[data-mode='agency'] .sidebar {
-            border-right-color: rgba(124,58,237,0.2);
-        }
-
-        /* ── Hide horizontal .header on sidebar layout ── */
-        .layout-wrapper ~ .header,
-        .sidebar ~ .header { display: none; }
-
-        /* Header Navigation (horizontal — kept for fallback) */
+        /* Header Navigation */
         .header {
             position: sticky;
             top: 0;
@@ -3401,78 +3426,92 @@
         }
 
         /* ═══════════════════════════════════════════════
-           HEADER LAYOUT — make toggle truly centred
+           CLIENT / AGENCY TOGGLE — in the sidebar
            ═══════════════════════════════════════════════ */
-        /* Give left and right equal flex so centre is truly centred */
-        .logo-section  { flex: 1; }
-        .header-actions { flex: 1; justify-content: flex-end; }
 
-        /* ── CLIENT / AGENCY CENTRE TOGGLE ── */
-        .mode-center-toggle {
+        /* Wrapper sits between logo and nav-menu */
+        .sidebar-mode-toggle {
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px 14px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
         }
-        /* Labels */
-        .mct-label {
+
+        /* "Client" / "Agency" labels */
+        .smt-btn {
             font-family: 'Outfit', sans-serif;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             color: var(--text-muted);
+            background: none;
+            border: none;
             cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
+            padding: 0;
             transition: color 0.2s, font-weight 0.2s;
+            white-space: nowrap;
         }
-        body:not([data-mode='agency']) #modeClientBtn { color: var(--blue-600); font-weight: 700; }
-        body[data-mode='agency'] #modeAgencyBtn       { color: var(--agency-purple, #7C3AED); font-weight: 700; }
+        /* Active Client label — blue */
+        body:not([data-mode='agency']) #modeClientBtn {
+            color: var(--blue-600);
+            font-weight: 700;
+        }
+        /* Active Agency label — purple */
+        body[data-mode='agency'] #modeAgencyBtn {
+            color: var(--agency-purple, #7C3AED);
+            font-weight: 700;
+        }
 
-        /* Track */
-        .mct-track {
-            width: 44px;
-            height: 24px;
-            border-radius: 12px;
+        /* The sliding track */
+        .smt-track {
+            width: 40px;
+            height: 22px;
+            border-radius: 11px;
             background: var(--blue-600);
             position: relative;
             cursor: pointer;
             flex-shrink: 0;
             transition: background 0.3s cubic-bezier(0.4,0,0.2,1);
-            box-shadow: 0 1px 6px rgba(37,99,235,0.3);
+            box-shadow: 0 1px 6px rgba(37,99,235,0.25);
         }
-        body[data-mode='agency'] .mct-track {
+        body[data-mode='agency'] .smt-track {
             background: var(--agency-purple, #7C3AED);
-            box-shadow: 0 1px 6px rgba(124,58,237,0.35);
+            box-shadow: 0 1px 6px rgba(124,58,237,0.3);
         }
-        /* Thumb */
-        .mct-thumb {
+
+        /* Sliding thumb */
+        .smt-thumb {
             position: absolute;
             top: 3px;
             left: 3px;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: white;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-            transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
         }
-        body[data-mode='agency'] .mct-thumb { transform: translateX(20px); }
+        body[data-mode='agency'] .smt-thumb {
+            transform: translateX(18px);
+        }
 
-        /* Dark mode */
+        /* Dark mode — track stays same colour, just dim the shadow */
+        body.dark .smt-track { opacity: 0.9; }
+        body.dark .smt-btn   { color: var(--text-muted); }
         body.dark:not([data-mode='agency']) #modeClientBtn { color: #60A5FA; }
         body.dark[data-mode='agency'] #modeAgencyBtn       { color: #A78BFA; }
 
-        /* Agency mode nav accent */
+        /* Agency mode accent on nav sidebar links */
         body[data-mode='agency'] .nav-link.active {
-            background: rgba(124,58,237,0.10);
+            background: rgba(124, 58, 237, 0.10);
             color: var(--agency-purple);
         }
         body[data-mode='agency'] .nav-link:hover {
-            background: rgba(124,58,237,0.06);
+            background: rgba(124, 58, 237, 0.06);
             color: var(--agency-purple);
         }
-        body[data-mode='agency'] .header { border-bottom-color: rgba(124,58,237,0.2); }
-
 
         /* ═══════════════════════════════════════════════
            MODE SHOW/HIDE — driven by body[data-mode]

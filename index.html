@@ -90,56 +90,54 @@
         </div>
     </div>
 
-    <!-- ── Sidebar + Main Layout ── -->
+    <!-- Layout Wrapper representing SPA structure -->
     <div class="layout-wrapper">
-
-        <!-- LEFT: Vertical Sidebar -->
-        <aside class="sidebar">
+        <!-- Persistent Sidebar -->
+        <aside class="sidebar desktop-sidebar">
             <div class="logo-section">
                 <div class="logo">Adsidol</div>
             </div>
 
-            <!-- Client / Agency Toggle -->
+            <!-- Client / Agency mode toggle — sits in sidebar below logo -->
             <div class="sidebar-mode-toggle">
-                <button class="smt-btn" id="modeClientBtn" onclick="setAppMode('client')">Client</button>
+                <button class="smt-btn active" id="modeClientBtn" onclick="setAppMode('client')">Client</button>
                 <div class="smt-track" onclick="toggleAppMode()">
-                    <div class="smt-thumb"></div>
+                    <div class="smt-thumb" id="smtThumb"></div>
                 </div>
                 <button class="smt-btn" id="modeAgencyBtn" onclick="setAppMode('agency')">Agency</button>
             </div>
 
-            <!-- Nav Links -->
             <nav class="nav-menu">
-                <button class="nav-link active" data-section="dashboard">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <button class="nav-link active" data-section="dashboard"><svg class="nav-icon" viewBox="0 0 16 16"
+                        fill="none">
+                        <path d="M2 12h12M8 2v8m0-8L5 5m3-3l3 3" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
                     </svg> Dashboard</button>
-                <button class="nav-link" data-section="audience">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <button class="nav-link" data-section="audience"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0l6 5 6-5" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg> Audience</button>
-                <button class="nav-link" data-section="templates">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <button class="nav-link" data-section="templates"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg> Templates</button>
-                <button class="nav-link" data-section="followups">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 8h12M10 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <button class="nav-link" data-section="followups"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 8h12M10 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
                     </svg> Follow-ups</button>
-                <button class="nav-link" data-section="analytics">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <button class="nav-link" data-section="analytics"><svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
                     </svg> Analytics</button>
             </nav>
         </aside>
 
-        <!-- RIGHT: Main Content Area -->
+        <!-- Main Workspace -->
         <main class="main-content">
-            <!-- Top bar: title + agency badge + action buttons -->
+            <!-- Top Nav Canvas Info -->
             <header class="top-nav">
                 <div class="top-nav-left">
-                    <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+                    <button class="hamburger" id="hamburgerBtn" aria-label="Menu" style="display:none;">
                         <span></span><span></span><span></span>
                     </button>
                     <h2 class="view-title" id="topNavTitle">Campaign Dashboard</h2>
@@ -164,7 +162,8 @@
                     </div>
                     <button class="nav-link" id="headerConnectGmail" style="background:var(--blue-600);color:white;padding:9px 16px;font-size:13px;border-radius:14px;cursor:pointer;border:none;">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 0v6m0 0l3-3m-3 3L4 4" stroke="white" stroke-width="1.5"
+                                stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         Connect
                     </button>
@@ -1549,9 +1548,6 @@
     
 
     
-        </main><!-- end .main-content -->
-    </div><!-- end .layout-wrapper -->
-
     <script src="app.js?v=3"></script>
 </body>
 
