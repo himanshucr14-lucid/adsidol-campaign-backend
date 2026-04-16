@@ -3231,94 +3231,84 @@
         }
 
         /* ═══════════════════════════════════════════════
-           CLIENT / AGENCY TOGGLE — centred at the top nav
+           CLIENT / AGENCY TOGGLE — in the sidebar
            ═══════════════════════════════════════════════ */
 
-        /* Make top-nav relative so the absolute centred toggle works */
-        .top-nav { position: relative; }
-
-        /* The centred wrapper — sits in the middle of the nav bar */
-        .mode-switch-center {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
+        /* Wrapper sits between logo and nav-menu */
+        .sidebar-mode-toggle {
             display: flex;
             align-items: center;
-            gap: 12px;
-            z-index: 10;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px 14px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
         }
 
-        /* "Client" and "Agency" text labels */
-        .mode-switch-label {
+        /* "Client" / "Agency" labels */
+        .smt-btn {
             font-family: 'Outfit', sans-serif;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             color: var(--text-muted);
+            background: none;
+            border: none;
             cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
+            padding: 0;
             transition: color 0.2s, font-weight 0.2s;
+            white-space: nowrap;
         }
-        /* Active Client label */
+        /* Active Client label — blue */
         body:not([data-mode='agency']) #modeClientBtn {
             color: var(--blue-600);
             font-weight: 700;
         }
-        /* Active Agency label */
+        /* Active Agency label — purple */
         body[data-mode='agency'] #modeAgencyBtn {
             color: var(--agency-purple, #7C3AED);
             font-weight: 700;
         }
 
-        /* The outer track (the pill) */
-        .mode-switch-track {
-            width: 48px;
-            height: 26px;
-            border-radius: 13px;
+        /* The sliding track */
+        .smt-track {
+            width: 40px;
+            height: 22px;
+            border-radius: 11px;
             background: var(--blue-600);
             position: relative;
             cursor: pointer;
-            transition: background 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
             flex-shrink: 0;
+            transition: background 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 1px 6px rgba(37,99,235,0.25);
         }
-        body[data-mode='agency'] .mode-switch-track {
+        body[data-mode='agency'] .smt-track {
             background: var(--agency-purple, #7C3AED);
-            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+            box-shadow: 0 1px 6px rgba(124,58,237,0.3);
         }
 
-        /* The sliding white thumb */
-        .mode-switch-thumb {
+        /* Sliding thumb */
+        .smt-thumb {
             position: absolute;
             top: 3px;
             left: 3px;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: white;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
         }
-        body[data-mode='agency'] .mode-switch-thumb {
-            transform: translateX(22px);
-        }
-
-        /* Dark mode adjustments for the toggle */
-        body.dark .mode-switch-track {
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
-        }
-        body.dark .mode-switch-label {
-            color: var(--text-muted);
-        }
-        body.dark:not([data-mode='agency']) #modeClientBtn {
-            color: #60A5FA;
-        }
-        body.dark[data-mode='agency'] #modeAgencyBtn {
-            color: #A78BFA;
+        body[data-mode='agency'] .smt-thumb {
+            transform: translateX(18px);
         }
 
-        /* Agency mode accent on nav sidebar */
+        /* Dark mode — track stays same colour, just dim the shadow */
+        body.dark .smt-track { opacity: 0.9; }
+        body.dark .smt-btn   { color: var(--text-muted); }
+        body.dark:not([data-mode='agency']) #modeClientBtn { color: #60A5FA; }
+        body.dark[data-mode='agency'] #modeAgencyBtn       { color: #A78BFA; }
+
+        /* Agency mode accent on nav sidebar links */
         body[data-mode='agency'] .nav-link.active {
             background: rgba(124, 58, 237, 0.10);
             color: var(--agency-purple);

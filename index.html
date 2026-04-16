@@ -98,6 +98,15 @@
                 <div class="logo">Adsidol</div>
             </div>
 
+            <!-- Client / Agency mode toggle — sits in sidebar below logo -->
+            <div class="sidebar-mode-toggle">
+                <button class="smt-btn active" id="modeClientBtn" onclick="setAppMode('client')">Client</button>
+                <div class="smt-track" onclick="toggleAppMode()">
+                    <div class="smt-thumb" id="smtThumb"></div>
+                </div>
+                <button class="smt-btn" id="modeAgencyBtn" onclick="setAppMode('agency')">Agency</button>
+            </div>
+
             <nav class="nav-menu">
                 <button class="nav-link active" data-section="dashboard"><svg class="nav-icon" viewBox="0 0 16 16"
                         fill="none">
@@ -131,9 +140,7 @@
                     <button class="hamburger" id="hamburgerBtn" aria-label="Menu" style="display:none;">
                         <span></span><span></span><span></span>
                     </button>
-                    <!-- Context placeholder, updated via js -->
                     <h2 class="view-title" id="topNavTitle">Campaign Dashboard</h2>
-                    <!-- Agency mode badge — shows only in agency mode -->
                     <div class="agency-mode-badge" id="agencyModeBadge">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                             <rect x="1" y="3" width="10" height="7.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
@@ -143,16 +150,6 @@
                         Agency Mode
                     </div>
                 </div>
-
-                <!-- ── Client / Agency Toggle — centred in the nav bar ── -->
-                <div class="mode-switch-center" title="Switch between Client and Agency mode">
-                    <span class="mode-switch-label" id="modeClientBtn" onclick="setAppMode('client')">Client</span>
-                    <div class="mode-switch-track" onclick="toggleAppMode()">
-                        <div class="mode-switch-thumb" id="modeSwitchThumb"></div>
-                    </div>
-                    <span class="mode-switch-label" id="modeAgencyBtn" onclick="setAppMode('agency')">Agency</span>
-                </div>
-
                 <div class="header-actions">
                     <div class="gmail-indicator">
                         <div class="status-dot" id="headerGmailDot"></div>
@@ -185,7 +182,6 @@
                     </button>
                 </div>
             </header>
-
 
             <div class="container container-canvas">
         <!-- Bulk Action Bar -->
