@@ -74,10 +74,13 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 100;
+            left: 0;
+            z-index: 200;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .main-content {
@@ -88,6 +91,7 @@
             background: var(--bg);
             position: relative;
             padding-bottom: 40px;
+            margin-left: 280px; /* offset for fixed sidebar */
         }
 
         .logo-section {
@@ -3592,6 +3596,7 @@
         @media (max-width: 1440px) {
             /* Sidebar narrower */
             .sidebar { width: 240px; }
+            .main-content { margin-left: 240px; }
 
             /* Logo */
             .logo { font-size: 22px; }
@@ -3659,6 +3664,7 @@
         /* Extra tightening for standard 13-inch / 1366px screens */
         @media (max-width: 1366px) {
             .sidebar  { width: 220px; }
+            .main-content { margin-left: 220px; }
             .card     { padding: 22px; }
             .stat-card { padding: 18px; }
             .stat-value { font-size: 28px; }
