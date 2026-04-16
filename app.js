@@ -2352,10 +2352,6 @@
             appMode = mode;
             document.body.setAttribute('data-mode', mode);
 
-            // Toggle pill buttons
-            document.getElementById('modeClientBtn').classList.toggle('active', mode === 'client');
-            document.getElementById('modeAgencyBtn').classList.toggle('active', mode === 'agency');
-
             // Update nav title
             const titleEl = document.getElementById('topNavTitle');
             if (titleEl) titleEl.textContent = mode === 'agency' ? 'Agency Dashboard' : 'Campaign Dashboard';
@@ -2370,14 +2366,18 @@
             if (mode === 'agency') {
                 updateAgencyDashboard();
                 renderAgencyFollowupSteps();
-                showToast('Switched to Agency Mode', 'info', 2500);
+                showToast('Switched to Agency Mode 🌙', 'info', 2500);
             } else {
-                showToast('Switched to Client Mode', 'info', 2500);
+                showToast('Switched to Client Mode ☀️', 'info', 2500);
             }
         }
 
         // Expose globally for onclick
         window.setAppMode = setAppMode;
+        // Toggle helper — called by the track click
+        window.toggleAppMode = function() {
+            setAppMode(appMode === 'agency' ? 'client' : 'agency');
+        };
 
         // ── Agency personalise preview ──────────────────
         function agencyPersonalisePreview(text) {
