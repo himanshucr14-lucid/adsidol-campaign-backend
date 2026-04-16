@@ -176,10 +176,12 @@
         // ═══════════════════════════════════════════════
         // PERSISTENCE
         // ═══════════════════════════════════════════════
-        const STORAGE_KEY = 'adsidol_v6';
+        // Keys are user-scoped so Paramjit, Moni, Ujjwal, Hemleta
+        // never share cached data when using the same browser.
+        const STORAGE_KEY         = () => `adsidol_v6_${currentUser?.id || 'default'}`;
         function saveState() {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                localStorage.setItem(STORAGE_KEY(), JSON.stringify({
                     contacts, templates, followupTemplates, darkMode, emailSignature,
                     sendTime: document.getElementById('sendTime').value,
                     sendLimit: document.getElementById('sendLimit').value,
@@ -193,7 +195,7 @@
             } catch (e) { }
         }
         function loadState() {
-            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; }
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY())); } catch (e) { return null; }
         }
 
         async function saveTemplatesToCloud() {
@@ -316,7 +318,7 @@
         mobileBackdrop.addEventListener('click', closeMobileMenu);
         document.querySelectorAll('.mobile-menu-panel [data-section]').forEach(link => {
             link.addEventListener('click', () => {
-                switchSection(link.dataset.section);
+                scrollToSection(link.dataset.section);
                 document.querySelectorAll('.mobile-menu-panel [data-section]').forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
                 closeMobileMenu();
@@ -324,68 +326,23 @@
         });
 
         // ═══════════════════════════════════════════════
-        // SECTION NAV — tab-style section switching
+        // SECTION NAV
         // ═══════════════════════════════════════════════
-        const SECTION_META = {
-            dashboard:  { sectionId: 'sec-dashboard',  title: 'Campaign Dashboard' },
-            audience:   { sectionId: 'sec-audience',   title: 'Audience' },
-            templates:  { sectionId: 'sec-templates',  title: 'Pitch Templates' },
-            followups:  { sectionId: 'sec-followups',  title: 'Follow-up Queue' },
-            analytics:  { sectionId: 'sec-analytics',  title: 'Analytics' },
-        };
-
-        function switchSection(section) {
-            const meta = SECTION_META[section];
-            if (!meta) return;
-
-            // Hide all sections
-            document.querySelectorAll('.app-section').forEach(s => {
-                s.classList.remove('active');
-                s.style.display = 'none';
-            });
-
-            // Show target section
-            const target = document.getElementById(meta.sectionId);
-            if (target) {
-                target.style.display = 'block';
-                // Trigger reflow for animation
-                requestAnimationFrame(() => target.classList.add('active'));
-            }
-
-            // Update top nav title
-            const titleEl = document.getElementById('topNavTitle');
-            if (titleEl) titleEl.textContent = meta.title;
-
-            // Side effects
-            if (section === 'followups') loadFollowupDashboard();
-            if (section === 'analytics') updateHistoryDashboard();
-
-            // Scroll main content to top
-            const mainContent = document.querySelector('.main-content');
-            if (mainContent) mainContent.scrollTop = 0;
-        }
-
-        // Backward-compat shim for legacy scrollToSection calls in other parts of the code
         function scrollToSection(section) {
-            // Map old section names to new ones
-            const legacyMap = { upload: 'audience', campaigns: 'audience', schedule: 'templates' };
-            const resolved = legacyMap[section] || section;
-            switchSection(resolved);
-            // Update sidebar active state
-            document.querySelectorAll('.nav-menu .nav-link').forEach(l => {
-                l.classList.toggle('active', l.dataset.section === resolved);
-            });
+            const map = { upload: 'uploadSection', templates: 'templatesSection', schedule: 'scheduleSection', campaigns: 'campaignsSection', analytics: 'analyticsSection', followups: 'followupDashboard' };
+            const el = document.getElementById(map[section]);
+            if (!el) return;
+            if (section === 'analytics') el.style.display = 'block';
+            if (section === 'followups') { el.style.display = 'block'; loadFollowupDashboard(); }
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-
         document.querySelectorAll('.nav-menu .nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
-                switchSection(link.dataset.section);
+                scrollToSection(link.dataset.section);
             });
         });
-
-        // (mobile menu listeners already wired above at line 317)
 
         // ═══════════════════════════════════════════════
         // STATE
@@ -429,15 +386,107 @@
         // TIMEZONE MAP
         // ═══════════════════════════════════════════════
         const timezoneMap = {
+            // ── North America ─────────────────────────────────────────────────────
             'United States': 'America/New_York', 'USA': 'America/New_York', 'US': 'America/New_York',
-            'United Kingdom': 'Europe/London', 'UK': 'Europe/London', 'Malta': 'Europe/Malta', 'Gibraltar': 'Europe/Gibraltar',
-            'Canada': 'America/Toronto', 'Australia': 'Australia/Sydney', 'India': 'Asia/Kolkata', 'Singapore': 'Asia/Singapore',
-            'Hong Kong': 'Asia/Hong_Kong', 'Philippines': 'Asia/Manila', 'Ireland': 'Europe/Dublin', 'Sweden': 'Europe/Stockholm',
-            'Netherlands': 'Europe/Amsterdam', 'Germany': 'Europe/Berlin', 'France': 'Europe/Paris', 'Spain': 'Europe/Madrid',
-            'Italy': 'Europe/Rome', 'Poland': 'Europe/Warsaw', 'Brazil': 'America/Sao_Paulo', 'Mexico': 'America/Mexico_City',
-            'Argentina': 'America/Argentina/Buenos_Aires', 'Japan': 'Asia/Tokyo', 'South Korea': 'Asia/Seoul',
-            'New Zealand': 'Pacific/Auckland', 'South Africa': 'Africa/Johannesburg', 'UAE': 'Asia/Dubai', 'Israel': 'Asia/Jerusalem'
+            'New York': 'America/New_York', 'Los Angeles': 'America/Los_Angeles', 'Chicago': 'America/Chicago',
+            'Houston': 'America/Chicago', 'Phoenix': 'America/Phoenix', 'Denver': 'America/Denver',
+            'Seattle': 'America/Los_Angeles', 'San Francisco': 'America/Los_Angeles', 'Miami': 'America/New_York',
+            'Canada': 'America/Toronto', 'Toronto': 'America/Toronto', 'Vancouver': 'America/Vancouver',
+            'Montreal': 'America/Toronto', 'Calgary': 'America/Edmonton',
+            'Mexico': 'America/Mexico_City', 'Mexico City': 'America/Mexico_City',
+            // ── South America ─────────────────────────────────────────────────────
+            'Brazil': 'America/Sao_Paulo', 'Sao Paulo': 'America/Sao_Paulo', 'Rio': 'America/Sao_Paulo',
+            'Argentina': 'America/Argentina/Buenos_Aires', 'Buenos Aires': 'America/Argentina/Buenos_Aires',
+            'Chile': 'America/Santiago', 'Colombia': 'America/Bogota', 'Peru': 'America/Lima',
+            'Venezuela': 'America/Caracas', 'Ecuador': 'America/Guayaquil', 'Bolivia': 'America/La_Paz',
+            // ── Europe ───────────────────────────────────────────────────────────
+            'United Kingdom': 'Europe/London', 'UK': 'Europe/London', 'England': 'Europe/London',
+            'London': 'Europe/London', 'Scotland': 'Europe/London', 'Wales': 'Europe/London',
+            'Ireland': 'Europe/Dublin', 'Dublin': 'Europe/Dublin',
+            'France': 'Europe/Paris', 'Paris': 'Europe/Paris',
+            'Germany': 'Europe/Berlin', 'Berlin': 'Europe/Berlin', 'Munich': 'Europe/Berlin',
+            'Netherlands': 'Europe/Amsterdam', 'Amsterdam': 'Europe/Amsterdam', 'Holland': 'Europe/Amsterdam',
+            'Spain': 'Europe/Madrid', 'Madrid': 'Europe/Madrid', 'Barcelona': 'Europe/Madrid',
+            'Italy': 'Europe/Rome', 'Rome': 'Europe/Rome', 'Milan': 'Europe/Rome',
+            'Portugal': 'Europe/Lisbon', 'Lisbon': 'Europe/Lisbon',
+            'Sweden': 'Europe/Stockholm', 'Stockholm': 'Europe/Stockholm',
+            'Norway': 'Europe/Oslo', 'Oslo': 'Europe/Oslo',
+            'Denmark': 'Europe/Copenhagen', 'Copenhagen': 'Europe/Copenhagen',
+            'Finland': 'Europe/Helsinki', 'Helsinki': 'Europe/Helsinki',
+            'Switzerland': 'Europe/Zurich', 'Zurich': 'Europe/Zurich', 'Geneva': 'Europe/Zurich',
+            'Austria': 'Europe/Vienna', 'Vienna': 'Europe/Vienna',
+            'Belgium': 'Europe/Brussels', 'Brussels': 'Europe/Brussels',
+            'Poland': 'Europe/Warsaw', 'Warsaw': 'Europe/Warsaw',
+            'Czech': 'Europe/Prague', 'Prague': 'Europe/Prague',
+            'Hungary': 'Europe/Budapest', 'Budapest': 'Europe/Budapest',
+            'Romania': 'Europe/Bucharest', 'Bucharest': 'Europe/Bucharest',
+            'Greece': 'Europe/Athens', 'Athens': 'Europe/Athens',
+            'Turkey': 'Europe/Istanbul', 'Istanbul': 'Europe/Istanbul', 'Ankara': 'Europe/Istanbul',
+            'Ukraine': 'Europe/Kiev', 'Kyiv': 'Europe/Kiev', 'Kiev': 'Europe/Kiev',
+            'Russia': 'Europe/Moscow', 'Moscow': 'Europe/Moscow',
+            'Malta': 'Europe/Malta', 'Gibraltar': 'Europe/Gibraltar',
+            'Cyprus': 'Asia/Nicosia',
+            // ── Middle East ──────────────────────────────────────────────────────
+            'United Arab Emirates': 'Asia/Dubai', 'UAE': 'Asia/Dubai', 'Dubai': 'Asia/Dubai', 'Abu Dhabi': 'Asia/Dubai',
+            'Saudi Arabia': 'Asia/Riyadh', 'Riyadh': 'Asia/Riyadh', 'Jeddah': 'Asia/Riyadh', 'KSA': 'Asia/Riyadh',
+            'Qatar': 'Asia/Qatar', 'Doha': 'Asia/Qatar',
+            'Kuwait': 'Asia/Kuwait',
+            'Bahrain': 'Asia/Bahrain', 'Manama': 'Asia/Bahrain',
+            'Oman': 'Asia/Muscat', 'Muscat': 'Asia/Muscat',
+            'Jordan': 'Asia/Amman', 'Amman': 'Asia/Amman',
+            'Lebanon': 'Asia/Beirut', 'Beirut': 'Asia/Beirut',
+            'Israel': 'Asia/Jerusalem', 'Tel Aviv': 'Asia/Jerusalem',
+            'Iraq': 'Asia/Baghdad', 'Baghdad': 'Asia/Baghdad',
+            'Iran': 'Asia/Tehran', 'Tehran': 'Asia/Tehran',
+            'Egypt': 'Africa/Cairo', 'Cairo': 'Africa/Cairo',
+            // ── Central Asia ─────────────────────────────────────────────────────
+            'Uzbekistan': 'Asia/Tashkent', 'Tashkent': 'Asia/Tashkent',
+            'Kazakhstan': 'Asia/Almaty', 'Almaty': 'Asia/Almaty',
+            'Kyrgyzstan': 'Asia/Bishkek', 'Bishkek': 'Asia/Bishkek',
+            'Tajikistan': 'Asia/Dushanbe', 'Dushanbe': 'Asia/Dushanbe',
+            'Turkmenistan': 'Asia/Ashgabat', 'Ashgabat': 'Asia/Ashgabat',
+            'Azerbaijan': 'Asia/Baku', 'Baku': 'Asia/Baku',
+            'Georgia': 'Asia/Tbilisi', 'Tbilisi': 'Asia/Tbilisi',
+            'Armenia': 'Asia/Yerevan', 'Yerevan': 'Asia/Yerevan',
+            'Afghanistan': 'Asia/Kabul', 'Kabul': 'Asia/Kabul',
+            // ── South Asia ──────────────────────────────────────────────────────
+            'India': 'Asia/Kolkata', 'Mumbai': 'Asia/Kolkata', 'Delhi': 'Asia/Kolkata',
+            'Bangalore': 'Asia/Kolkata', 'Bengaluru': 'Asia/Kolkata', 'Chennai': 'Asia/Kolkata',
+            'Hyderabad': 'Asia/Kolkata', 'Pune': 'Asia/Kolkata', 'Ahmedabad': 'Asia/Kolkata',
+            'Pakistan': 'Asia/Karachi', 'Karachi': 'Asia/Karachi', 'Lahore': 'Asia/Karachi',
+            'Bangladesh': 'Asia/Dhaka', 'Dhaka': 'Asia/Dhaka',
+            'Sri Lanka': 'Asia/Colombo', 'Colombo': 'Asia/Colombo',
+            'Nepal': 'Asia/Kathmandu', 'Kathmandu': 'Asia/Kathmandu',
+            'Myanmar': 'Asia/Rangoon', 'Yangon': 'Asia/Rangoon',
+            // ── East & Southeast Asia ────────────────────────────────────────────
+            'China': 'Asia/Shanghai', 'Beijing': 'Asia/Shanghai', 'Shanghai': 'Asia/Shanghai',
+            'Japan': 'Asia/Tokyo', 'Tokyo': 'Asia/Tokyo',
+            'South Korea': 'Asia/Seoul', 'Korea': 'Asia/Seoul', 'Seoul': 'Asia/Seoul',
+            'Singapore': 'Asia/Singapore',
+            'Hong Kong': 'Asia/Hong_Kong',
+            'Taiwan': 'Asia/Taipei', 'Taipei': 'Asia/Taipei',
+            'Thailand': 'Asia/Bangkok', 'Bangkok': 'Asia/Bangkok',
+            'Vietnam': 'Asia/Ho_Chi_Minh', 'Ho Chi Minh': 'Asia/Ho_Chi_Minh', 'Hanoi': 'Asia/Bangkok',
+            'Indonesia': 'Asia/Jakarta', 'Jakarta': 'Asia/Jakarta',
+            'Malaysia': 'Asia/Kuala_Lumpur', 'Kuala Lumpur': 'Asia/Kuala_Lumpur', 'KL': 'Asia/Kuala_Lumpur',
+            'Philippines': 'Asia/Manila', 'Manila': 'Asia/Manila',
+            'Cambodia': 'Asia/Phnom_Penh', 'Phnom Penh': 'Asia/Phnom_Penh',
+            'Laos': 'Asia/Vientiane', 'Myanmar': 'Asia/Rangoon',
+            // ── Oceania ──────────────────────────────────────────────────────────
+            'Australia': 'Australia/Sydney', 'Sydney': 'Australia/Sydney', 'Melbourne': 'Australia/Melbourne',
+            'Brisbane': 'Australia/Brisbane', 'Perth': 'Australia/Perth', 'Adelaide': 'Australia/Adelaide',
+            'New Zealand': 'Pacific/Auckland', 'Auckland': 'Pacific/Auckland',
+            // ── Africa ───────────────────────────────────────────────────────────
+            'South Africa': 'Africa/Johannesburg', 'Johannesburg': 'Africa/Johannesburg', 'Cape Town': 'Africa/Johannesburg',
+            'Nigeria': 'Africa/Lagos', 'Lagos': 'Africa/Lagos', 'Abuja': 'Africa/Lagos',
+            'Kenya': 'Africa/Nairobi', 'Nairobi': 'Africa/Nairobi',
+            'Ghana': 'Africa/Accra', 'Accra': 'Africa/Accra',
+            'Ethiopia': 'Africa/Addis_Ababa', 'Addis Ababa': 'Africa/Addis_Ababa',
+            'Morocco': 'Africa/Casablanca', 'Casablanca': 'Africa/Casablanca',
+            'Tanzania': 'Africa/Dar_es_Salaam', 'Uganda': 'Africa/Kampala',
+            'Algeria': 'Africa/Algiers', 'Tunisia': 'Africa/Tunis',
         };
+
 
         // ═══════════════════════════════════════════════
         // HELPERS
@@ -446,6 +495,16 @@
             for (const [country, tz] of Object.entries(timezoneMap))
                 if (location.toLowerCase().includes(country.toLowerCase())) return tz;
             return 'America/New_York';
+        }
+
+        function matchVertical(subjectVertical) {
+            if (!subjectVertical) return VERTICALS[0];
+            const lowerRaw = subjectVertical.toLowerCase().trim();
+            // Exact case-insensitive match
+            let found = VERTICALS.find(v => v.toLowerCase() === lowerRaw);
+            if (found) return found;
+
+            return VERTICALS[0]; // Fallback
         }
         function calculateSendTime(contact, sendTimeStr) {
             const tz = contact.timezone || 'UTC';
@@ -572,7 +631,8 @@
                 const scheduledDate = contact.scheduledFor ? new Date(contact.scheduledFor) : calculateSendTime(contact, document.getElementById('sendTime').value);
                 const tzAbbr = new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, timeZoneName: 'short' }).format(scheduledDate).split(' ').pop();
                 const realIdx = contacts.indexOf(contact);
-                const hasFu = followupTemplates[contact.vertical]?.length > 0;
+                const vKey = matchVertical(contact.vertical);
+                const hasFu = followupTemplates[vKey]?.length > 0;
                 
                 let scheduledCellHtml = '<span style="color:var(--text-muted);font-size:13px;">—</span>';
                 if (contact.scheduledFor && contact.status !== 'pending') {
@@ -1343,9 +1403,14 @@
                 fuJobs = []; renderFuDashboard(); return;
             }
             try {
+                // Only load CLIENT jobs — exclude Agency vertical
                 const res = await fetch(`${BACKEND.baseUrl}/api/followup?action=list`, { headers: { 'x-api-key': BACKEND.apiKey } });
                 const data = await res.json();
-                if (data.ok) { fuJobs = data.jobs || []; renderFuDashboard(); }
+                if (data.ok) {
+                    // Filter out agency follow-ups from the client dashboard
+                    fuJobs = (data.jobs || []).filter(j => j.contact?.vertical !== 'Agency');
+                    renderFuDashboard();
+                }
                 else showToast('Could not load follow-up jobs', 'error');
             } catch (e) { fuJobs = []; renderFuDashboard(); }
         }
@@ -1690,7 +1755,8 @@
             if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
             if (contact.status === 'sent') return;
 
-            const tpl = templates[contact.vertical];
+            const vKey = matchVertical(contact.vertical);
+            const tpl = templates[vKey] || templates[Object.keys(templates)[0]];
             if (!tpl || !tpl.subject || !tpl.body) { showToast('No template saved for ' + contact.vertical, 'warning'); return; }
 
             if (!confirm(`Are you sure you want to send the "${contact.vertical}" email to ${contact.email} immediately?`)) return;
@@ -1704,7 +1770,7 @@
                         contact, 
                         subject: tpl.subject, 
                         body: tpl.body,
-                        followups: followupTemplates[contact.vertical] || [],
+                        followups: followupTemplates[vKey] || [],
                         signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null
                     }) 
                 });
@@ -1850,6 +1916,8 @@
                     autoCheckGmailStatus();
                     // Load templates from cloud
                     loadTemplatesFromCloud();
+                    // Load agency data from cloud (user-isolated)
+                    if (typeof loadAgencyFromCloud === 'function') loadAgencyFromCloud();
                     
                     // Start auto-syncing after login
                     startPolling();
@@ -1964,9 +2032,10 @@
             scheduleBtn.innerHTML = '<span class="icon-3d icon-3d-slate"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg></span> Scheduling...';
 
             const batch = toSend.map(contact => {
-                const tpl = templates[contact.vertical] || templates[Object.keys(templates)[0]];
+                const vKey = matchVertical(contact.vertical);
+                const tpl = templates[vKey] || templates[Object.keys(templates)[0]];
                 let followups = [];
-                const fuSteps = followupTemplates[contact.vertical];
+                const fuSteps = followupTemplates[vKey];
                 if (fuSteps && fuSteps.some(f => f.subject && f.body)) {
                     followups = fuSteps.filter(f => f.subject && f.body);
                 }
@@ -2253,16 +2322,617 @@
                     document.body.classList.toggle('compact-table');
                 });
             }
-
-            // ── BOOT: Initialize the default visible section ──
-            // Hide every section first, then show dashboard
-            document.querySelectorAll('.app-section').forEach(s => {
-                s.classList.remove('active');
-                s.style.display = 'none';
-            });
-            switchSection('dashboard');
-            // Ensure sidebar Dashboard link is active
-            document.querySelectorAll('.nav-menu .nav-link').forEach(l => {
-                l.classList.toggle('active', l.dataset.section === 'dashboard');
-            });
         })();
+
+        // ═══════════════════════════════════════════════
+        // AGENCY MODE SYSTEM
+        // ═══════════════════════════════════════════════
+
+        // ── Mode State ──────────────────────────────────
+        let appMode = 'client'; // 'client' | 'agency'
+
+        // ── Agency Data State ───────────────────────────
+        let agencyContacts = [];
+        let filteredAgencyContacts = [];
+        let agencyTemplate = { subject: '', body: '' };
+        // 4 fixed follow-ups for agency (cannot be added/removed)
+        let agencyFollowups = [
+            { step: 1, delayDays: 3,  subject: '', body: '' },
+            { step: 2, delayDays: 7,  subject: '', body: '' },
+            { step: 3, delayDays: 14, subject: '', body: '' },
+            { step: 4, delayDays: 21, subject: '', body: '' }
+        ];
+
+        // Sample data for agency preview
+        const AGENCY_SAMPLE = { contact_name: 'Alex', agency_name: 'MediaWave Agency' };
+
+        // ── setAppMode: core switcher ───────────────────
+        function setAppMode(mode) {
+            appMode = mode;
+            document.body.setAttribute('data-mode', mode);
+
+            // Toggle pill buttons
+            document.getElementById('modeClientBtn').classList.toggle('active', mode === 'client');
+            document.getElementById('modeAgencyBtn').classList.toggle('active', mode === 'agency');
+
+            // Update nav title
+            const titleEl = document.getElementById('topNavTitle');
+            if (titleEl) titleEl.textContent = mode === 'agency' ? 'Agency Dashboard' : 'Campaign Dashboard';
+
+            // Save preference — user-scoped
+            try { localStorage.setItem(MODE_STORAGE_KEY(), mode); } catch(e) {}
+
+            // Refresh content
+            if (mode === 'agency') {
+                updateAgencyDashboard();
+                renderAgencyFollowupSteps();
+                showToast('Switched to Agency Mode', 'info', 2500);
+            } else {
+                showToast('Switched to Client Mode', 'info', 2500);
+            }
+        }
+
+        // Expose globally for onclick
+        window.setAppMode = setAppMode;
+
+        // ── Agency personalise preview ──────────────────
+        function agencyPersonalisePreview(text) {
+            return text.replace(/\{\{(\w+)\}\}/g, (_, k) =>
+                AGENCY_SAMPLE[k]
+                    ? `<span class="preview-var">${AGENCY_SAMPLE[k]}</span>`
+                    : `<span style="color:var(--error);font-weight:700">{{${k}?}}</span>`);
+        }
+
+        // ── Agency template tabs ────────────────────────
+        document.querySelectorAll('[data-agency-tab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('[data-agency-tab]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const which = tab.dataset.agencyTab;
+                document.getElementById('agencyTabInitial').style.display = which === 'initial' ? 'block' : 'none';
+                document.getElementById('agencyTabFollowups').style.display = which === 'followups' ? 'block' : 'none';
+                if (which === 'followups') renderAgencyFollowupSteps();
+            });
+        });
+
+        // ── Agency pitch live preview ───────────────────
+        function renderAgencyPreview(subject, body) {
+            const subjEl = document.getElementById('agencyPreviewSubject');
+            const bodyEl = document.getElementById('agencyPreviewBody');
+            if (subjEl) subjEl.innerHTML = subject ? agencyPersonalisePreview(subject) : '<em style="opacity:0.4">Subject here…</em>';
+            if (bodyEl) bodyEl.innerHTML = body ? formatEmailPreview(body) : '<em style="opacity:0.4">Body here…</em>';
+        }
+
+        document.getElementById('agencySubjectLine').addEventListener('input', () =>
+            renderAgencyPreview(document.getElementById('agencySubjectLine').value, document.getElementById('agencyEmailBody').value));
+        document.getElementById('agencyEmailBody').addEventListener('input', () =>
+            renderAgencyPreview(document.getElementById('agencySubjectLine').value, document.getElementById('agencyEmailBody').value));
+
+        // Bold in agency body
+        document.getElementById('agencyBoldBtn').addEventListener('click', () => applyBold(document.getElementById('agencyEmailBody')));
+        document.getElementById('agencyEmailBody').addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); applyBold(document.getElementById('agencyEmailBody')); }
+        });
+
+        // Save agency pitch
+        document.getElementById('agencySaveTemplate').addEventListener('click', () => {
+            const subject = document.getElementById('agencySubjectLine').value.trim();
+            const body = document.getElementById('agencyEmailBody').value.trim();
+            if (!subject || !body) { showToast('Please fill in both Subject and Body', 'warning'); return; }
+            agencyTemplate = { subject, body };
+            saveAgencyState();
+            showToast('Agency pitch template saved!', 'success');
+        });
+
+        // ── Agency follow-up steps (4 fixed) ───────────
+        const AGENCY_DELAY_PRESETS = [1, 2, 3, 5, 7, 10, 14, 21];
+
+        function renderAgencyFollowupSteps() {
+            const container = document.getElementById('agencyFollowupSteps');
+            if (!container) return;
+            container.innerHTML = agencyFollowups.map((fu, i) => {
+                const isSaved = fu.subject && fu.body;
+                return `
+                <div class="fu-step-card agency-fu-card" id="agencyFuCard${i}" data-step="${i}">
+                    <div class="fu-step-header" onclick="toggleAgencyFuStep(${i})" style="border-left:3px solid #7C3AED;">
+                        <div class="fu-step-num" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">F${fu.step}</div>
+                        <div class="fu-step-info">
+                            <div class="fu-step-title">Agency Follow-up ${fu.step}</div>
+                            <div class="fu-step-meta">Sends ${fu.delayDays} day${fu.delayDays !== 1 ? 's' : ''} after ${fu.step === 1 ? 'initial pitch' : 'previous follow-up'}</div>
+                        </div>
+                        <span class="fu-step-status ${isSaved ? 'saved' : 'unsaved'}">${isSaved ? 'Saved' : 'Not saved'}</span>
+                        <svg class="fu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="fu-step-body">
+                        <div class="fu-delay-row">
+                            <span class="fu-delay-label">Send after:</span>
+                            <div class="fu-delay-btns">
+                                ${AGENCY_DELAY_PRESETS.map(d => `<button class="fu-delay-btn ${fu.delayDays === d ? 'active' : ''}" style="${fu.delayDays === d ? 'background:#7C3AED;border-color:#7C3AED;' : ''}" onclick="setAgencyFuDelay(${i},${d})">${d}d</button>`).join('')}
+                            </div>
+                        </div>
+                        <div class="fu-grid">
+                            <div>
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:13px;">Subject Line</label>
+                                    <input type="text" id="agencyFuSubject${i}" value="${escHtml(fu.subject || '')}" placeholder="Re: {{contact_name}}, following up…" oninput="updateAgencyFuPreview(${i})" style="font-size:14px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:13px;">Email Body</label>
+                                    <textarea id="agencyFuBody${i}" style="min-height:140px;font-size:13px;" placeholder="Hi {{contact_name}},\n\nJust following up with {{agency_name}}…" oninput="updateAgencyFuPreview(${i})">${escHtml(fu.body || '')}</textarea>
+                                </div>
+                            </div>
+                            <div class="fu-preview">
+                                <div class="fu-preview-hdr">Preview</div>
+                                <div class="fu-preview-subj" id="agencyFuPreviewSubj${i}">${fu.subject ? agencyPersonalisePreview(fu.subject) : '<em style="opacity:0.4">Subject…</em>'}</div>
+                                <div class="fu-preview-body" id="agencyFuPreviewBody${i}">${fu.body ? formatEmailPreview(fu.body) : '<em style="opacity:0.4">Body…</em>'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Open first unsaved step
+            const firstUnsaved = agencyFollowups.findIndex(f => !f.subject || !f.body);
+            toggleAgencyFuStep(firstUnsaved >= 0 ? firstUnsaved : 0);
+        }
+
+        window.toggleAgencyFuStep = function(idx) {
+            document.querySelectorAll('.agency-fu-card').forEach((card, i) => {
+                if (i === idx) { card.classList.toggle('open'); card.classList.toggle('active-step', card.classList.contains('open')); }
+                else { card.classList.remove('open', 'active-step'); }
+            });
+        };
+
+        window.setAgencyFuDelay = function(idx, days) {
+            agencyFollowups[idx].delayDays = days;
+            document.querySelectorAll(`#agencyFuCard${idx} .fu-delay-btn`).forEach(btn => {
+                const isActive = parseInt(btn.textContent) === days;
+                btn.classList.toggle('active', isActive);
+                btn.style.background = isActive ? '#7C3AED' : '';
+                btn.style.borderColor = isActive ? '#7C3AED' : '';
+            });
+            document.querySelector(`#agencyFuCard${idx} .fu-step-meta`).textContent =
+                `Sends ${days} day${days !== 1 ? 's' : ''} after ${idx === 0 ? 'initial pitch' : 'previous follow-up'}`;
+        };
+
+        window.updateAgencyFuPreview = function(idx) {
+            const subject = document.getElementById(`agencyFuSubject${idx}`)?.value || '';
+            const body = document.getElementById(`agencyFuBody${idx}`)?.value || '';
+            const subjEl = document.getElementById(`agencyFuPreviewSubj${idx}`);
+            const bodyEl = document.getElementById(`agencyFuPreviewBody${idx}`);
+            if (subjEl) subjEl.innerHTML = subject ? agencyPersonalisePreview(subject) : '<em style="opacity:0.4">Subject…</em>';
+            if (bodyEl) bodyEl.innerHTML = body ? formatEmailPreview(body) : '<em style="opacity:0.4">Body…</em>';
+        };
+
+        document.getElementById('agencySaveFollowups').addEventListener('click', () => {
+            agencyFollowups.forEach((fu, i) => {
+                fu.subject = document.getElementById(`agencyFuSubject${i}`)?.value?.trim() || '';
+                fu.body = document.getElementById(`agencyFuBody${i}`)?.value?.trim() || '';
+            });
+            // Update saved badges
+            agencyFollowups.forEach((fu, i) => {
+                const card = document.getElementById(`agencyFuCard${i}`);
+                if (card) {
+                    const badge = card.querySelector('.fu-step-status');
+                    if (badge) { badge.className = `fu-step-status ${fu.subject && fu.body ? 'saved' : 'unsaved'}`; badge.textContent = fu.subject && fu.body ? 'Saved' : 'Not saved'; }
+                }
+            });
+            saveAgencyState();
+            showToast('Agency follow-ups saved!', 'success');
+        });
+
+        // ── Agency CSV Upload ───────────────────────────
+        const agencyUploadZone = document.getElementById('agencyUploadZone');
+        const agencyFileInput = document.getElementById('agencyFileInput');
+
+        agencyUploadZone.addEventListener('click', () => agencyFileInput.click());
+        agencyUploadZone.addEventListener('dragover', e => { e.preventDefault(); agencyUploadZone.classList.add('dragover'); });
+        agencyUploadZone.addEventListener('dragleave', () => agencyUploadZone.classList.remove('dragover'));
+        agencyUploadZone.addEventListener('drop', e => {
+            e.preventDefault(); agencyUploadZone.classList.remove('dragover');
+            const f = e.dataTransfer.files[0];
+            f?.name.endsWith('.csv') ? handleAgencyFileUpload(f) : showToast('Please upload a .csv file', 'error');
+        });
+        agencyFileInput.addEventListener('change', e => { if (e.target.files[0]) handleAgencyFileUpload(e.target.files[0]); });
+
+        function handleAgencyFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const result = parseAgencyCSV(e.target.result);
+                if (!result.ok) { showToast(result.error, 'error'); return; }
+                if (result.duplicates > 0) showToast(`${result.duplicates} duplicate email${result.duplicates > 1 ? 's' : ''} skipped`, 'warning');
+                document.getElementById('agencyUploadedFileName').textContent = file.name;
+                document.getElementById('agencyPreviewCount').textContent = agencyContacts.length;
+                document.getElementById('agencyUploadPreview').style.display = 'block';
+                filteredAgencyContacts = [...agencyContacts];
+                updateAgencyDashboard();
+                document.getElementById('agencyScheduleBtn').disabled = false;
+                showToast(`${agencyContacts.length} agencies loaded from ${file.name}`, 'success');
+                saveAgencyState();
+            };
+            reader.readAsText(file);
+        }
+
+        function parseAgencyCSV(csv) {
+            const lines = csv.split('\n').filter(l => l.trim());
+            if (lines.length < 2) return { ok: false, error: 'CSV appears empty.' };
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+            // Flexible column detection: name/contact, agency/company, email, location/country
+            const findCol = (candidates) => headers.findIndex(h => candidates.some(c => h.includes(c)));
+            const nameIdx  = findCol(['name', 'contact']);
+            const agencyIdx = findCol(['agency', 'company', 'organization']);
+            const emailIdx = findCol(['email']);
+            const locIdx   = findCol(['location', 'country', 'city', 'region']);
+            if (emailIdx === -1) return { ok: false, error: 'Missing required column: Email' };
+            if (nameIdx === -1)  return { ok: false, error: 'Missing required column: Name or Contact' };
+            if (agencyIdx === -1) return { ok: false, error: 'Missing required column: Agency or Company' };
+            const existingEmails = new Set(agencyContacts.map(c => c.email.toLowerCase()));
+            let duplicates = 0;
+            const newContacts = [];
+            for (let i = 1; i < lines.length; i++) {
+                const vals = lines[i].split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+                if (vals.length < 2) continue;
+                const email = (vals[emailIdx] || '').toLowerCase();
+                if (!email || !email.includes('@')) continue;
+                if (existingEmails.has(email)) { duplicates++; continue; }
+                existingEmails.add(email);
+                const location = locIdx >= 0 ? (vals[locIdx] || 'Unknown') : 'Unknown';
+                newContacts.push({
+                    name: vals[nameIdx] || '',
+                    agency: vals[agencyIdx] || '',
+                    email: vals[emailIdx] || '',
+                    location,
+                    timezone: detectTimezone(location),
+                    status: 'pending',
+                    scheduledFor: null,
+                    selected: false
+                });
+            }
+            agencyContacts = [...agencyContacts, ...newContacts];
+            filteredAgencyContacts = [...agencyContacts];
+            return { ok: true, duplicates };
+        }
+
+        // ── Agency Dashboard Table ──────────────────────
+        document.getElementById('agencySearch').addEventListener('input', applyAgencyFilters);
+        document.getElementById('agencyFilterStatus').addEventListener('change', applyAgencyFilters);
+
+        function applyAgencyFilters() {
+            const search = document.getElementById('agencySearch').value.toLowerCase();
+            const status = document.getElementById('agencyFilterStatus').value;
+            filteredAgencyContacts = agencyContacts.filter(c =>
+                (!search || c.name.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || c.agency.toLowerCase().includes(search)) &&
+                (!status || c.status === status)
+            );
+            updateAgencyDashboard();
+        }
+
+        function updateAgencyDashboard() {
+            const tbody = document.getElementById('agencyTableBody');
+            if (!tbody) return;
+            if (filteredAgencyContacts.length === 0) {
+                tbody.innerHTML = agencyContacts.length === 0
+                    ? '<tr><td colspan="8"><div class="empty-state"><div class="empty-text">No agencies uploaded yet. Upload a CSV to get started.</div></div></td></tr>'
+                    : '<tr><td colspan="8"><div class="empty-state"><div class="empty-text">No agencies match your filters.</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = filteredAgencyContacts.map(contact => {
+                const realIdx = agencyContacts.indexOf(contact);
+                const scheduledDate = contact.scheduledFor
+                    ? new Date(contact.scheduledFor)
+                    : calculateSendTime(contact, document.getElementById('sendTime').value);
+                let scheduledCellHtml = '<span style="color:var(--text-muted);font-size:13px;">—</span>';
+                if (contact.scheduledFor && contact.status !== 'pending') {
+                    scheduledCellHtml = `
+                        <div style="font-weight:600;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: contact.timezone, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:11px;font-weight:700;color:var(--text-muted);opacity:0.8;margin-left:4px;">(Local)</span></div>
+                        <div style="font-size:12px;font-weight:500;color:var(--text-light);margin-top:2px;display:flex;align-items:baseline;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(scheduledDate)} <span style="font-size:10px;font-weight:700;opacity:0.6;margin-left:4px;">(IST)</span></div>
+                    `;
+                }
+                return `<tr>
+                    <td><input type="checkbox" class="checkbox agency-checkbox" data-real="${realIdx}" ${contact.selected ? 'checked' : ''}></td>
+                    <td style="font-weight:600;">${escHtml(contact.name)}</td>
+                    <td class="col-company" style="color:#7C3AED;font-weight:600;">${escHtml(contact.agency)}</td>
+                    <td style="color:var(--text-light);">${escHtml(contact.email)}</td>
+                    <td class="col-timezone">${escHtml(contact.location)}</td>
+                    <td style="line-height:1.4;">${scheduledCellHtml}</td>
+                    <td><span class="status status-${contact.status}"><span class="status-icon"></span>${contact.status}</span></td>
+                    <td><div class="row-actions">
+                        ${contact.status !== 'sent' ? `<button class="row-action-btn row-send-btn" data-agency-real="${realIdx}" title="Send Now" style="color:#7C3AED;border-color:#7C3AED;"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5l4 4 7-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ''}
+                        <button class="row-action-btn row-del-btn" data-agency-real="${realIdx}" title="Delete"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2.5h3v1M10 3.5l-.5 7H3.5L3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                    </div></td>
+                </tr>`;
+            }).join('');
+
+            tbody.querySelectorAll('.agency-checkbox').forEach(cb => {
+                cb.addEventListener('change', e => { agencyContacts[parseInt(e.target.dataset.real)].selected = e.target.checked; });
+            });
+            tbody.querySelectorAll('.row-del-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const ri = parseInt(btn.dataset.agencyReal);
+                    const name = agencyContacts[ri].agency;
+                    agencyContacts.splice(ri, 1);
+                    filteredAgencyContacts = filteredAgencyContacts.filter(c => agencyContacts.includes(c));
+                    updateAgencyDashboard();
+                    showToast(`Deleted ${name}`, 'info');
+                    saveAgencyState();
+                });
+            });
+        }
+
+        // ── Agency Follow-up Queue Dashboard ───────────
+        async function updateAgencyFuQueue() {
+            const tbody = document.getElementById('agencyFuTableBody');
+            if (!tbody) return;
+
+            if (!currentApiKey) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">Log in to view agency follow-up queue.</td></tr>';
+                return;
+            }
+
+            // Load all follow-up jobs from backend, filter to Agency vertical only
+            let agencyFuJobs = [];
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/followup?action=list`, { headers: { 'x-api-key': BACKEND.apiKey } });
+                const data = await res.json();
+                if (data.ok) agencyFuJobs = (data.jobs || []).filter(j => j.contact?.vertical === 'Agency');
+            } catch(e) { console.error('[Agency FU Queue] Load error:', e); }
+
+            if (agencyFuJobs.length === 0) {
+                // Fall back to virtual queue from local state (before first schedule)
+                const scheduled = agencyContacts.filter(c => c.status === 'scheduled' || c.status === 'sent');
+                if (scheduled.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">No agency follow-ups scheduled yet. Schedule a campaign first.</td></tr>';
+                    const statsRow = document.getElementById('agencyFuStatsRow');
+                    if (statsRow) statsRow.innerHTML = '';
+                    return;
+                }
+                // Build virtual follow-up rows from local data
+                const fuRows = [];
+                scheduled.forEach(c => {
+                    if (!c.scheduledFor) return;
+                    agencyFollowups.forEach(fu => {
+                        if (!fu.subject || !fu.body) return;
+                        const sendAt = new Date(c.scheduledFor).getTime() + fu.delayDays * 86400000;
+                        fuRows.push({ contact: c, step: fu.step, sendAt, status: sendAt > Date.now() ? 'pending' : 'due', id: null });
+                    });
+                });
+                fuRows.sort((a, b) => a.sendAt - b.sendAt);
+                renderAgencyFuRows(fuRows);
+                return;
+            }
+
+            // Render real backend jobs
+            const realRows = agencyFuJobs.map(j => ({
+                contact: { name: j.contact?.name || j.contact?.first_name || '', email: j.contact?.email || '', agency: j.contact?.company_name || j.contact?.company || '', timezone: j.contact?.timezone || 'America/New_York' },
+                step: j.step,
+                sendAt: j.scheduledFor,
+                status: j.status,
+                id: j.id
+            }));
+            realRows.sort((a, b) => a.sendAt - b.sendAt);
+            renderAgencyFuRows(realRows);
+        }
+
+        function renderAgencyFuRows(fuRows) {
+            const tbody = document.getElementById('agencyFuTableBody');
+            const pending = fuRows.filter(r => r.status === 'pending').length;
+            const sent    = fuRows.filter(r => r.status === 'sent').length;
+            const failed  = fuRows.filter(r => r.status === 'failed' || r.status === 'due').length;
+            const statsRow = document.getElementById('agencyFuStatsRow');
+            if (statsRow) {
+                statsRow.innerHTML = [
+                    ['Total',   fuRows.length, '#7C3AED'],
+                    ['Pending', pending,        '#D97706'],
+                    ['Sent',    sent,           '#059669'],
+                    ['Due/Failed', failed,      '#EF4444']
+                ].map(([l, v, c]) => `<div class="fu-stat" style="border-color:${c}22;"><div class="fu-stat-val" style="color:${c}">${v}</div><div class="fu-stat-lbl">${l}</div></div>`).join('');
+            }
+            if (fuRows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">No agency follow-ups scheduled yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = fuRows.slice(0, 50).map(row => {
+                const tz   = row.contact.timezone || 'America/New_York';
+                const date = new Date(row.sendAt);
+                const statusClass = row.status === 'due' ? 'failed' : row.status;
+                return `<tr>
+                    <td><strong>${escHtml(row.contact.name)}</strong><br><span style="color:var(--text-muted);font-size:12px;">${escHtml(row.contact.email)}</span></td>
+                    <td class="col-company" style="font-size:13px;color:#7C3AED;font-weight:600;">${escHtml(row.contact.agency || row.contact.company || '')}</td>
+                    <td><div style="width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#7C3AED,#6D28D9);display:inline-flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;">F${row.step}</div></td>
+                    <td style="line-height:1.4;">
+                        <div style="font-weight:600;white-space:nowrap;">${new Intl.DateTimeFormat('en-US', { timeZone: tz, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(date)} <span style="font-size:11px;color:var(--text-muted);">(Local)</span></div>
+                        <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(date)} <span style="font-size:10px;opacity:0.6;">(IST)</span></div>
+                    </td>
+                    <td><span class="fu-status-badge fu-status-${statusClass}">${row.status === 'due' ? '⚡ Due Now' : row.status}</span></td>
+                    <td>${row.id && row.status === 'pending' ? `<button class="fu-send-now-btn" onclick="sendFuNow('${row.id}')">Send now</button>` : '—'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        document.getElementById('agencyRefreshFuBtn')?.addEventListener('click', updateAgencyFuQueue);
+
+        // ── Agency Schedule Campaign ────────────────────
+        document.getElementById('agencyScheduleBtn').addEventListener('click', async () => {
+            if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
+            if (agencyContacts.length === 0) { showToast('Please upload agency contacts first', 'warning'); return; }
+            if (!agencyTemplate.subject || !agencyTemplate.body) { showToast('Please save an Agency Pitch template first', 'warning'); return; }
+            const pending = agencyContacts.filter(c => c.status === 'pending');
+            if (pending.length === 0) { showToast('No pending agency contacts to schedule', 'info'); return; }
+
+            const sendTime = document.getElementById('sendTime').value;
+            const dailyLimit = parseInt(document.getElementById('sendLimit').value);
+            const intervalSeconds = document.getElementById('sendInterval') ? parseInt(document.getElementById('sendInterval').value) : 15;
+            const toSend = pending.slice(0, dailyLimit);
+
+            toSend.forEach(c => { c.status = 'scheduled'; c.scheduledFor = calculateSendTime(c, sendTime); });
+            filteredAgencyContacts = [...agencyContacts];
+            updateAgencyDashboard();
+            saveAgencyState();
+            showToast(`Scheduling ${toSend.length} agency emails via Upstash...`, 'info', 5000);
+
+            const agencyScheduleBtn = document.getElementById('agencyScheduleBtn');
+            const origHtml = agencyScheduleBtn.innerHTML;
+            agencyScheduleBtn.disabled = true;
+            agencyScheduleBtn.innerHTML = '<span>Scheduling...</span>';
+
+            // Build batch: each contact gets the single agency pitch + 4 follow-ups
+            const batch = toSend.map(contact => {
+                // Personalise for this contact
+                const personalise = (text) => text
+                    .replace(/\{\{contact_name\}\}/g, contact.name ? contact.name.split(' ')[0] : contact.name)
+                    .replace(/\{\{agency_name\}\}/g, contact.agency);
+                const followups = agencyFollowups.filter(f => f.subject && f.body);
+                return {
+                    contact: {
+                        email: contact.email,
+                        first_name: contact.name ? contact.name.split(' ')[0] : contact.name,
+                        company_name: contact.agency,
+                        vertical: 'Agency',
+                        name: contact.name,
+                        company: contact.agency,
+                        timezone: contact.timezone,
+                        location: contact.location
+                    },
+                    scheduledFor: contact.scheduledFor,
+                    subject: personalise(agencyTemplate.subject),
+                    body: personalise(agencyTemplate.body),
+                    signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null,
+                    followups: followups.map(f => ({ ...f, subject: personalise(f.subject), body: personalise(f.body) }))
+                };
+            });
+
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/schedule-batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey },
+                    body: JSON.stringify({ batch, intervalSeconds })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Agency campaign scheduled! Follow-ups queued automatically.', 'success', 8000);
+                    updateAgencyFuQueue();
+                } else {
+                    showToast('Scheduling failed: ' + (data.error || 'Unknown error'), 'error', 8000);
+                    toSend.forEach(c => c.status = 'pending');
+                }
+            } catch (e) {
+                showToast('Failed to connect to backend.', 'error');
+                toSend.forEach(c => c.status = 'pending');
+            }
+
+            agencyScheduleBtn.disabled = false;
+            agencyScheduleBtn.innerHTML = origHtml;
+            filteredAgencyContacts = [...agencyContacts];
+            updateAgencyDashboard();
+            saveAgencyState();
+        });
+
+        // ── Agency Export ───────────────────────────────
+        document.getElementById('agencyExportBtn').addEventListener('click', () => {
+            const csv = ['Name,Agency,Email,Location,Timezone,Status', ...agencyContacts.map(c => `${c.name},${c.agency},${c.email},${c.location},${c.timezone},${c.status}`)].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+            a.href = url; a.download = 'adsidol-agency-export.csv'; a.click();
+            showToast('Agency export downloaded!', 'success');
+        });
+
+        // ── Agency Persist ──────────────────────────────
+        // Key is USER-SCOPED: each of the 4 founders gets their own localStorage slot
+        const AGENCY_STORAGE_KEY = () => `adsidol_agency_v1_${currentUser?.id || 'default'}`;
+        // Mode preference is also user-scoped
+        const MODE_STORAGE_KEY   = () => `adsidol_mode_${currentUser?.id || 'default'}`;
+
+        // ── Agency Cloud Sync ───────────────────────────
+        async function saveAgencyToCloud() {
+            if (!currentApiKey) return;
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/agency`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': currentApiKey },
+                    body: JSON.stringify({ agencyContacts, agencyTemplate, agencyFollowups })
+                });
+                const data = await res.json();
+                if (!data.ok) console.warn('[Agency] Cloud save failed:', data.error);
+            } catch (e) { console.error('[Agency] Cloud save error:', e); }
+        }
+
+        async function loadAgencyFromCloud() {
+            if (!currentApiKey) return;
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/agency`, {
+                    headers: { 'x-api-key': currentApiKey }
+                });
+                const data = await res.json();
+                if (data.ok && data.data) {
+                    const d = data.data;
+                    if (d.agencyContacts) {
+                        agencyContacts = d.agencyContacts;
+                        filteredAgencyContacts = [...agencyContacts];
+                        if (agencyContacts.length > 0) {
+                            document.getElementById('agencyUploadPreview').style.display = 'block';
+                            document.getElementById('agencyUploadedFileName').textContent = 'Synced from Cloud ☁';
+                            document.getElementById('agencyPreviewCount').textContent = agencyContacts.length;
+                            document.getElementById('agencyScheduleBtn').disabled = false;
+                        }
+                    }
+                    if (d.agencyTemplate) {
+                        agencyTemplate = d.agencyTemplate;
+                        document.getElementById('agencySubjectLine').value = agencyTemplate.subject || '';
+                        document.getElementById('agencyEmailBody').value = agencyTemplate.body || '';
+                        if (agencyTemplate.subject || agencyTemplate.body) renderAgencyPreview(agencyTemplate.subject, agencyTemplate.body);
+                    }
+                    if (d.agencyFollowups) agencyFollowups = d.agencyFollowups;
+                    if (appMode === 'agency') { updateAgencyDashboard(); renderAgencyFollowupSteps(); }
+                    console.log('[Agency] Synced from cloud for', currentUser?.name);
+                }
+            } catch (e) { console.error('[Agency] Cloud load error:', e); }
+        }
+
+        function saveAgencyState() {
+            try {
+                localStorage.setItem(AGENCY_STORAGE_KEY(), JSON.stringify({
+                    agencyContacts, agencyTemplate, agencyFollowups
+                }));
+            } catch(e) {}
+            // Also push to cloud
+            saveAgencyToCloud();
+        }
+
+        function loadAgencyState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(AGENCY_STORAGE_KEY()));
+                if (!saved) return;
+                if (saved.agencyContacts) {
+                    agencyContacts = saved.agencyContacts;
+                    filteredAgencyContacts = [...agencyContacts];
+                    if (agencyContacts.length > 0) {
+                        document.getElementById('agencyUploadPreview').style.display = 'block';
+                        document.getElementById('agencyUploadedFileName').textContent = 'Restored from last session';
+                        document.getElementById('agencyPreviewCount').textContent = agencyContacts.length;
+                        document.getElementById('agencyScheduleBtn').disabled = false;
+                    }
+                }
+                if (saved.agencyTemplate) {
+                    agencyTemplate = saved.agencyTemplate;
+                    document.getElementById('agencySubjectLine').value = agencyTemplate.subject || '';
+                    document.getElementById('agencyEmailBody').value = agencyTemplate.body || '';
+                    if (agencyTemplate.subject || agencyTemplate.body) renderAgencyPreview(agencyTemplate.subject, agencyTemplate.body);
+                }
+                if (saved.agencyFollowups) {
+                    agencyFollowups = saved.agencyFollowups;
+                }
+            } catch(e) {}
+        }
+
+        // Also restore mode preference (user-scoped)
+        (function restoreMode() {
+            const savedMode = localStorage.getItem(MODE_STORAGE_KEY());
+            if (savedMode === 'agency') {
+                setTimeout(() => setAppMode('agency'), 50);
+            }
+            // Load from localStorage first (instant), then cloud will overwrite with latest
+            loadAgencyState();
+            // If already logged in, pull from cloud immediately
+            if (currentApiKey) loadAgencyFromCloud();
+        })();
+
+
