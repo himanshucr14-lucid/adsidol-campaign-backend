@@ -170,6 +170,9 @@
             // Persistence
             localStorage.setItem('adsidol_app_mode', mode);
 
+            // Refresh all section wrappers to show the right mode content
+            if (typeof showAllSections === 'function') showAllSections();
+
             if (!skipSync && currentApiKey) {
                 if (mode === 'agency') {
                     loadAgencyDataFromCloud();
@@ -415,23 +418,114 @@
         });
 
         // ═══════════════════════════════════════════════
-        // SECTION NAV
+        // SECTION NAV & SCROLL-SPY
         // ═══════════════════════════════════════════════
-        function scrollToSection(section) {
-            const map = { upload: 'uploadSection', templates: 'templatesSection', schedule: 'scheduleSection', campaigns: 'campaignsSection', analytics: 'analyticsSection', followups: 'followupDashboard' };
-            const el = document.getElementById(map[section]);
-            if (!el) return;
-            if (section === 'analytics') el.style.display = 'block';
-            if (section === 'followups') { el.style.display = 'block'; loadFollowupDashboard(); }
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Make all sections visible for scroll-based navigation
+        function showAllSections() {
+            document.querySelectorAll('.app-section').forEach(s => {
+                s.style.display = 'block';
+                // Set correct mode wrappers
+                if (appMode === 'agency') {
+                    s.querySelectorAll('.mode-agency').forEach(w => w.style.display = 'block');
+                    s.querySelectorAll('.mode-client').forEach(w => w.style.display = 'none');
+                } else {
+                    s.querySelectorAll('.mode-agency').forEach(w => w.style.display = 'none');
+                    s.querySelectorAll('.mode-client').forEach(w => w.style.display = 'block');
+                }
+            });
         }
+
+        function scrollToSection(sectionId) {
+            let targetId = 'sec-' + sectionId;
+            if (sectionId === 'campaigns') targetId = 'sec-audience';
+
+            showAllSections();
+
+            const sec = document.getElementById(targetId);
+            if (sec) {
+                // Offset for sticky top-nav height
+                const navOffset = document.querySelector('.top-nav')?.offsetHeight || 60;
+                const top = sec.getBoundingClientRect().top + window.scrollY - navOffset - 8;
+                window.scrollTo({ top, behavior: 'smooth' });
+
+                // Update active link immediately on click
+                updateActiveSidebarLink(sectionId);
+            }
+
+            // Special init calls
+            if (sectionId === 'followups') {
+                if (appMode === 'agency') {
+                    if (typeof loadAgencyFollowupDashboard === 'function') loadAgencyFollowupDashboard();
+                } else {
+                    if (typeof loadFollowupDashboard === 'function') loadFollowupDashboard();
+                }
+            }
+            if (sectionId === 'analytics') {
+                updateHistoryDashboard();
+            }
+        }
+
+        function updateActiveSidebarLink(sectionId) {
+            const sectionKey = sectionId.replace('sec-', '');
+            document.querySelectorAll('.nav-menu .nav-link').forEach(l => {
+                const matches = l.dataset.section === sectionKey ||
+                    (sectionKey === 'audience' && l.dataset.section === 'campaigns');
+                l.classList.toggle('active', matches);
+            });
+        }
+
+        // Sidebar click navigation
         document.querySelectorAll('.nav-menu .nav-link').forEach(link => {
             link.addEventListener('click', () => {
-                document.querySelectorAll('.nav-menu .nav-link').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
                 scrollToSection(link.dataset.section);
             });
         });
+
+        // ── Scroll-Spy via IntersectionObserver ──────────────────────────────
+        // Maps section IDs → sidebar data-section values
+        const SECTION_NAV_MAP = {
+            'sec-dashboard':  'dashboard',
+            'sec-audience':   'audience',
+            'sec-templates':  'templates',
+            'sec-followups':  'followups',
+            'sec-analytics':  'analytics',
+        };
+
+        let scrollSpyActive = true;
+
+        const scrollSpyObserver = new IntersectionObserver((entries) => {
+            if (!scrollSpyActive) return;
+            // Pick the entry that is most visible on screen
+            let best = null;
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (!best || entry.intersectionRatio > best.intersectionRatio) {
+                        best = entry;
+                    }
+                }
+            });
+            if (best) {
+                const sectionId = best.target.id;
+                const navKey = SECTION_NAV_MAP[sectionId];
+                if (navKey) updateActiveSidebarLink(navKey);
+            }
+        }, {
+            root: null,
+            rootMargin: '-20% 0px -60% 0px', // trigger when section is in top 40% of viewport
+            threshold: [0, 0.1, 0.25, 0.5]
+        });
+
+        // Observe all sections once DOM is settled
+        function initScrollSpy() {
+            showAllSections();
+            document.querySelectorAll('.app-section').forEach(sec => {
+                scrollSpyObserver.observe(sec);
+            });
+        }
+        // Run after a tiny delay to ensure sections are laid out
+        setTimeout(initScrollSpy, 200);
+
 
         // ═══════════════════════════════════════════════
         // STATE
@@ -945,7 +1039,8 @@
         async function fetchCloudAnalytics() {
             if (!currentApiKey) return;
             try {
-                const res = await fetch(`${BACKEND_URL}/api/analytics`, {
+                const url = appMode === 'agency' ? `${BACKEND_URL}/api/analytics?type=agency` : `${BACKEND_URL}/api/analytics`;
+                const res = await fetch(url, {
                     headers: { 'x-api-key': currentApiKey }
                 });
                 const data = await res.json();
@@ -1298,6 +1393,7 @@
         // FOLLOW-UP TEMPLATE SYSTEM
         // ═══════════════════════════════════════════════
         const DELAY_PRESETS = [1, 2, 3, 5, 7, 10, 14, 21];
+
 
         function updateFuCountBadge(vertical) {
             const badge = document.getElementById('fuCountBadge');

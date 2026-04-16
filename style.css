@@ -3573,3 +3573,86 @@
             0%, 100% { box-shadow: 0 4px 16px rgba(124,58,237,0.35); }
             50%       { box-shadow: 0 6px 24px rgba(124,58,237,0.55); }
         }
+
+        /* ══════════════════════════════════════════════
+           LAPTOP OPTIMISATION  ≤ 1440px
+           Tightens up all spacing / sizing so nothing
+           feels oversized on 13–15 inch screens.
+        ══════════════════════════════════════════════ */
+        @media (max-width: 1440px) {
+            /* Sidebar narrower */
+            .sidebar { width: 240px; }
+
+            /* Logo */
+            .logo { font-size: 22px; }
+            .logo-section { padding: 18px 16px; }
+
+            /* Nav links */
+            .nav-link { padding: 10px 14px; font-size: 13px; }
+            .nav-menu  { padding: 8px 10px; gap: 2px; }
+
+            /* Mode toggle */
+            .sidebar-mode-toggle { margin: 8px 14px 14px; }
+
+            /* Top nav bar */
+            .top-nav  { height: 58px; padding: 0 24px; }
+            .view-title { font-size: 17px; }
+
+            /* Main canvas padding */
+            .container, .container-canvas { padding: 24px 24px; }
+
+            /* Cards */
+            .card { padding: 28px; border-radius: 18px; margin-bottom: 20px; }
+            .card-header { margin-bottom: 20px; }
+            .card-title { font-size: 19px; }
+            .step-badge { width: 30px; height: 30px; font-size: 13px; border-radius: 10px; }
+
+            /* Stats grid */
+            .stats-grid { gap: 16px; margin-bottom: 24px; }
+            .stat-card  { padding: 22px; border-radius: 16px; }
+            .stat-value { font-size: 34px; }
+            .stat-label { font-size: 12px; }
+
+            /* Upload zone */
+            .upload-zone { padding: 36px 28px; }
+            .upload-text { font-size: 16px; }
+            .upload-hint { font-size: 13px; }
+
+            /* Template grid */
+            .template-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+            .template-card { padding: 20px; border-radius: 16px; }
+            .template-vertical { font-size: 15px; }
+
+            /* Schedule tiles */
+            .schedule-config-grid { gap: 14px; }
+            .sched-tile { padding: 20px; }
+            .sched-tile-label { font-size: 13px; }
+            .sched-limit-display, .sched-time-display { font-size: 26px; }
+
+            /* Table */
+            table td, table th { font-size: 13px; padding: 10px 12px; }
+
+            /* Buttons */
+            .btn { padding: 10px 20px; font-size: 13px; }
+
+            /* Section header */
+            .stats-header { margin-bottom: 12px; }
+
+            /* Bulk bar */
+            #bulkBar { padding: 10px 16px; }
+
+            /* Gmail indicator */
+            .gmail-indicator { font-size: 12px; padding: 6px 12px; }
+            .sync-indicator  { font-size: 11px; }
+        }
+
+        /* Extra tightening for 13-inch / 1280px screens */
+        @media (max-width: 1280px) {
+            .sidebar  { width: 220px; }
+            .card     { padding: 22px; }
+            .stat-card { padding: 18px; }
+            .stat-value { font-size: 28px; }
+            .container, .container-canvas { padding: 20px 18px; }
+            .top-nav { padding: 0 18px; }
+        }
+
