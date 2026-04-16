@@ -44,6 +44,12 @@
             display: none !important;
         }
 
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
         body {
             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
@@ -901,13 +907,15 @@
 
         /* Stats Grid */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            display: flex;
+            flex-wrap: nowrap;
             gap: 24px;
             margin-bottom: 40px;
         }
 
         .stat-card {
+            flex: 1;
+            min-width: 0;
             background: linear-gradient(135deg, var(--card) 0%, var(--blue-50) 100%);
             border: 1px solid var(--border);
             border-radius: 20px;
@@ -1028,7 +1036,7 @@
         /* Template Grid */
         .template-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 20px;
             margin-bottom: 32px;
         }
@@ -1451,12 +1459,14 @@
 
         /* ── SCHEDULE CONFIG TILES ── */
         .schedule-config-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            display: flex;
+            flex-wrap: nowrap;
             gap: 20px;
         }
 
         .sched-tile {
+            flex: 1;
+            min-width: 0;
             background: linear-gradient(135deg, var(--bg) 0%, var(--blue-50) 100%);
             border: 2px solid var(--border);
             border-radius: 16px;
@@ -3619,7 +3629,7 @@
             .upload-hint { font-size: 13px; }
 
             /* Template grid */
-            .template-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+            .template-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
             .template-card { padding: 20px; border-radius: 16px; }
             .template-vertical { font-size: 15px; }
 
@@ -3646,8 +3656,8 @@
             .sync-indicator  { font-size: 11px; }
         }
 
-        /* Extra tightening for 13-inch / 1280px screens */
-        @media (max-width: 1280px) {
+        /* Extra tightening for standard 13-inch / 1366px screens */
+        @media (max-width: 1366px) {
             .sidebar  { width: 220px; }
             .card     { padding: 22px; }
             .stat-card { padding: 18px; }
