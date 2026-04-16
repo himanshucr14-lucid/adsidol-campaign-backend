@@ -2845,7 +2845,7 @@
         async function saveAgencyToCloud() {
             if (!currentApiKey) return;
             try {
-                const res = await fetch(`${BACKEND.baseUrl}/api/agency`, {
+                const res = await fetch(`${BACKEND.baseUrl}/api/contacts?type=agency`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-api-key': currentApiKey },
                     body: JSON.stringify({ agencyContacts, agencyTemplate, agencyFollowups })
@@ -2858,7 +2858,7 @@
         async function loadAgencyFromCloud() {
             if (!currentApiKey) return;
             try {
-                const res = await fetch(`${BACKEND.baseUrl}/api/agency`, {
+                const res = await fetch(`${BACKEND.baseUrl}/api/contacts?type=agency`, {
                     headers: { 'x-api-key': currentApiKey }
                 });
                 const data = await res.json();
