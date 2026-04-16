@@ -180,6 +180,16 @@
                     loadContactsFromCloud();
                     loadTemplatesFromCloud();
                 }
+                // Always re-fetch analytics for the new mode immediately
+                // so stats show the correct silo right away
+                fetchCloudAnalytics();
+            }
+
+            // Render the correct dashboard for the active mode
+            if (mode === 'agency') {
+                if (typeof updateAgencyDashboard === 'function') updateAgencyDashboard();
+            } else {
+                updateDashboard();
             }
             
             updateStats();
@@ -306,17 +316,49 @@
                     if (tpl) agencyTemplate = tpl;
                     if (fus) agencyFollowups = fus;
                     
+                    // Render into Agency-specific table ONLY — never touch client contacts
                     if (appMode === 'agency') {
-                        contacts = agencyContacts;
-                        filteredContacts = [...contacts];
-                        updateDashboard();
+                        updateAgencyDashboard();
                         updateStats();
-                        updateHistoryDashboard();
                     }
                     console.log('Agency data synced from cloud');
                 }
             } catch (e) { console.error('Failed to load agency data from cloud:', e); }
         }
+
+        function updateAgencyDashboard() {
+            const tbody = document.getElementById('agencyTableBody');
+            if (!tbody) return;
+            if (agencyContacts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-text">No agencies uploaded yet. Upload a CSV to get started.</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = agencyContacts.map((c, idx) => {
+                const statusClass = c.status || 'pending';
+                return `<tr>
+                    <td><input type="checkbox" class="checkbox agency-cb" data-idx="${idx}" ${c.selected ? 'checked' : ''}></td>
+                    <td style="font-weight:600;">${escHtml(c.name || c.contact_name || '')}</td>
+                    <td class="col-company">${escHtml(c.company || c.agency_name || '')}</td>
+                    <td style="color:var(--text-light);">${escHtml(c.email || '')}</td>
+                    <td class="col-timezone">${escHtml(c.location || '')}</td>
+                    <td><span style="color:var(--text-muted);font-size:13px;">${c.scheduledFor ? new Date(c.scheduledFor).toLocaleString() : '—'}</span></td>
+                    <td><span class="status status-${statusClass}"><span class="status-icon"></span>${statusClass}</span></td>
+                    <td><div class="row-actions">
+                        <button class="row-action-btn row-del-btn" data-agency-idx="${idx}" title="Delete" onclick="deleteAgencyContact(${idx})">
+                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2.5h3v1M10 3.5l-.5 7H3.5L3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function deleteAgencyContact(idx) {
+            agencyContacts.splice(idx, 1);
+            updateAgencyDashboard();
+            updateStats();
+            saveAgencyDataToCloud();
+        }
+
 
         async function saveContactsToCloud() {
             if (!currentApiKey || appMode !== 'client') return;
@@ -482,8 +524,7 @@
             });
         });
 
-        // ── Scroll-Spy via IntersectionObserver ──────────────────────────────
-        // Maps section IDs → sidebar data-section values
+        // ── Scroll-Spy: highlight sidebar link for the section currently in view ──
         const SECTION_NAV_MAP = {
             'sec-dashboard':  'dashboard',
             'sec-audience':   'audience',
@@ -492,38 +533,39 @@
             'sec-analytics':  'analytics',
         };
 
-        let scrollSpyActive = true;
-
-        const scrollSpyObserver = new IntersectionObserver((entries) => {
-            if (!scrollSpyActive) return;
-            // Pick the entry that is most visible on screen
-            let best = null;
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    if (!best || entry.intersectionRatio > best.intersectionRatio) {
-                        best = entry;
-                    }
+        function updateScrollSpy() {
+            const sections = document.querySelectorAll('.app-section');
+            const navHeight = document.querySelector('.top-nav')?.offsetHeight || 60;
+            // Find the section whose top is closest to (but not past) the viewport top
+            let active = null;
+            let minDistance = Infinity;
+            sections.forEach(sec => {
+                const rect = sec.getBoundingClientRect();
+                // Distance from viewport top (accounting for nav bar)
+                const dist = Math.abs(rect.top - navHeight);
+                if (rect.top - navHeight <= 80 && dist < minDistance) {
+                    minDistance = dist;
+                    active = sec;
                 }
             });
-            if (best) {
-                const sectionId = best.target.id;
-                const navKey = SECTION_NAV_MAP[sectionId];
+            // If we haven't scrolled past any section yet, default to first
+            if (!active) {
+                active = sections[0];
+            }
+            if (active) {
+                const navKey = SECTION_NAV_MAP[active.id];
                 if (navKey) updateActiveSidebarLink(navKey);
             }
-        }, {
-            root: null,
-            rootMargin: '-20% 0px -60% 0px', // trigger when section is in top 40% of viewport
-            threshold: [0, 0.1, 0.25, 0.5]
-        });
+        }
 
         // Observe all sections once DOM is settled
         function initScrollSpy() {
             showAllSections();
-            document.querySelectorAll('.app-section').forEach(sec => {
-                scrollSpyObserver.observe(sec);
-            });
+            // Use scroll event for reliable tracking
+            window.addEventListener('scroll', updateScrollSpy, { passive: true });
+            // Initial call to set correct active state on page load
+            setTimeout(updateScrollSpy, 300);
         }
-        // Run after a tiny delay to ensure sections are laid out
         setTimeout(initScrollSpy, 200);
 
 
@@ -1147,18 +1189,19 @@
             else if (period === '7d') limit = now - (7 * 86400000);
             else if (period === '30d') limit = now - (30 * 86400000);
 
-            // Cloud Data Metrics
+            // Cloud Data Metrics — analyticsData is always fetched for the current mode
             const filteredCloud = period === 'all' ? analyticsData : analyticsData.filter(e => e.date >= limit);
             const cloudSent = filteredCloud.length;
 
-            // Local Session Metrics (for context)
-            const total = contacts.length;
-            const scheduled = contacts.filter(c => c.status === 'scheduled').length;
-            const pending = contacts.filter(c => c.status === 'pending').length;
+            // Use the correct contacts array for the active mode
+            const activeContacts = appMode === 'agency' ? agencyContacts : contacts;
+            const total = activeContacts.length;
+            const scheduled = activeContacts.filter(c => c.status === 'scheduled').length;
+            const pending = activeContacts.filter(c => c.status === 'pending').length;
 
             animateCount(document.getElementById('totalContacts'), total);
             animateCount(document.getElementById('scheduledCount'), scheduled);
-            animateCount(document.getElementById('sentCount'), cloudSent); // Now driven by Cloud
+            animateCount(document.getElementById('sentCount'), cloudSent);
             animateCount(document.getElementById('pendingCount'), pending);
 
             const sentLabel = document.getElementById('sentCount').nextElementSibling;
@@ -1170,7 +1213,7 @@
             const pct = n => total > 0 ? (n / total * 100) + '%' : '0%';
             document.getElementById('progressTotal').style.width = total > 0 ? '100%' : '0%';
             document.getElementById('progressScheduled').style.width = pct(scheduled);
-            document.getElementById('progressSent').style.width = cloudSent > 0 ? '100%' : '0%'; // Different logic for cloud
+            document.getElementById('progressSent').style.width = cloudSent > 0 ? '100%' : '0%';
             document.getElementById('progressPending').style.width = pct(pending);
 
             if (typeof updateAdvancedAnalytics === 'function') updateAdvancedAnalytics();
