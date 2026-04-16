@@ -35,8 +35,9 @@ module.exports = async (req, res) => {
         return res.status(401).json({ ok: false, error: 'Unauthorized' });
     }
 
+    const isAgency = req.query.type === 'agency';
     try {
-        const events = await store.getAnalytics(user.id);
+        const events = await store.getAnalytics(user.id, isAgency);
         
         // Basic grouping/stats logic could go here, or we can send raw data 
         // and let the frontend handle flexible date filtering.
