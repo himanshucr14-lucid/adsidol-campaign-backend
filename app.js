@@ -769,6 +769,121 @@
         }
 
         // ═══════════════════════════════════════════════
+        // AGENCY CSV UPLOAD
+        // ═══════════════════════════════════════════════
+        const agencyUploadZone = document.getElementById('agencyUploadZone');
+        const agencyFileInput  = document.getElementById('agencyFileInput');
+
+        if (agencyUploadZone && agencyFileInput) {
+            agencyUploadZone.addEventListener('click', () => agencyFileInput.click());
+            agencyUploadZone.addEventListener('dragover', e => { e.preventDefault(); agencyUploadZone.classList.add('dragover'); });
+            agencyUploadZone.addEventListener('dragleave', () => agencyUploadZone.classList.remove('dragover'));
+            agencyUploadZone.addEventListener('drop', e => {
+                e.preventDefault(); agencyUploadZone.classList.remove('dragover');
+                const f = e.dataTransfer.files[0];
+                if (f && f.name.endsWith('.csv')) handleAgencyFileUpload(f);
+                else showToast('Please upload a .csv file', 'error');
+            });
+            agencyFileInput.addEventListener('change', e => {
+                if (e.target.files[0]) handleAgencyFileUpload(e.target.files[0]);
+            });
+        }
+
+        function handleAgencyFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const result = parseAgencyCSV(e.target.result);
+                if (!result.ok) { showToast(result.error, 'error'); return; }
+                if (result.duplicates > 0) showToast(`${result.duplicates} duplicate email${result.duplicates > 1 ? 's' : ''} skipped`, 'warning');
+
+                // Show preview bar
+                const nameEl  = document.getElementById('agencyUploadedFileName');
+                const cntEl   = document.getElementById('agencyPreviewCount');
+                const prevEl  = document.getElementById('agencyUploadPreview');
+                const schBtn  = document.getElementById('agencyScheduleBtn');
+                if (nameEl)  nameEl.textContent  = file.name;
+                if (cntEl)   cntEl.textContent   = agencyContacts.length;
+                if (prevEl)  prevEl.style.display = 'block';
+                if (schBtn)  schBtn.disabled      = false;
+
+                updateAgencyDashboard();
+                updateStats();
+                showToast(`${agencyContacts.length} agencies loaded from ${file.name}`, 'success');
+                saveAgencyDataToCloud();
+            };
+            reader.readAsText(file);
+        }
+
+        function parseAgencyCSV(csv) {
+            const lines = csv.split('\n').filter(l => l.trim());
+            if (lines.length < 2) return { ok: false, error: 'CSV appears empty.' };
+
+            // Parse headers, strip quotes
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+
+            // Required: name + email. Agency/company and location are optional but expected.
+            const missing = ['name', 'email'].filter(r => !headers.some(h => h.includes(r)));
+            if (missing.length) return { ok: false, error: `Missing required columns: ${missing.join(', ')}. Expected: Name, Agency, Contact, Email, Location` };
+
+            // Column index helpers
+            const col = (keywords) => {
+                const idx = headers.findIndex(h => keywords.some(k => h.includes(k)));
+                return idx >= 0 ? idx : -1;
+            };
+            const iName    = col(['name', 'contact']);
+            const iAgency  = col(['agency', 'company', 'organisation', 'organization']);
+            const iEmail   = col(['email']);
+            const iContact = col(['contact person', 'contact_name']);
+            const iLoc     = col(['location', 'city', 'country']);
+
+            const existingEmails = new Set(agencyContacts.map(c => (c.email || '').toLowerCase()));
+            let duplicates = 0;
+            const newAgencies = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                // Handle quoted fields with commas inside
+                const row = lines[i];
+                const vals = [];
+                let inQuote = false, cur = '';
+                for (let j = 0; j < row.length; j++) {
+                    const ch = row[j];
+                    if (ch === '"') { inQuote = !inQuote; }
+                    else if (ch === ',' && !inQuote) { vals.push(cur.trim()); cur = ''; }
+                    else { cur += ch; }
+                }
+                vals.push(cur.trim());
+
+                const get = (idx) => idx >= 0 && idx < vals.length ? vals[idx].replace(/^["']|["']$/g, '').trim() : '';
+                const email = get(iEmail);
+                const name  = get(iName);
+                if (!email || !name) continue;
+                if (existingEmails.has(email.toLowerCase())) { duplicates++; continue; }
+                existingEmails.add(email.toLowerCase());
+
+                const agencyName = get(iAgency) || 'Unknown Agency';
+                const location   = get(iLoc)    || 'Unknown';
+
+                newAgencies.push({
+                    name,                     // contact person name
+                    agency_name: agencyName,  // agency / company
+                    company: agencyName,
+                    email,
+                    location,
+                    timezone: detectTimezone(location),
+                    status: 'pending',
+                    scheduledFor: null,
+                    selected: false,
+                    sentMessageId: null,
+                    sentThreadId: null,
+                    tags: []
+                });
+            }
+
+            agencyContacts = [...agencyContacts, ...newAgencies];
+            return { ok: true, count: newAgencies.length, duplicates };
+        }
+
+        // ═══════════════════════════════════════════════
         // DASHBOARD TABLE
         // ═══════════════════════════════════════════════
         function updateDashboard() {
