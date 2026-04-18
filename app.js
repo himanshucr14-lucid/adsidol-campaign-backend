@@ -335,6 +335,7 @@
             }
             tbody.innerHTML = agencyContacts.map((c, idx) => {
                 const statusClass = c.status || 'pending';
+                const isSent = statusClass === 'sent';
                 return `<tr>
                     <td><input type="checkbox" class="checkbox agency-cb" data-idx="${idx}" ${c.selected ? 'checked' : ''}></td>
                     <td style="font-weight:600;">${escHtml(c.name || c.contact_name || '')}</td>
@@ -344,6 +345,11 @@
                     <td><span style="color:var(--text-muted);font-size:13px;">${c.scheduledFor ? new Date(c.scheduledFor).toLocaleString() : '—'}</span></td>
                     <td><span class="status status-${statusClass}"><span class="status-icon"></span>${statusClass}</span></td>
                     <td><div class="row-actions">
+                        <button class="row-action-btn row-send-btn ${isSent ? 'disabled' : ''}" 
+                                title="Send Now" 
+                                onclick="sendManualNow(${idx})">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                        </button>
                         <button class="row-action-btn row-del-btn" data-agency-idx="${idx}" title="Delete" onclick="deleteAgencyContact(${idx})">
                             <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2.5h3v1M10 3.5l-.5 7H3.5L3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
@@ -2007,26 +2013,62 @@
             const vertical = document.getElementById('testEmailVertical').value;
             if (!email.includes('@')) { showToast('Enter a valid email address', 'error'); return; }
             document.getElementById('testEmailModal').style.display = 'none';
-            const tpl = templates[vertical];
-            if (!tpl || !tpl.subject || !tpl.body) { showToast('No saved template found for this vertical', 'error'); return; }
+            
+            let tpl;
+            if (appMode === 'agency') {
+                tpl = agencyTemplate;
+            } else {
+                tpl = templates[vertical];
+            }
+            
+            if (!tpl || !tpl.subject || !tpl.body) { showToast('No saved template found', 'error'); return; }
             showToast(`Sending test to ${email}...`, 'info');
             try {
-                const res = await fetch(`${BACKEND.baseUrl}/api/send`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey }, body: JSON.stringify({ contact: { first_name: 'Test', company_name: 'Test Co', vertical, email, name: 'Test', company: 'Test Co' }, subject: tpl.subject, body: tpl.body }) });
+                const res = await fetch(`${BACKEND.baseUrl}/api/send`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey }, 
+                    body: JSON.stringify({ 
+                        contact: { 
+                            first_name: 'Test', 
+                            company_name: 'Test Co', 
+                            vertical, 
+                            email, 
+                            name: 'Test', 
+                            company: 'Test Co' 
+                        }, 
+                        subject: tpl.subject, 
+                        body: tpl.body,
+                        isAgency: appMode === 'agency'
+                    }) 
+                });
                 const data = await res.json();
                 data.ok ? showToast(`Test sent to ${email}`, 'success') : showToast(`Send failed: ${data.error}`, 'error', 6000);
             } catch (e) { showToast('Could not reach backend - Network or CORS error', 'error'); }
         });
 
         async function sendManualNow(ri) {
-            const contact = contacts[ri];
+            const activeContacts = appMode === 'agency' ? agencyContacts : contacts;
+            const contact = activeContacts[ri];
             if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
             if (contact.status === 'sent') return;
 
-            const vKey = matchVertical(contact.vertical);
-            const tpl = templates[vKey] || templates[Object.keys(templates)[0]];
-            if (!tpl || !tpl.subject || !tpl.body) { showToast('No template saved for ' + contact.vertical, 'warning'); return; }
+            const vKey = matchVertical(contact.vertical || '');
+            let tpl, fuse;
+            
+            if (appMode === 'agency') {
+                tpl = agencyTemplate;
+                fuse = agencyFollowups || [];
+            } else {
+                tpl = templates[vKey] || templates[Object.keys(templates)[0]];
+                fuse = followupTemplates[vKey] || [];
+            }
+            
+            if (!tpl || !tpl.subject || !tpl.body) { 
+                showToast(appMode === 'agency' ? 'No agency template saved' : 'No template saved for ' + contact.vertical, 'warning'); 
+                return; 
+            }
 
-            if (!confirm(`Are you sure you want to send the "${contact.vertical}" email to ${contact.email} immediately?`)) return;
+            if (!confirm(`Are you sure you want to send this email to ${contact.email} immediately?`)) return;
 
             showToast(`Initiating manual send to ${contact.name}...`, 'info');
             try {
@@ -2037,15 +2079,20 @@
                         contact, 
                         subject: tpl.subject, 
                         body: tpl.body,
-                        followups: followupTemplates[vKey] || [],
-                        signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null
+                        followups: fuse,
+                        signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null,
+                        isAgency: appMode === 'agency'
                     }) 
                 });
                 const data = await res.json();
                 if (data.ok) {
                     showToast(`Successfully sent! Status will update shortly.`, 'success');
                     contact.status = 'sent';
-                    updateDashboard();
+                    if (appMode === 'agency') {
+                        updateAgencyDashboard();
+                    } else {
+                        updateDashboard();
+                    }
                     updateStats();
                     saveState();
                 } else {
@@ -2319,7 +2366,8 @@
                     subject: tpl.subject,
                     body: tpl.body,
                     signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null,
-                    followups: followups
+                    followups: followups,
+                    isAgency: false // Explicitly client mode
                 };
             });
 
@@ -2350,8 +2398,79 @@
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
 
 
-            // Refresh follow-up dashboard if visible
-            if (document.getElementById('followupDashboard').style.display !== 'none') loadFollowupDashboard();
+        // ═══════════════════════════════════════════════
+        // AGENCY SCHEDULE CAMPAIGN
+        // ═══════════════════════════════════════════════
+        document.getElementById('agencyScheduleBtn').addEventListener('click', async () => {
+            if (!gmailConnected) { showToast('Connect Gmail first', 'warning'); return; }
+            if (agencyContacts.length === 0) { showToast('Please upload agencies first', 'warning'); return; }
+            
+            const pending = agencyContacts.filter(c => c.status === 'pending');
+            if (pending.length === 0) { showToast('No pending agencies to schedule', 'info'); return; }
+            
+            const sendTime = document.getElementById('sendTime').value;
+            const dailyLimit = parseInt(document.getElementById('sendLimit').value);
+            const intervalSecondsStr = document.getElementById('sendInterval') ? document.getElementById('sendInterval').value : "15";
+            const intervalSeconds = parseInt(intervalSecondsStr);
+            const toSend = pending.slice(0, dailyLimit);
+
+            toSend.forEach(c => { 
+                c.status = 'scheduled'; 
+                c.scheduledFor = calculateSendTime(c, sendTime); 
+            });
+            
+            updateAgencyDashboard(); updateStats(); saveAgencyDataToCloud();
+            showToast(`Scheduling ${toSend.length} agency emails via Upstash...`, 'info', 5000);
+
+            const scheduleBtn = document.getElementById('agencyScheduleBtn');
+            const originalText = scheduleBtn.innerHTML;
+            scheduleBtn.disabled = true;
+            scheduleBtn.innerHTML = '<span class="icon-3d icon-3d-slate"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg></span> Scheduling...';
+
+            const batch = toSend.map(contact => {
+                return {
+                    contact: {
+                        email: contact.email,
+                        first_name: contact.name ? contact.name.split(' ')[0] : '',
+                        company_name: contact.agency_name || contact.company,
+                        vertical: contact.vertical || 'Agency',
+                        name: contact.name,
+                        company: contact.agency_name || contact.company,
+                        timezone: contact.timezone,
+                        location: contact.location
+                    },
+                    scheduledFor: contact.scheduledFor,
+                    subject: agencyTemplate.subject,
+                    body: agencyTemplate.body,
+                    signature: (emailSignature.name || emailSignature.cc) ? emailSignature : null,
+                    followups: agencyFollowups || [],
+                    isAgency: true // ← Critical for data isolation
+                };
+            });
+
+            try {
+                const res = await fetch(`${BACKEND.baseUrl}/api/schedule-batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND.apiKey },
+                    body: JSON.stringify({ batch, intervalSeconds })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Agency campaign successfully scheduled online!', 'success', 8000);
+                } else {
+                    showToast('Agency scheduling failed: ' + (data.error || 'Unknown error'), 'error', 8000);
+                    toSend.forEach(c => c.status = 'pending');
+                }
+            } catch (e) {
+                console.error('Agency Schedule Error:', e);
+                showToast('Failed to connect to backend.', 'error');
+                toSend.forEach(c => c.status = 'pending');
+            }
+
+            scheduleBtn.disabled = false;
+            scheduleBtn.innerHTML = originalText;
+            updateAgencyDashboard(); updateStats(); saveAgencyDataToCloud();
         });
 
         // ═══════════════════════════════════════════════
