@@ -1,9 +1,12 @@
-// ═══════════════════════════════════════════════
-        // CONFIG — Current Vercel Backend URL
-        // ═══════════════════════════════════════════════
-        const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-            ? 'http://localhost:3000'
-            : 'https://adsidol-campaignemail.vercel.app';
+(function () {
+    "use strict";
+
+    // ═══════════════════════════════════════════════
+    // CONFIG — Current Vercel Backend URL
+    // ═══════════════════════════════════════════════
+    const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3000'
+        : 'https://adsidol-campaignemail.vercel.app';
 
         // Founders registry (for login UI display)
         const FOUNDERS = [
@@ -2710,4 +2713,13 @@
                     document.body.classList.toggle('compact-table');
                 });
             }
+            // Globalize needed functions for onclick handlers
+            window.setAppMode = setAppMode;
+            window.toggleAppMode = toggleAppMode;
+            window.sendManualNow = sendManualNow;
+            window.deleteAgencyContact = deleteAgencyContact;
+            window.dismissToast = dismissToast;
+            window.showLoginModal = showLoginModal;
+            window.hideLoginModal = hideLoginModal;
+
         })();
