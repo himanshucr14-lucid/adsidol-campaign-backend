@@ -2400,6 +2400,7 @@
 
             filteredContacts = [...contacts]; updateDashboard(); updateStats(); saveState();
 
+        }); // END scheduleBtn click handler
 
         // ═══════════════════════════════════════════════
         // AGENCY SCHEDULE CAMPAIGN
@@ -2735,3 +2736,5 @@
             window.hideLoginModal = hideLoginModal;
 
         })();
+
+})();
