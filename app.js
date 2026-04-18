@@ -2641,7 +2641,22 @@
             syncLimit(50, true);
             if (document.getElementById('sendInterval')) syncInterval(15, true);
 
+            // 1. Session check - MUST run regardless of saved state
+            if (loadSession()) {
+                fetchCloudAnalytics(); 
+                if (appMode === 'agency') {
+                    loadAgencyDataFromCloud();
+                } else {
+                    loadTemplatesFromCloud(); 
+                    loadContactsFromCloud(); 
+                }
+            } else {
+                showLoginModal();
+            }
+
+            // 2. State restoration - return if no cache found
             if (!saved) { updateStats(); return; }
+
             if (saved.darkMode) setDark(true);
             if (saved.templates) templates = saved.templates;
             if (saved.followupTemplates) {
@@ -2650,6 +2665,7 @@
             if (saved.sendTime) { document.getElementById('sendTime').value = saved.sendTime; syncTime(saved.sendTime); }
             if (saved.sendLimit) { document.getElementById('sendLimit').value = saved.sendLimit; syncLimit(saved.sendLimit); }
             if (saved.sendInterval && document.getElementById('sendInterval')) { document.getElementById('sendInterval').value = saved.sendInterval; syncInterval(saved.sendInterval); }
+
             // Restore email signature
             if (saved.emailSignature) {
                 emailSignature = { ...emailSignature, ...saved.emailSignature };
@@ -2660,7 +2676,8 @@
                 });
                 updateSignaturePreview();
             }
-            // Start date always defaults to today — not restored from saved state
+
+            // Custom template badges
             if (saved.savedTemplatesList) {
                 saved.savedTemplatesList.forEach(v => {
                     savedTemplates.add(v);
@@ -2670,6 +2687,8 @@
                     });
                 });
             }
+
+            // Restore contacts
             if (saved.contacts && saved.contacts.length > 0) {
                 contacts = saved.contacts;
                 filteredContacts = [...contacts];
@@ -2681,15 +2700,7 @@
                 updateDashboard();
                 showToast(`${contacts.length} contacts restored from last session`, 'info');
             }
-            if (loadSession()) {
-                fetchCloudAnalytics(); // Fetch analytics on load
-                if (appMode === 'agency') {
-                    loadAgencyDataFromCloud();
-                } else {
-                    loadTemplatesFromCloud(); // Sync templates on load
-                    loadContactsFromCloud(); // Sync contacts on load
-                }
-            }
+
             updateStats();
             loadFollowupDashboard(); // Load follow-up queue on page load
             
@@ -2713,6 +2724,7 @@
                     document.body.classList.toggle('compact-table');
                 });
             }
+
             // Globalize needed functions for onclick handlers
             window.setAppMode = setAppMode;
             window.toggleAppMode = toggleAppMode;
